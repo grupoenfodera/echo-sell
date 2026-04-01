@@ -9,15 +9,8 @@ const Welcome = () => {
   const navigate = useNavigate();
   const firstName = usuario?.nome?.split(' ')[0] || '';
 
-  const handleConfigure = async () => {
-    // Mark primeiro_acesso as false
-    if (usuario?.id) {
-      await supabase
-        .from('usuarios')
-        .update({ primeiro_acesso: false })
-        .eq('id', usuario.id);
-    }
-    navigate('/dna-comercial');
+  const handleConfigure = () => {
+    navigate('/onboarding');
   };
 
   const handleSkip = async () => {
