@@ -80,7 +80,7 @@ const DnaProfile = () => {
           {/* Summary card */}
           <Card className="card-glow mb-6">
             <CardContent className="p-6 space-y-3">
-              <SummaryRow label="Tom principal" value={`${TONE_NAME[dna.tom_primario] || dna.tom_primario} ${pMeta.icon || ''}`} />
+              <SummaryRow label="Tom principal" value={`${TONE_NAME[dna.tom_primario] || dna.tom_primario} ${pMeta?.icon || ''}`} />
               {sMeta && (
                 <SummaryRow label="Tom secundário" value={`${TONE_NAME[dna.tom_secundario] || dna.tom_secundario} ${sMeta.icon} (${dna.peso_secundario || 30}%)`} />
               )}
