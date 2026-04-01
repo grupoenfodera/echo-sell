@@ -274,7 +274,13 @@ export default function CRMCliente() {
                   ) : (
                     <div className="space-y-3">
                       {sessoes.slice(0, 5).map(s => (
-                        <SessaoItem key={s.id} sessao={s} />
+                        <SessaoItem
+                          key={s.id}
+                          sessao={s}
+                          onRegistrarResultado={() =>
+                            setResultadoModal({ sessaoId: s.id, produto: s.produto })
+                          }
+                        />
                       ))}
                       {sessoes.length > 5 && (
                         <Button variant="link" size="sm" className="px-0 text-xs">Ver todas ({sessoes.length})</Button>
