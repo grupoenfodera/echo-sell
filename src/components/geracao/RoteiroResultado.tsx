@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import type { RoteiroJSON } from '@/types/crm';
+import type { RoteiroJSON, RoteiroEtapa } from '@/types/crm';
 import { svpApi } from '@/lib/api-svp';
 
 interface RoteiroResultadoProps {
