@@ -33,12 +33,12 @@ interface PropostaResultadoProps {
   onVerCRM?: () => void;
 }
 
-const TIPO_BADGE: Record<ObjecaoItem['tipo'], { label: string; cls: string }> = {
-  preco:        { label: 'Preço',        cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
-  urgencia:     { label: 'Urgência',     cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
-  concorrencia: { label: 'Concorrência', cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
-  confianca:    { label: 'Confiança',    cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-  necessidade:  { label: 'Necessidade',  cls: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+const TIPO_BADGE: Record<ObjecaoItem['categoria'], { label: string; cls: string }> = {
+  preco:       { label: 'Preço',       cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+  tempo:       { label: 'Tempo',       cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
+  confianca:   { label: 'Confiança',   cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+  necessidade: { label: 'Necessidade', cls: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+  autoridade:  { label: 'Autoridade',  cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
 };
 
 const SECTIONS = [
