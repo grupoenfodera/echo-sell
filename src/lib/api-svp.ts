@@ -25,6 +25,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     headers: {
       'Content-Type': 'application/json',
       Authorization: auth,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     },
     body: JSON.stringify(body),
   });
@@ -37,7 +38,10 @@ async function get<T>(path: string, params?: Record<string, string>): Promise<T>
   const auth = await getAuthHeader();
   const qs = params ? '?' + new URLSearchParams(params).toString() : '';
   const res = await fetch(`${BASE}/${path}${qs}`, {
-    headers: { Authorization: auth },
+    headers: {
+      Authorization: auth,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data?.error ?? `Erro ${res.status}`);
