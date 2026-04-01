@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun, LogOut, User, Dna, ClipboardList, ChevronDown } from 'lucide-react';
+import { Moon, Sun, LogOut, User, Dna, ClipboardList, Users, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const TONE_NAME: Record<string, string> = {
