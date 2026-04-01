@@ -8,6 +8,7 @@ import ResultsDisplay from '@/components/ResultsDisplay';
 import HistorySection from '@/components/HistorySection';
 import type { Modality, SvpFormData, SvpResult, HistoryItem } from '@/types/svp';
 import { initialFormData } from '@/types/svp';
+import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
   const [modality, setModality] = useState<Modality | null>(null);
@@ -22,27 +23,15 @@ const Dashboard = () => {
     setResult(null);
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      if (!supabaseUrl) {
-        throw new Error('Backend não configurado. Habilite o Lovable Cloud.');
-      }
-
-      const response = await fetch(`${supabaseUrl}/functions/v1/gerar`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ ...formData, _modalidade: modality }),
+      const { data, error } = await supabase.functions.invoke('gerar', {
+        body: { ...formData, _modalidade: modality },
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || `Erro ${response.status}`);
+      if (error) {
+        throw new Error(error.message || 'Erro ao chamar a função.');
       }
 
-      const data: SvpResult = await response.json();
-      setResult(data);
+      setResult(data as SvpResult);
 
       setHistory(prev => [{
         id: crypto.randomUUID(),
