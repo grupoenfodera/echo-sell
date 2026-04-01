@@ -8,6 +8,7 @@ import ResultsDisplay from '@/components/ResultsDisplay';
 import HistorySection from '@/components/HistorySection';
 import type { Modality, SvpFormData, SvpResult, HistoryItem } from '@/types/svp';
 import { initialFormData } from '@/types/svp';
+import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
   const [modality, setModality] = useState<Modality | null>(null);
