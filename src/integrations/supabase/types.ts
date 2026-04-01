@@ -103,8 +103,10 @@ export type Database = {
           id: string
           modalidade: string
           nicho: string | null
+          nome_cliente: string | null
           produto: string | null
           resolvido: boolean | null
+          resultado_json: Json | null
           tokens_entrada: number | null
           tokens_saida: number | null
           tokens_total: number | null
@@ -118,8 +120,10 @@ export type Database = {
           id?: string
           modalidade: string
           nicho?: string | null
+          nome_cliente?: string | null
           produto?: string | null
           resolvido?: boolean | null
+          resultado_json?: Json | null
           tokens_entrada?: number | null
           tokens_saida?: number | null
           tokens_total?: number | null
@@ -133,8 +137,10 @@ export type Database = {
           id?: string
           modalidade?: string
           nicho?: string | null
+          nome_cliente?: string | null
           produto?: string | null
           resolvido?: boolean | null
+          resultado_json?: Json | null
           tokens_entrada?: number | null
           tokens_saida?: number | null
           tokens_total?: number | null
