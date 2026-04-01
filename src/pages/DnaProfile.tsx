@@ -112,7 +112,7 @@ const DnaProfile = () => {
               <CardContent className="p-4">
                 <p className="text-lg mb-2">🗣️</p>
                 <p className="text-sm font-heading font-semibold text-foreground mb-1">Tom nos scripts</p>
-                <p className="text-xs font-body text-muted-foreground">{pMeta.desc || 'Tom configurado.'}</p>
+                <p className="text-xs font-body text-muted-foreground">{pMeta?.desc || 'Tom configurado.'}</p>
               </CardContent>
             </Card>
             <Card className="card-glow">
