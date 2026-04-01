@@ -311,6 +311,16 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
               {resBadge.label}
             </Badge>
           )}
+          {!resBadge && onRegistrarResultado && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+              onClick={e => { e.stopPropagation(); onRegistrarResultado(); }}
+            >
+              <MessageSquare className="h-3 w-3 mr-0.5" /> Como foi?
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
