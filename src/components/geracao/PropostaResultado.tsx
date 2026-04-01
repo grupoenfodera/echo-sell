@@ -138,6 +138,12 @@ export default function PropostaResultado({
                             </li>
                           ))}
                         </ul>
+                      ) : typeof value === 'object' && value !== null && !Array.isArray(value) ? (
+                        <div className="text-sm text-foreground space-y-1">
+                          {Object.entries(value as Record<string, string>).map(([k, v]) => (
+                            <p key={k}><span className="font-medium capitalize">{k}:</span> {v}</p>
+                          ))}
+                        </div>
                       ) : (
                         <p className="text-sm text-foreground">{value as string}</p>
                       )}
