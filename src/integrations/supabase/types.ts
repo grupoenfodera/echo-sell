@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      admins: {
+        Row: {
+          criado_em: string | null
+          id: string
+        }
+        Insert: {
+          criado_em?: string | null
+          id: string
+        }
+        Update: {
+          criado_em?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       compras: {
         Row: {
           atualizado_em: string | null
@@ -58,15 +73,38 @@ export type Database = {
           },
         ]
       }
+      configuracoes: {
+        Row: {
+          atualizado_em: string | null
+          chave: string
+          descricao: string | null
+          valor: string
+        }
+        Insert: {
+          atualizado_em?: string | null
+          chave: string
+          descricao?: string | null
+          valor: string
+        }
+        Update: {
+          atualizado_em?: string | null
+          chave?: string
+          descricao?: string | null
+          valor?: string
+        }
+        Relationships: []
+      }
       geracoes: {
         Row: {
           contexto_geracao: string | null
           criado_em: string | null
           custo_usd: number | null
+          erro_mensagem: string | null
           id: string
           modalidade: string
           nicho: string | null
           produto: string | null
+          resolvido: boolean | null
           tokens_entrada: number | null
           tokens_saida: number | null
           tokens_total: number | null
@@ -76,10 +114,12 @@ export type Database = {
           contexto_geracao?: string | null
           criado_em?: string | null
           custo_usd?: number | null
+          erro_mensagem?: string | null
           id?: string
           modalidade: string
           nicho?: string | null
           produto?: string | null
+          resolvido?: boolean | null
           tokens_entrada?: number | null
           tokens_saida?: number | null
           tokens_total?: number | null
@@ -89,10 +129,12 @@ export type Database = {
           contexto_geracao?: string | null
           criado_em?: string | null
           custo_usd?: number | null
+          erro_mensagem?: string | null
           id?: string
           modalidade?: string
           nicho?: string | null
           produto?: string | null
+          resolvido?: boolean | null
           tokens_entrada?: number | null
           tokens_saida?: number | null
           tokens_total?: number | null
@@ -286,7 +328,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
