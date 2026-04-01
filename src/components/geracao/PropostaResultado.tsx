@@ -67,12 +67,15 @@ export default function PropostaResultado({
       if (s.key === 'beneficios' && Array.isArray(val)) {
         return `${s.label}:\n${(val as string[]).map(b => `• ${b}`).join('\n')}`;
       }
+      if (typeof val === 'object' && val !== null) {
+        return `${s.label}:\n${JSON.stringify(val)}`;
+      }
       return `${s.label}:\n${val}`;
     }).join('\n\n');
   };
 
   const formatWhatsApp = () =>
-    `*${email.assunto}*\n\n${email.corpo}\n\n${email.cta}\n\nP.S.: ${email.ps}`;
+    `*${email.assunto}*\n\n${email.saudacao}\n\n${email.corpo}\n\n${email.cta}\n\n${email.assinatura}`;
 
   return (
     <div className="max-w-[680px] mx-auto space-y-6">
