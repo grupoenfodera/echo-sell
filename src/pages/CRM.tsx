@@ -205,7 +205,22 @@ export default function CRM() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {clientesFiltrados.map(c => (
-                <ClienteCard key={c.id} cliente={c} onClick={() => navigate(`/crm/${c.id}`)} />
+                <ClienteCard
+                  key={c.id}
+                  cliente={c}
+                  onClick={() => navigate(`/crm/${c.id}`)}
+                  onRegistrarResultado={
+                    c.ultima_sessao && !c.ultima_sessao.resultado &&
+                    c.ultima_sessao.criado_em &&
+                    differenceInDays(new Date(), new Date(c.ultima_sessao.criado_em)) >= 1
+                      ? () => setResultadoModal({
+                          sessaoId: c.ultima_sessao!.id,
+                          nomeCliente: c.nome,
+                          produto: c.ultima_sessao!.produto,
+                        })
+                      : undefined
+                  }
+                />
               ))}
             </div>
           )}
