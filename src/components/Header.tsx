@@ -61,7 +61,7 @@ const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-[54px] bg-elevated border-b border-border flex items-center px-4 sm:px-6 no-print">
-      <div className="flex items-center gap-2">
+      <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
         <span className="font-heading font-bold text-lg text-foreground">SVP</span>
         <span className="text-[10px] font-ui font-semibold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-pill">
           MVP
@@ -69,7 +69,7 @@ const Header = () => {
         <span className="text-xs text-muted-foreground font-body italic hidden sm:inline ml-1">
           by Thammy Manuella
         </span>
-      </div>
+      </Link>
 
       <div className="ml-auto flex items-center gap-2">
         <Button
