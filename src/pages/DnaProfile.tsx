@@ -66,7 +66,7 @@ const DnaProfile = () => {
     );
   }
 
-  const pMeta = TONE_META[dna.tom_primario] || {};
+  const pMeta = TONE_META[dna.tom_primario];
   const sMeta = dna.tom_secundario ? TONE_META[dna.tom_secundario] : null;
   const ctx = dna.contexto || '';
 
