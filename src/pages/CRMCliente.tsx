@@ -25,7 +25,7 @@ import {
 import {
   ArrowLeft, Edit2, Plus, Phone, Mail, Linkedin, Instagram, UserPlus,
   Circle, Thermometer, Calendar, Clock, StickyNote, FileText, ChevronRight,
-  Sparkles, Loader2, AlertCircle, MessageSquare,
+  Sparkles, Loader2, AlertCircle, MessageSquare, ClipboardCheck,
 } from 'lucide-react';
 
 /* ── Maps ──────────────────────────────────────── */
