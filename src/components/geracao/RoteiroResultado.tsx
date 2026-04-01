@@ -56,10 +56,9 @@ function scoreBadgeColor(value: number, max: number) {
 }
 
 const SCORE_LABELS: { key: keyof RoteiroJSON['score_breakdown']; label: string; max: number }[] = [
-  { key: 'personalizacao', label: 'Personalização', max: 30 },
-  { key: 'clareza_proposta', label: 'Clareza', max: 30 },
-  { key: 'urgencia_cta', label: 'Urgência', max: 20 },
-  { key: 'tom_adequado', label: 'Tom', max: 20 },
+  { key: 'clareza', label: 'Clareza', max: 40 },
+  { key: 'objecoes_cobertas', label: 'Objeções', max: 30 },
+  { key: 'adequacao_nicho', label: 'Adequação', max: 30 },
 ];
 
 export default function RoteiroResultado({
