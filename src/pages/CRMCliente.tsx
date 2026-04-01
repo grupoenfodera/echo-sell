@@ -5,6 +5,7 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import NovaInteracaoModal from '@/components/crm/NovaInteracaoModal';
+import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
 import { svpApi } from '@/lib/api-svp';
 import { useAuth } from '@/contexts/AuthContext';
 import type {
