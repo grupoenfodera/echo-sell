@@ -94,6 +94,10 @@ export default function CRMCliente() {
   const [filtroCanal, setFiltroCanal] = useState<InteracaoCanal | 'todos'>('todos');
   const [modalInteracao, setModalInteracao] = useState(false);
   const [canalInicial, setCanalInicial] = useState<InteracaoCanal | undefined>(undefined);
+  const [resultadoModal, setResultadoModal] = useState<{
+    sessaoId: string;
+    produto?: string;
+  } | null>(null);
 
   // Edit form state
   const [formEdit, setFormEdit] = useState<Record<string, string>>({});
