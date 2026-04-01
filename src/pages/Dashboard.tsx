@@ -112,19 +112,11 @@ const Dashboard = () => {
           {!loading && !result && (
             <>
               <HistorySection items={history} onSelect={handleHistoryClick} />
-              <ModalitySelector selected={modality} onSelect={setModality} />
-              {modality && (
-                <SvpForm
-                  modality={modality}
-                  formData={formData}
-                  onChange={setFormData}
-                  onSubmit={handleSubmit}
-                  loading={loading}
-                  dna={dna}
-                  contextoGeracao={contextoGeracao}
-                  onContextoChange={setContextoGeracao}
-                />
-              )}
+              <GeracaoWizard
+                onSubmit={(dados, tipo) => console.log('Wizard submitted:', dados, tipo)}
+                isLoading={false}
+                loadingTipo={null}
+              />
             </>
           )}
           {loading && <LoadingState />}
