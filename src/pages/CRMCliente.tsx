@@ -456,7 +456,7 @@ function EditForm({ form, set, onCancel, onSave, salvando }: {
 
 /* ── SessaoItem ────────────────────────────────── */
 
-function SessaoItem({ sessao }: { sessao: SessaoVenda }) {
+function SessaoItem({ sessao, onRegistrarResultado }: { sessao: SessaoVenda; onRegistrarResultado: () => void }) {
   const statusLabel = sessao.roteiro_aprovado === true && sessao.proposta_gerada_em
     ? 'Proposta completa'
     : sessao.roteiro_aprovado === true
@@ -497,6 +497,16 @@ function SessaoItem({ sessao }: { sessao: SessaoVenda }) {
           <Badge variant="secondary" className={`text-[10px] ${statusCls}`}>{statusLabel}</Badge>
           {sessao.contexto && <Badge variant="outline" className="text-[10px]">{sessao.contexto.toUpperCase()}</Badge>}
           {res && <Badge variant="secondary" className={`text-[10px] ${res.cls}`}>{res.label}</Badge>}
+          {!sessao.resultado && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 px-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+              onClick={e => { e.stopPropagation(); onRegistrarResultado(); }}
+            >
+              <ClipboardCheck className="h-3 w-3 mr-0.5" /> Registrar
+            </Button>
+          )}
         </div>
       </div>
       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
