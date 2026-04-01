@@ -140,8 +140,25 @@ const Dashboard = () => {
             <RoteiroResultado
               roteiro={dadosRoteiro}
               sessaoId={sessaoAtual}
-              onAprovado={() => {
-                console.log('Roteiro aprovado, sessao:', sessaoAtual);
+              onAprovado={async () => {
+                setLoadingTipo('proposta');
+                setFaseLoading(2);
+                setEtapaView('loading');
+                try {
+                  const res = await svpApi.gerarProposta({ sessao_id: sessaoAtual! });
+                  setDadosProposta({
+                    proposta: res.proposta,
+                    email: res.email,
+                    objecoes: res.objecoes,
+                  });
+                  setFaseLoading(3);
+                  await new Promise(r => setTimeout(r, 400));
+                  setEtapaView('resultado_proposta');
+                  refreshUsuario();
+                } catch (err) {
+                  setErro(err instanceof Error ? err.message : 'Erro ao gerar proposta.');
+                  setEtapaView('resultado_roteiro');
+                }
               }}
               onRejeitado={() => {
                 setEtapaView('wizard');
