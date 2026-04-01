@@ -62,6 +62,7 @@ const Dashboard = () => {
   return (
     <>
       <Header />
+      <DnaBanner />
       <main className="pt-[70px] pb-16 px-4 sm:px-6">
         <div className="max-w-[920px] mx-auto">
           {!loading && !result && (
