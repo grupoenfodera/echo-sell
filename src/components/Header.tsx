@@ -126,6 +126,7 @@ const Header = () => {
               <div className="py-1">
                 <MenuLink icon={<User className="h-3.5 w-3.5" />} label="Meu Perfil" onClick={() => { setOpen(false); navigate('/perfil'); }} />
                 <MenuLink icon={<Dna className="h-3.5 w-3.5" />} label="DNA Comercial" onClick={() => { setOpen(false); navigate('/perfil/dna'); }} />
+                <MenuLink icon={<Users className="h-3.5 w-3.5" />} label="CRM" onClick={() => { setOpen(false); navigate('/crm'); }} />
                 <MenuLink icon={<ClipboardList className="h-3.5 w-3.5" />} label="Histórico" onClick={() => { setOpen(false); navigate('/perfil/historico'); }} />
               </div>
 
