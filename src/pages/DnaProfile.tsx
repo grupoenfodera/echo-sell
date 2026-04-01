@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const TONE_META: Record<string, { icon: string; color: string; desc: string }> = {
+const TONE_META: Record<string, { icon: string; color: string; desc: string } | undefined> = {
   consultivo: { icon: '🔵', color: '#0055FF', desc: 'Faz perguntas antes de responder. Nunca pressiona.' },
   direto: { icon: '🟡', color: '#F59E0B', desc: 'Vai ao ponto, sem rodeios. Confiante e objetivo.' },
   relacional: { icon: '🟢', color: '#22C55E', desc: 'Cria conexão emocional. Usa história e proximidade.' },
