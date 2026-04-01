@@ -121,21 +121,21 @@ export default function RoteiroResultado({
 
     return (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">{secao.objetivo}</p>
-        {secao.script && (
-          <p className="text-sm text-foreground leading-relaxed">{secao.script}</p>
+        <p className="text-sm text-muted-foreground">{genSecao.objetivo}</p>
+        {genSecao.script && (
+          <p className="text-sm text-foreground leading-relaxed">{genSecao.script}</p>
         )}
-        {secao.perguntas && secao.perguntas.length > 0 && (
+        {genSecao.perguntas && genSecao.perguntas.length > 0 && (
           <ol className="list-decimal list-inside space-y-1.5">
-            {secao.perguntas.map((p, i) => (
+            {genSecao.perguntas.map((p, i) => (
               <li key={i} className="text-sm text-foreground">{p}</li>
             ))}
           </ol>
         )}
-        {key === 'fechamento' && secao.proximo_passo && (
+        {key === 'fechamento' && (genSecao as any).proximo_passo && (
           <div className="flex items-start gap-2 rounded-md bg-muted/50 p-3">
             <ArrowRight className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-            <p className="text-sm font-medium text-foreground">{secao.proximo_passo}</p>
+            <p className="text-sm font-medium text-foreground">{(genSecao as any).proximo_passo}</p>
           </div>
         )}
       </div>
