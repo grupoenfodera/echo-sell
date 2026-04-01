@@ -232,6 +232,24 @@ export default function CRM() {
         onFechar={() => setModalAberto(false)}
         onCriado={c => setClientes(prev => [c, ...prev])}
       />
+
+      <RegistrarResultadoModal
+        aberto={!!resultadoModal}
+        sessaoId={resultadoModal?.sessaoId ?? ''}
+        nomeCliente={resultadoModal?.nomeCliente}
+        produto={resultadoModal?.produto}
+        onFechar={() => setResultadoModal(null)}
+        onRegistrado={(resultado) => {
+          setClientes(prev =>
+            prev.map(c =>
+              c.ultima_sessao?.id === resultadoModal?.sessaoId
+                ? { ...c, ultima_sessao: { ...c.ultima_sessao!, resultado } }
+                : c
+            )
+          );
+          setResultadoModal(null);
+        }}
+      />
     </>
   );
 }
