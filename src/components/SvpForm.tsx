@@ -1,9 +1,16 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import type { Modality, SvpFormData } from '@/types/svp';
 import { modalitySubmitLabels } from '@/types/svp';
+
+interface DnaInfo {
+  contexto: string | null;
+  tom_primario: string | null;
+}
 
 interface Props {
   modality: Modality;
@@ -11,7 +18,24 @@ interface Props {
   onChange: (data: SvpFormData) => void;
   onSubmit: () => void;
   loading?: boolean;
+  dna?: DnaInfo | null;
+  contextoGeracao?: string | null;
+  onContextoChange?: (ctx: string) => void;
 }
+
+const TOM_ICONS: Record<string, string> = {
+  consultivo: '🔵',
+  direto: '🟡',
+  relacional: '🟢',
+  tecnico: '🟣',
+  svp_puro: '⚪',
+};
+
+const CONTEXTO_LABELS: Record<string, string> = {
+  b2b: 'B2B',
+  b2c: 'B2C',
+  ambos: 'B2B/B2C',
+};
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="space-y-1.5">
@@ -20,7 +44,7 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
   </div>
 );
 
-const SvpForm = ({ modality, formData, onChange, onSubmit, loading }: Props) => {
+const SvpForm = ({ modality, formData, onChange, onSubmit, loading, dna, contextoGeracao, onContextoChange }: Props) => {
   const set = (field: keyof SvpFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     onChange({ ...formData, [field]: e.target.value });
 
@@ -28,11 +52,18 @@ const SvpForm = ({ modality, formData, onChange, onSubmit, loading }: Props) => 
   const showM1Only = modality === 'm1';
   const showM2AOnly = modality === 'm2a';
   const showM2BOnly = modality === 'm2b';
+  const showContextToggle = dna?.contexto === 'ambos';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit();
   };
+
+  const tomIcon = dna?.tom_primario ? TOM_ICONS[dna.tom_primario] || '🔵' : null;
+  const tomLabel = dna?.tom_primario
+    ? dna.tom_primario.charAt(0).toUpperCase() + dna.tom_primario.slice(1).replace('_', ' ')
+    : null;
+  const ctxLabel = dna?.contexto ? CONTEXTO_LABELS[dna.contexto] || dna.contexto.toUpperCase() : null;
 
   return (
     <motion.form
@@ -42,6 +73,52 @@ const SvpForm = ({ modality, formData, onChange, onSubmit, loading }: Props) => 
       onSubmit={handleSubmit}
       className="space-y-4 bg-card border border-border rounded-xl p-6 card-glow"
     >
+      {/* DNA Badge */}
+      {dna?.tom_primario ? (
+        <div className="flex items-center justify-between text-xs text-muted-foreground pb-2 border-b border-border">
+          <span>
+            {tomIcon} {tomLabel} · {ctxLabel}
+          </span>
+          <Link to="/perfil/dna" className="text-primary hover:underline font-medium">
+            Editar →
+          </Link>
+        </div>
+      ) : (
+        <Link
+          to="/onboarding"
+          className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 hover:bg-muted transition-colors"
+        >
+          <Settings className="w-3.5 h-3.5" />
+          <span>Configure seu DNA para personalizar os scripts.</span>
+          <span className="text-primary font-medium ml-auto">→</span>
+        </Link>
+      )}
+
+      {/* B2B/B2C toggle for dual-context users */}
+      {showContextToggle && (
+        <Field label="Esta venda específica é para:">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { value: 'b2c', label: 'Pessoa física (B2C)' },
+              { value: 'b2b', label: 'Empresa (B2B)' },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => onContextoChange?.(opt.value)}
+                className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition-all ${
+                  contextoGeracao === opt.value
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-background text-foreground hover:border-primary/50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </Field>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Nicho">
           <Input placeholder="Ex: Odontologia estética" value={formData.nicho} onChange={set('nicho')} className="bg-background" />
@@ -105,7 +182,7 @@ const SvpForm = ({ modality, formData, onChange, onSubmit, loading }: Props) => 
 
       <Button
         type="submit"
-        disabled={loading || !formData.nicho || !formData.produto || !formData.preco}
+        disabled={loading || !formData.nicho || !formData.produto || !formData.preco || (showContextToggle && !contextoGeracao)}
         className="w-full rounded-pill h-11 font-heading font-semibold mt-2"
       >
         {modalitySubmitLabels[modality]}
