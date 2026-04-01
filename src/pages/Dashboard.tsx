@@ -6,6 +6,7 @@ import HistorySection from '@/components/HistorySection';
 import GeracaoWizard from '@/components/geracao/GeracaoWizard';
 import GeracaoLoading from '@/components/geracao/GeracaoLoading';
 import RoteiroResultado from '@/components/geracao/RoteiroResultado';
+import PropostaResultado from '@/components/geracao/PropostaResultado';
 import type { WizardData } from '@/components/geracao/GeracaoWizard';
 import type { Modality, SvpFormData, SvpResult, HistoryItem } from '@/types/svp';
 import type { RoteiroJSON, PropostaJSON, EmailJSON, ObjecaoItem } from '@/types/crm';
