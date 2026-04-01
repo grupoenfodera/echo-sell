@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Header from '@/components/Header';
 import { svpApi } from '@/lib/api-svp';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Cliente, ClienteStatus, ClienteTemperatura } from '@/types/crm';
+import type { Cliente, ClienteStatus, ClienteTemperatura, SessaoResultado } from '@/types/crm';
+import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import {
-  Search, Plus, Users, FileText, Clock, Loader2, AlertCircle,
+  Search, Plus, Users, FileText, Clock, Loader2, AlertCircle, MessageSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -79,6 +80,11 @@ export default function CRM() {
   const [filtroStatus, setFiltroStatus] = useState<ClienteStatus | 'todos'>('todos');
   const [filtroTemp, setFiltroTemp] = useState<ClienteTemperatura | 'todos'>('todos');
   const [modalAberto, setModalAberto] = useState(false);
+  const [resultadoModal, setResultadoModal] = useState<{
+    sessaoId: string;
+    nomeCliente: string;
+    produto?: string;
+  } | null>(null);
 
   const carregarClientes = async () => {
     setCarregando(true);
@@ -199,7 +205,22 @@ export default function CRM() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {clientesFiltrados.map(c => (
-                <ClienteCard key={c.id} cliente={c} onClick={() => navigate(`/crm/${c.id}`)} />
+                <ClienteCard
+                  key={c.id}
+                  cliente={c}
+                  onClick={() => navigate(`/crm/${c.id}`)}
+                  onRegistrarResultado={
+                    c.ultima_sessao && !c.ultima_sessao.resultado &&
+                    c.ultima_sessao.criado_em &&
+                    differenceInDays(new Date(), new Date(c.ultima_sessao.criado_em)) >= 1
+                      ? () => setResultadoModal({
+                          sessaoId: c.ultima_sessao!.id,
+                          nomeCliente: c.nome,
+                          produto: c.ultima_sessao!.produto,
+                        })
+                      : undefined
+                  }
+                />
               ))}
             </div>
           )}
@@ -211,13 +232,31 @@ export default function CRM() {
         onFechar={() => setModalAberto(false)}
         onCriado={c => setClientes(prev => [c, ...prev])}
       />
+
+      <RegistrarResultadoModal
+        aberto={!!resultadoModal}
+        sessaoId={resultadoModal?.sessaoId ?? ''}
+        nomeCliente={resultadoModal?.nomeCliente}
+        produto={resultadoModal?.produto}
+        onFechar={() => setResultadoModal(null)}
+        onRegistrado={(resultado) => {
+          setClientes(prev =>
+            prev.map(c =>
+              c.ultima_sessao?.id === resultadoModal?.sessaoId
+                ? { ...c, ultima_sessao: { ...c.ultima_sessao!, resultado } }
+                : c
+            )
+          );
+          setResultadoModal(null);
+        }}
+      />
     </>
   );
 }
 
 /* ── ClienteCard ───────────────────────────────── */
 
-function ClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () => void }) {
+function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Cliente; onClick: () => void; onRegistrarResultado?: () => void }) {
   const temp = TEMP_BADGE[cliente.temperatura] || TEMP_BADGE.frio;
   const statusCls = STATUS_CLS[cliente.status] || STATUS_CLS.novo;
   const statusLabel = STATUS_LABEL[cliente.status] || cliente.status;
@@ -271,6 +310,16 @@ function ClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () => vo
             <Badge variant="secondary" className={`text-[10px] ${resBadge.cls}`}>
               {resBadge.label}
             </Badge>
+          )}
+          {!resBadge && onRegistrarResultado && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+              onClick={e => { e.stopPropagation(); onRegistrarResultado(); }}
+            >
+              <MessageSquare className="h-3 w-3 mr-0.5" /> Como foi?
+            </Button>
           )}
         </div>
       </CardContent>

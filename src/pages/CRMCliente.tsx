@@ -5,6 +5,7 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import NovaInteracaoModal from '@/components/crm/NovaInteracaoModal';
+import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
 import { svpApi } from '@/lib/api-svp';
 import { useAuth } from '@/contexts/AuthContext';
 import type {
@@ -24,7 +25,7 @@ import {
 import {
   ArrowLeft, Edit2, Plus, Phone, Mail, Linkedin, Instagram, UserPlus,
   Circle, Thermometer, Calendar, Clock, StickyNote, FileText, ChevronRight,
-  Sparkles, Loader2, AlertCircle, MessageSquare,
+  Sparkles, Loader2, AlertCircle, MessageSquare, ClipboardCheck,
 } from 'lucide-react';
 
 /* ── Maps ──────────────────────────────────────── */
@@ -93,6 +94,10 @@ export default function CRMCliente() {
   const [filtroCanal, setFiltroCanal] = useState<InteracaoCanal | 'todos'>('todos');
   const [modalInteracao, setModalInteracao] = useState(false);
   const [canalInicial, setCanalInicial] = useState<InteracaoCanal | undefined>(undefined);
+  const [resultadoModal, setResultadoModal] = useState<{
+    sessaoId: string;
+    produto?: string;
+  } | null>(null);
 
   // Edit form state
   const [formEdit, setFormEdit] = useState<Record<string, string>>({});
@@ -269,7 +274,13 @@ export default function CRMCliente() {
                   ) : (
                     <div className="space-y-3">
                       {sessoes.slice(0, 5).map(s => (
-                        <SessaoItem key={s.id} sessao={s} />
+                        <SessaoItem
+                          key={s.id}
+                          sessao={s}
+                          onRegistrarResultado={() =>
+                            setResultadoModal({ sessaoId: s.id, produto: s.produto })
+                          }
+                        />
                       ))}
                       {sessoes.length > 5 && (
                         <Button variant="link" size="sm" className="px-0 text-xs">Ver todas ({sessoes.length})</Button>
@@ -333,6 +344,24 @@ export default function CRMCliente() {
           onCriada={inter => setInteracoes(prev => [inter, ...prev])}
         />
       )}
+
+      <RegistrarResultadoModal
+        aberto={!!resultadoModal}
+        sessaoId={resultadoModal?.sessaoId ?? ''}
+        nomeCliente={cliente?.nome}
+        produto={resultadoModal?.produto}
+        onFechar={() => setResultadoModal(null)}
+        onRegistrado={(resultado) => {
+          setSessoes(prev =>
+            prev.map(s =>
+              s.id === resultadoModal?.sessaoId
+                ? { ...s, resultado }
+                : s
+            )
+          );
+          setResultadoModal(null);
+        }}
+      />
     </>
   );
 }
@@ -427,7 +456,7 @@ function EditForm({ form, set, onCancel, onSave, salvando }: {
 
 /* ── SessaoItem ────────────────────────────────── */
 
-function SessaoItem({ sessao }: { sessao: SessaoVenda }) {
+function SessaoItem({ sessao, onRegistrarResultado }: { sessao: SessaoVenda; onRegistrarResultado: () => void }) {
   const statusLabel = sessao.roteiro_aprovado === true && sessao.proposta_gerada_em
     ? 'Proposta completa'
     : sessao.roteiro_aprovado === true
@@ -468,6 +497,16 @@ function SessaoItem({ sessao }: { sessao: SessaoVenda }) {
           <Badge variant="secondary" className={`text-[10px] ${statusCls}`}>{statusLabel}</Badge>
           {sessao.contexto && <Badge variant="outline" className="text-[10px]">{sessao.contexto.toUpperCase()}</Badge>}
           {res && <Badge variant="secondary" className={`text-[10px] ${res.cls}`}>{res.label}</Badge>}
+          {!sessao.resultado && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 px-1.5 text-[10px] text-muted-foreground hover:text-foreground"
+              onClick={e => { e.stopPropagation(); onRegistrarResultado(); }}
+            >
+              <ClipboardCheck className="h-3 w-3 mr-0.5" /> Registrar
+            </Button>
+          )}
         </div>
       </div>
       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />

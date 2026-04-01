@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { PropostaJSON, EmailJSON, ObjecaoItem } from '@/types/crm';
+import type { PropostaJSON, EmailJSON, ObjecaoItem, SessaoResultado } from '@/types/crm';
+import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +60,8 @@ export default function PropostaResultado({
   const copyProposta = useCopy();
   const copyWhatsApp = useCopy();
   const copyAssunto = useCopy();
+  const [resultadoModalAberto, setResultadoModalAberto] = useState(false);
+  const [resultadoRegistrado, setResultadoRegistrado] = useState<SessaoResultado | null>(null);
 
   const formatPropostaTexto = () => {
     return SECTIONS.map(s => {
@@ -223,18 +226,48 @@ export default function PropostaResultado({
       </Tabs>
 
       {/* Banner pós-geração */}
-      <div className="bg-muted/30 border rounded-lg p-4 flex items-center gap-4">
-        <TrendingUp className="h-8 w-8 text-muted-foreground flex-shrink-0" />
-        <div className="flex-1">
-          <p className="text-sm font-medium text-foreground">Como foi a reunião?</p>
-          <p className="text-xs text-muted-foreground">
-            Registre o resultado para que o SVP aprenda com esta venda.
-          </p>
+      {resultadoRegistrado ? (
+        <div className="bg-muted/30 border rounded-lg p-4 flex items-center gap-4">
+          <CheckCircle className="h-8 w-8 text-green-500 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground">
+              Resultado registrado: {
+                resultadoRegistrado === 'converteu' ? 'Converteu ✓' :
+                resultadoRegistrado === 'nao_converteu' ? 'Não converteu' :
+                resultadoRegistrado === 'em_andamento' ? 'Em andamento' : 'Cancelado'
+              }
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Obrigado! O SVP vai usar isso para melhorar futuras gerações.
+            </p>
+          </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => console.log('Registrar resultado', sessaoId)}>
-          Registrar Resultado
-        </Button>
-      </div>
+      ) : (
+        <div className="bg-muted/30 border rounded-lg p-4 flex items-center gap-4">
+          <TrendingUp className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground">Como foi a reunião?</p>
+            <p className="text-xs text-muted-foreground">
+              Registre o resultado para que o SVP aprenda com esta venda.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setResultadoModalAberto(true)}>
+            Registrar Resultado
+          </Button>
+        </div>
+      )}
+
+      <RegistrarResultadoModal
+        aberto={resultadoModalAberto}
+        sessaoId={sessaoId}
+        nomeCliente={nomeCliente}
+        produto={proposta.titulo}
+        onFechar={() => setResultadoModalAberto(false)}
+        onRegistrado={(resultado) => {
+          setResultadoRegistrado(resultado);
+          setResultadoModalAberto(false);
+        }}
+      />
     </div>
   );
 }
