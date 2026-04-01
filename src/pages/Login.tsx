@@ -88,7 +88,7 @@ const Login = () => {
         <div className="text-center mb-10">
           <h1 className="font-heading font-bold text-3xl tracking-tight text-foreground">SVP</h1>
           <p className="font-heading font-normal text-xl text-muted-foreground mt-2">
-            Sistema de Vendas Persuasivas
+            Sistema de Vendas PASTOR
           </p>
         </div>
 
