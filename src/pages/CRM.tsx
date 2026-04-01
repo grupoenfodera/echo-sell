@@ -244,7 +244,7 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
   const statusCls = STATUS_CLS[cliente.status] || STATUS_CLS.novo;
   const statusLabel = STATUS_LABEL[cliente.status] || cliente.status;
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  const resultado = cliente.ultima_sessao?.resultado;
+  const resultado = undefined;
   const resBadge = resultado ? RESULTADO_BADGE[resultado] : null;
 
   return (
