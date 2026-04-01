@@ -256,7 +256,7 @@ export default function CRM() {
 
 /* ── ClienteCard ───────────────────────────────── */
 
-function ClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () => void }) {
+function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Cliente; onClick: () => void; onRegistrarResultado?: () => void }) {
   const temp = TEMP_BADGE[cliente.temperatura] || TEMP_BADGE.frio;
   const statusCls = STATUS_CLS[cliente.status] || STATUS_CLS.novo;
   const statusLabel = STATUS_LABEL[cliente.status] || cliente.status;
