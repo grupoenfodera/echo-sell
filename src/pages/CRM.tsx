@@ -80,6 +80,11 @@ export default function CRM() {
   const [filtroStatus, setFiltroStatus] = useState<ClienteStatus | 'todos'>('todos');
   const [filtroTemp, setFiltroTemp] = useState<ClienteTemperatura | 'todos'>('todos');
   const [modalAberto, setModalAberto] = useState(false);
+  const [resultadoModal, setResultadoModal] = useState<{
+    sessaoId: string;
+    nomeCliente: string;
+    produto?: string;
+  } | null>(null);
 
   const carregarClientes = async () => {
     setCarregando(true);
