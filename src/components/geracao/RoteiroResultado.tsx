@@ -99,8 +99,8 @@ export default function RoteiroResultado({
   const r = roteiro.roteiro_reuniao;
 
   const renderSecaoBody = (key: SecaoKey) => {
-    if (key === 'tratamento_objecoes') {
-      const secao = r.tratamento_objecoes;
+    const secao = r[key];
+    if (key === 'tratamento_objecoes' && secao.objecoes_previstas) {
       return (
         <div className="space-y-3">
           {secao.objecoes_previstas.map((obj, i) => (
