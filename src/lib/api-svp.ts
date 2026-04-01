@@ -2,11 +2,8 @@ import { supabase } from '@/integrations/supabase/client';
 import type {
   GerarRoteiroPayload,   GerarRoteiroResponse,
   AprovarRoteiroPayload, AprovarRoteiroResponse,
-  GerarPropostaPayload,  GerarPropostaResponse,
-  CrmListarResponse,     CrmDetalheResponse,
-  AtualizarSessaoPayload,
-  AtualizarClientePayload,
-  RegistrarInteracaoPayload,
+  GerarPropostaResponse,
+  CrmListarResponse,
 } from '@/types/crm';
 
 const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
