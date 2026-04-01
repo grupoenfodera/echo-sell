@@ -7,6 +7,8 @@ import SvpForm from '@/components/SvpForm';
 import LoadingState from '@/components/LoadingState';
 import ResultsDisplay from '@/components/ResultsDisplay';
 import HistorySection from '@/components/HistorySection';
+import GeracaoWizard from '@/components/geracao/GeracaoWizard';
+import type { WizardData } from '@/components/geracao/GeracaoWizard';
 import type { Modality, SvpFormData, SvpResult, HistoryItem } from '@/types/svp';
 import { initialFormData } from '@/types/svp';
 import { supabase } from '@/integrations/supabase/client';
@@ -110,19 +112,11 @@ const Dashboard = () => {
           {!loading && !result && (
             <>
               <HistorySection items={history} onSelect={handleHistoryClick} />
-              <ModalitySelector selected={modality} onSelect={setModality} />
-              {modality && (
-                <SvpForm
-                  modality={modality}
-                  formData={formData}
-                  onChange={setFormData}
-                  onSubmit={handleSubmit}
-                  loading={loading}
-                  dna={dna}
-                  contextoGeracao={contextoGeracao}
-                  onContextoChange={setContextoGeracao}
-                />
-              )}
+              <GeracaoWizard
+                onSubmit={(dados, tipo) => console.log('Wizard submitted:', dados, tipo)}
+                isLoading={false}
+                loadingTipo={null}
+              />
             </>
           )}
           {loading && <LoadingState />}
