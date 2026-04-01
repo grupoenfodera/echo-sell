@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
+import DnaBanner from '@/components/DnaBanner';
 import ModalitySelector from '@/components/ModalitySelector';
 import SvpForm from '@/components/SvpForm';
 import LoadingState from '@/components/LoadingState';
@@ -61,6 +62,7 @@ const Dashboard = () => {
   return (
     <>
       <Header />
+      <DnaBanner />
       <main className="pt-[70px] pb-16 px-4 sm:px-6">
         <div className="max-w-[920px] mx-auto">
           {!loading && !result && (
