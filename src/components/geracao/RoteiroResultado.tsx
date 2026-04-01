@@ -117,7 +117,7 @@ export default function RoteiroResultado({
       );
     }
 
-    const secao = r[key] as { objetivo: string; script?: string; perguntas?: string[]; proximo_passo?: string };
+    const genSecao = secao as RoteiroEtapa & { proximo_passo?: string };
 
     return (
       <div className="space-y-3">
