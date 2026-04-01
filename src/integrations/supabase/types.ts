@@ -29,6 +29,84 @@ export type Database = {
         }
         Relationships: []
       }
+      clientes: {
+        Row: {
+          atualizado_em: string | null
+          como_conhecemos: string | null
+          criado_em: string | null
+          email: string | null
+          empresa: string | null
+          id: string
+          indicado_por: string | null
+          instagram_url: string | null
+          linkedin_url: string | null
+          nome: string
+          notas: string | null
+          status: string | null
+          tags: string[] | null
+          temperatura: string | null
+          temperatura_atualizada_em: string | null
+          ultimo_contato_em: string | null
+          usuario_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          atualizado_em?: string | null
+          como_conhecemos?: string | null
+          criado_em?: string | null
+          email?: string | null
+          empresa?: string | null
+          id?: string
+          indicado_por?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          nome: string
+          notas?: string | null
+          status?: string | null
+          tags?: string[] | null
+          temperatura?: string | null
+          temperatura_atualizada_em?: string | null
+          ultimo_contato_em?: string | null
+          usuario_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          atualizado_em?: string | null
+          como_conhecemos?: string | null
+          criado_em?: string | null
+          email?: string | null
+          empresa?: string | null
+          id?: string
+          indicado_por?: string | null
+          instagram_url?: string | null
+          linkedin_url?: string | null
+          nome?: string
+          notas?: string | null
+          status?: string | null
+          tags?: string[] | null
+          temperatura?: string | null
+          temperatura_atualizada_em?: string | null
+          ultimo_contato_em?: string | null
+          usuario_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_indicado_por_fkey"
+            columns: ["indicado_por"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compras: {
         Row: {
           atualizado_em: string | null
@@ -94,6 +172,66 @@ export type Database = {
         }
         Relationships: []
       }
+      deals: {
+        Row: {
+          atualizado_em: string | null
+          cliente_id: string
+          criado_em: string | null
+          data_previsao_fechamento: string | null
+          etapa: string | null
+          id: string
+          motivo_perda: string | null
+          probabilidade: number | null
+          score_saude: number | null
+          titulo: string
+          usuario_id: string
+          valor: number | null
+        }
+        Insert: {
+          atualizado_em?: string | null
+          cliente_id: string
+          criado_em?: string | null
+          data_previsao_fechamento?: string | null
+          etapa?: string | null
+          id?: string
+          motivo_perda?: string | null
+          probabilidade?: number | null
+          score_saude?: number | null
+          titulo: string
+          usuario_id: string
+          valor?: number | null
+        }
+        Update: {
+          atualizado_em?: string | null
+          cliente_id?: string
+          criado_em?: string | null
+          data_previsao_fechamento?: string | null
+          etapa?: string | null
+          id?: string
+          motivo_perda?: string | null
+          probabilidade?: number | null
+          score_saude?: number | null
+          titulo?: string
+          usuario_id?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deals_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deals_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geracoes: {
         Row: {
           contexto_geracao: string | null
@@ -149,6 +287,165 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "geracoes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interacoes: {
+        Row: {
+          canal: string
+          cliente_id: string
+          conteudo: string | null
+          criado_em: string | null
+          direcao: string | null
+          duracao_minutos: number | null
+          id: string
+          metadata: Json | null
+          proxima_acao_sugerida: string | null
+          resultado: string | null
+          resumo_ia: string | null
+          titulo: string | null
+          usuario_id: string
+        }
+        Insert: {
+          canal: string
+          cliente_id: string
+          conteudo?: string | null
+          criado_em?: string | null
+          direcao?: string | null
+          duracao_minutos?: number | null
+          id?: string
+          metadata?: Json | null
+          proxima_acao_sugerida?: string | null
+          resultado?: string | null
+          resumo_ia?: string | null
+          titulo?: string | null
+          usuario_id: string
+        }
+        Update: {
+          canal?: string
+          cliente_id?: string
+          conteudo?: string | null
+          criado_em?: string | null
+          direcao?: string | null
+          duracao_minutos?: number | null
+          id?: string
+          metadata?: Json | null
+          proxima_acao_sugerida?: string | null
+          resultado?: string | null
+          resumo_ia?: string | null
+          titulo?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "interacoes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessoes_venda: {
+        Row: {
+          atualizado_em: string | null
+          cliente_id: string | null
+          contexto: string | null
+          criado_em: string | null
+          dados_formulario: Json | null
+          email_gerado_em: string | null
+          email_json: Json | null
+          id: string
+          nicho: string | null
+          notas_pos_reuniao: string | null
+          objecoes_geradas_em: string | null
+          objecoes_json: Json | null
+          preco: number | null
+          produto: string | null
+          proposta_gerada_em: string | null
+          proposta_json: Json | null
+          resultado: string | null
+          roteiro_aprovado: boolean | null
+          roteiro_aprovado_em: string | null
+          roteiro_gerado_em: string | null
+          roteiro_json: Json | null
+          tokens_proposta: number | null
+          tokens_roteiro: number | null
+          usuario_id: string
+        }
+        Insert: {
+          atualizado_em?: string | null
+          cliente_id?: string | null
+          contexto?: string | null
+          criado_em?: string | null
+          dados_formulario?: Json | null
+          email_gerado_em?: string | null
+          email_json?: Json | null
+          id?: string
+          nicho?: string | null
+          notas_pos_reuniao?: string | null
+          objecoes_geradas_em?: string | null
+          objecoes_json?: Json | null
+          preco?: number | null
+          produto?: string | null
+          proposta_gerada_em?: string | null
+          proposta_json?: Json | null
+          resultado?: string | null
+          roteiro_aprovado?: boolean | null
+          roteiro_aprovado_em?: string | null
+          roteiro_gerado_em?: string | null
+          roteiro_json?: Json | null
+          tokens_proposta?: number | null
+          tokens_roteiro?: number | null
+          usuario_id: string
+        }
+        Update: {
+          atualizado_em?: string | null
+          cliente_id?: string | null
+          contexto?: string | null
+          criado_em?: string | null
+          dados_formulario?: Json | null
+          email_gerado_em?: string | null
+          email_json?: Json | null
+          id?: string
+          nicho?: string | null
+          notas_pos_reuniao?: string | null
+          objecoes_geradas_em?: string | null
+          objecoes_json?: Json | null
+          preco?: number | null
+          produto?: string | null
+          proposta_gerada_em?: string | null
+          proposta_json?: Json | null
+          resultado?: string | null
+          roteiro_aprovado?: boolean | null
+          roteiro_aprovado_em?: string | null
+          roteiro_gerado_em?: string | null
+          roteiro_json?: Json | null
+          tokens_proposta?: number | null
+          tokens_roteiro?: number | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessoes_venda_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessoes_venda_usuario_id_fkey"
             columns: ["usuario_id"]
             isOneToOne: false
             referencedRelation: "usuarios"
