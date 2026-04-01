@@ -168,24 +168,24 @@ const Dashboard = () => {
             />
           )}
 
-          {etapaView === 'resultado_proposta' && (
-            <div className="max-w-[560px] mx-auto">
-              <Card className="shadow-md">
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Proposta gerada · sessao_id: {sessaoAtual}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Tela da proposta será adicionada no próximo passo.
-                  </p>
-                  <Button variant="ghost" onClick={() => setEtapaView('wizard')}>
-                    ← Voltar ao wizard
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+          {etapaView === 'resultado_proposta' && dadosProposta && (
+            <PropostaResultado
+              proposta={dadosProposta.proposta}
+              email={dadosProposta.email}
+              objecoes={dadosProposta.objecoes}
+              sessaoId={sessaoAtual!}
+              clienteId={clienteAtual}
+              onNovaGeracao={() => {
+                setEtapaView('wizard');
+                setDadosRoteiro(null);
+                setDadosProposta(null);
+                setSessaoAtual(null);
+                setClienteAtual(null);
+              }}
+              onVerCRM={() => {
+                console.log('navegar para CRM cliente:', clienteAtual);
+              }}
+            />
           )}
         </div>
       </main>
