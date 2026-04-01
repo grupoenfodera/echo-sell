@@ -135,24 +135,19 @@ const Dashboard = () => {
             <GeracaoLoading tipo={loadingTipo} faseAtual={faseLoading} />
           )}
 
-          {etapaView === 'resultado_roteiro' && (
-            <div className="max-w-[560px] mx-auto">
-              <Card className="shadow-md">
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Roteiro gerado · sessao_id: {sessaoAtual}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Tela de aprovação do roteiro será adicionada no próximo passo.
-                  </p>
-                  <Button variant="ghost" onClick={() => setEtapaView('wizard')}>
-                    ← Voltar ao wizard
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+          {etapaView === 'resultado_roteiro' && dadosRoteiro && sessaoAtual && (
+            <RoteiroResultado
+              roteiro={dadosRoteiro}
+              sessaoId={sessaoAtual}
+              onAprovado={() => {
+                console.log('Roteiro aprovado, sessao:', sessaoAtual);
+              }}
+              onRejeitado={() => {
+                setEtapaView('wizard');
+                setDadosRoteiro(null);
+                setSessaoAtual(null);
+              }}
+            />
           )}
 
           {etapaView === 'resultado_proposta' && (
