@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +16,7 @@ const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading, usuario } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -27,8 +28,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!session) return <Navigate to="/login" replace />;
 
-  // Redirect to welcome if first access
-  if (usuario?.primeiro_acesso) {
+  // Redirect to welcome if first access (but not if already on /bem-vindo)
+  if (usuario?.primeiro_acesso && location.pathname !== '/bem-vindo') {
     return <Navigate to="/bem-vindo" replace />;
   }
 
