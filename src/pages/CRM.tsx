@@ -209,17 +209,7 @@ export default function CRM() {
                   key={c.id}
                   cliente={c}
                   onClick={() => navigate(`/crm/${c.id}`)}
-                  onRegistrarResultado={
-                    c.ultima_sessao && !c.ultima_sessao.resultado &&
-                    c.ultima_sessao.criado_em &&
-                    differenceInDays(new Date(), new Date(c.ultima_sessao.criado_em)) >= 1
-                      ? () => setResultadoModal({
-                          sessaoId: c.ultima_sessao!.id,
-                          nomeCliente: c.nome,
-                          produto: c.ultima_sessao!.produto,
-                        })
-                      : undefined
-                  }
+                  onRegistrarResultado={undefined}
                 />
               ))}
             </div>
