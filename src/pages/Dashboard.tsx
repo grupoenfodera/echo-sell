@@ -63,13 +63,12 @@ const Dashboard = () => {
         },
       });
 
-      if (error) {
-        throw new Error(error.message || 'Erro ao chamar a função.');
-      }
-
-      // Check for error responses from the edge function
-      if (data?.error) {
-        throw new Error(data.error);
+      // Unified error check: SDK error OR edge function JSON error
+      const errorMessage = error?.message || data?.error || null;
+      if (errorMessage) {
+        toast.error(errorMessage);
+        setLoading(false);
+        return;
       }
 
       setResult(data as SvpResult);
