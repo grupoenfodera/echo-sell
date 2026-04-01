@@ -42,15 +42,13 @@ const TIPO_BADGE: Record<ObjecaoItem['categoria'], { label: string; cls: string 
 };
 
 const SECTIONS = [
-  { key: 'titulo'        as const, label: 'Título',               icon: FileText },
-  { key: 'introducao'    as const, label: 'Introdução',           icon: MessageSquare },
-  { key: 'diagnostico'   as const, label: 'Diagnóstico',          icon: Search },
-  { key: 'solucao'       as const, label: 'Solução Proposta',     icon: Lightbulb },
-  { key: 'beneficios'    as const, label: 'Benefícios',           icon: CheckCircle },
-  { key: 'investimento'  as const, label: 'Investimento',         icon: DollarSign },
-  { key: 'garantia'      as const, label: 'Garantia',             icon: Shield },
-  { key: 'proximo_passo' as const, label: 'Próximo Passo',        icon: ArrowRight },
-  { key: 'validade'      as const, label: 'Validade da Proposta', icon: Clock },
+  { key: 'titulo'        as const, label: 'Título',          icon: FileText },
+  { key: 'introducao'    as const, label: 'Introdução',      icon: MessageSquare },
+  { key: 'diagnostico'   as const, label: 'Diagnóstico',     icon: Search },
+  { key: 'solucao'       as const, label: 'Solução Proposta', icon: Lightbulb },
+  { key: 'beneficios'    as const, label: 'Benefícios',      icon: CheckCircle },
+  { key: 'proximo_passo' as const, label: 'Próximo Passo',   icon: ArrowRight },
+  { key: 'fechamento'    as const, label: 'Fechamento',      icon: Clock },
 ];
 
 export default function PropostaResultado({
