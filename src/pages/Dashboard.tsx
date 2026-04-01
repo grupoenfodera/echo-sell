@@ -185,7 +185,7 @@ const Dashboard = () => {
                 setClienteAtual(null);
               }}
               onVerCRM={() => {
-                console.log('navegar para CRM cliente:', clienteAtual);
+                if (clienteAtual) navigate(`/crm/${clienteAtual}`);
               }}
             />
           )}
