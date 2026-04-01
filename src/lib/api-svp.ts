@@ -25,6 +25,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     headers: {
       'Content-Type': 'application/json',
       Authorization: auth,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
     },
     body: JSON.stringify(body),
   });
