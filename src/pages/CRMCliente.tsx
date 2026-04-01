@@ -344,6 +344,24 @@ export default function CRMCliente() {
           onCriada={inter => setInteracoes(prev => [inter, ...prev])}
         />
       )}
+
+      <RegistrarResultadoModal
+        aberto={!!resultadoModal}
+        sessaoId={resultadoModal?.sessaoId ?? ''}
+        nomeCliente={cliente?.nome}
+        produto={resultadoModal?.produto}
+        onFechar={() => setResultadoModal(null)}
+        onRegistrado={(resultado) => {
+          setSessoes(prev =>
+            prev.map(s =>
+              s.id === resultadoModal?.sessaoId
+                ? { ...s, resultado }
+                : s
+            )
+          );
+          setResultadoModal(null);
+        }}
+      />
     </>
   );
 }
