@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { user, refreshUsuario } = useAuth();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [dna, setDna] = useState<{ contexto: string | null; tom_primario: string | null } | null>(null);
