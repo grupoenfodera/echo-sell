@@ -14,22 +14,8 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard = () => {
   const { user, refreshUsuario } = useAuth();
-  const [modality, setModality] = useState<Modality | null>('m1');
-  const [formData, setFormData] = useState<SvpFormData>({
-    nicho: 'Odontologia estética',
-    produto: 'Lente de contato dental',
-    nomeCliente: 'Carlos Mendes',
-    preco: 'R$ 3.500',
-    limiteMinimo: 'R$ 2.800',
-    descricao: 'Procedimento estético dental com lentes ultrafinas de porcelana que transformam o sorriso do paciente em até 3 sessões.',
-    entregaveis: 'Moldagem digital 3D, 20 lentes de porcelana, 3 sessões de aplicação, 1 retorno de ajuste',
-    formatoEntrega: 'Presencial na clínica',
-    perfilCliente: 'Profissionais liberais 30-50 anos que querem melhorar a aparência do sorriso para ganhar mais confiança',
-    objecaoPrincipal: 'Está muito caro, vi por menos em outro lugar',
-    canalContato: '',
-    notasT1: '',
-    objecaoSurgida: '',
-  });
+  const [modality, setModality] = useState<Modality | null>(null);
+  const [formData, setFormData] = useState<SvpFormData>(initialFormData);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SvpResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
