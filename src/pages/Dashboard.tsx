@@ -2,27 +2,38 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import DnaBanner from '@/components/DnaBanner';
-import ModalitySelector from '@/components/ModalitySelector';
-import SvpForm from '@/components/SvpForm';
-import LoadingState from '@/components/LoadingState';
-import ResultsDisplay from '@/components/ResultsDisplay';
 import HistorySection from '@/components/HistorySection';
 import GeracaoWizard from '@/components/geracao/GeracaoWizard';
+import GeracaoLoading from '@/components/geracao/GeracaoLoading';
 import type { WizardData } from '@/components/geracao/GeracaoWizard';
 import type { Modality, SvpFormData, SvpResult, HistoryItem } from '@/types/svp';
-import { initialFormData } from '@/types/svp';
+import type { RoteiroJSON, PropostaJSON, EmailJSON, ObjecaoItem } from '@/types/crm';
+import { svpApi } from '@/lib/api-svp';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
   const { user, refreshUsuario } = useAuth();
-  const [modality, setModality] = useState<Modality | null>(null);
-  const [formData, setFormData] = useState<SvpFormData>(initialFormData);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<SvpResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [dna, setDna] = useState<{ contexto: string | null; tom_primario: string | null } | null>(null);
-  const [contextoGeracao, setContextoGeracao] = useState<string | null>(null);
+
+  // ── Novos estados de fluxo ──
+  const [etapaView, setEtapaView] = useState<
+    'wizard' | 'loading' | 'resultado_roteiro' | 'resultado_proposta'
+  >('wizard');
+  const [loadingTipo, setLoadingTipo] = useState<'roteiro' | 'proposta' | null>(null);
+  const [faseLoading, setFaseLoading] = useState(0);
+  const [sessaoAtual, setSessaoAtual] = useState<string | null>(null);
+  const [clienteAtual, setClienteAtual] = useState<string | null>(null);
+  const [dadosRoteiro, setDadosRoteiro] = useState<RoteiroJSON | null>(null);
+  const [dadosProposta, setDadosProposta] = useState<{
+    proposta: PropostaJSON;
+    email: EmailJSON;
+    objecoes: ObjecaoItem[];
+  } | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
 
   // Load user DNA
   useEffect(() => {
@@ -37,70 +48,64 @@ const Dashboard = () => {
       });
   }, [user?.id]);
 
-  // Auto-set context when DNA has fixed context
-  useEffect(() => {
-    if (dna?.contexto && dna.contexto !== 'ambos') {
-      setContextoGeracao(dna.contexto);
-    }
-  }, [dna]);
-
-  const handleSubmit = async () => {
-    if (!modality) return;
-
-    // Validate B2B/B2C selection for dual-context users
-    if (dna?.contexto === 'ambos' && !contextoGeracao) {
-      toast.error('Selecione o contexto desta venda (B2B ou B2C).');
-      return;
-    }
-
-    setLoading(true);
-    setResult(null);
+  // ── Handler do wizard ──
+  const handleWizardSubmit = async (dados: WizardData, tipo: 'roteiro' | 'proposta') => {
+    setErro(null);
+    setLoadingTipo(tipo);
+    setFaseLoading(0);
+    setEtapaView('loading');
 
     try {
-      const { data, error } = await supabase.functions.invoke('gerar', {
-        body: {
-          ...formData,
-          _modalidade: modality,
-          contexto_geracao: contextoGeracao || (dna?.contexto !== 'ambos' ? dna?.contexto : null),
+      const payload = {
+        nicho: dados.nicho,
+        produto: dados.produto,
+        preco: dados.preco ? parseFloat(dados.preco.replace(',', '.')) : undefined,
+        contexto: dados.contexto,
+        nome_cliente: dados.nome_cliente || undefined,
+        dados_extras: {
+          empresa: dados.empresa || undefined,
+          como_conhecemos: dados.como_conhecemos || undefined,
         },
-      });
+      };
 
-      // Unified error check: SDK error OR edge function JSON error
-      const errorMessage = error?.message || data?.error || null;
-      if (errorMessage) {
-        toast.error(errorMessage);
-        setLoading(false);
+      // Fase 0 → 1
+      setFaseLoading(0);
+      await new Promise(r => setTimeout(r, 600));
+      setFaseLoading(1);
+
+      const roteiroRes = await svpApi.gerarRoteiro(payload);
+      setSessaoAtual(roteiroRes.sessao_id);
+      setClienteAtual(roteiroRes.cliente_id);
+      setDadosRoteiro(roteiroRes.roteiro);
+
+      if (tipo === 'roteiro') {
+        setFaseLoading(2);
+        await new Promise(r => setTimeout(r, 400));
+        setEtapaView('resultado_roteiro');
+        refreshUsuario();
         return;
       }
 
-      setResult(data as SvpResult);
+      // Fluxo proposta completa
+      setFaseLoading(2);
+      await svpApi.aprovarRoteiro({ sessao_id: roteiroRes.sessao_id, aprovado: true });
 
-      setHistory(prev => [{
-        id: crypto.randomUUID(),
-        modality,
-        formData: { ...formData },
-        result: data,
-        timestamp: new Date(),
-      }, ...prev].slice(0, 5));
+      setFaseLoading(3);
+      const propostaRes = await svpApi.gerarProposta({ sessao_id: roteiroRes.sessao_id });
+      setDadosProposta({
+        proposta: propostaRes.proposta,
+        email: propostaRes.email,
+        objecoes: propostaRes.objecoes,
+      });
 
-      // Refresh user data to update quota display
+      await new Promise(r => setTimeout(r, 400));
+      setEtapaView('resultado_proposta');
       refreshUsuario();
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || 'Erro ao gerar roteiro. Tente novamente.');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro ao gerar. Tente novamente.');
+      setEtapaView('wizard');
+      setLoadingTipo(null);
     }
-  };
-
-  const handleHistoryClick = (item: HistoryItem) => {
-    setModality(item.modality);
-    setFormData(item.formData);
-    setResult(item.result);
-  };
-
-  const handleReset = () => {
-    setResult(null);
   };
 
   return (
@@ -109,19 +114,64 @@ const Dashboard = () => {
       <DnaBanner />
       <main className="pt-[70px] pb-16 px-4 sm:px-6">
         <div className="max-w-[920px] mx-auto">
-          {!loading && !result && (
+          {etapaView === 'wizard' && (
             <>
-              <HistorySection items={history} onSelect={handleHistoryClick} />
+              {erro && (
+                <div className="max-w-[560px] mx-auto mb-4 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+                  {erro}
+                </div>
+              )}
+              <HistorySection items={history} onSelect={() => {}} />
               <GeracaoWizard
-                onSubmit={(dados, tipo) => console.log('Wizard submitted:', dados, tipo)}
-                isLoading={false}
-                loadingTipo={null}
+                onSubmit={handleWizardSubmit}
+                isLoading={loadingTipo !== null}
+                loadingTipo={loadingTipo}
               />
             </>
           )}
-          {loading && <LoadingState />}
-          {result && modality && (
-            <ResultsDisplay result={result} modality={modality} onReset={handleReset} />
+
+          {etapaView === 'loading' && loadingTipo && (
+            <GeracaoLoading tipo={loadingTipo} faseAtual={faseLoading} />
+          )}
+
+          {etapaView === 'resultado_roteiro' && (
+            <div className="max-w-[560px] mx-auto">
+              <Card className="shadow-md">
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Roteiro gerado · sessao_id: {sessaoAtual}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Tela de aprovação do roteiro será adicionada no próximo passo.
+                  </p>
+                  <Button variant="ghost" onClick={() => setEtapaView('wizard')}>
+                    ← Voltar ao wizard
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {etapaView === 'resultado_proposta' && (
+            <div className="max-w-[560px] mx-auto">
+              <Card className="shadow-md">
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Proposta gerada · sessao_id: {sessaoAtual}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Tela da proposta será adicionada no próximo passo.
+                  </p>
+                  <Button variant="ghost" onClick={() => setEtapaView('wizard')}>
+                    ← Voltar ao wizard
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
       </main>
