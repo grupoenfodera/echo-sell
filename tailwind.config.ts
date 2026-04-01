@@ -8,11 +8,15 @@ export default {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
+      fontFamily: {
+        heading: ['"Albert Sans"', 'sans-serif'],
+        body: ['"DM Sans"', 'sans-serif'],
+        ui: ['"Inter"', 'sans-serif'],
+        mono: ['"DM Mono"', 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -22,6 +26,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          hover: "hsl(var(--primary-hover))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -47,6 +52,16 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        elevated: "hsl(var(--bg-elevated))",
+        section: "hsl(var(--bg-section))",
+        ok: "hsl(var(--ok))",
+        warn: "hsl(var(--warn))",
+        err: "hsl(var(--err))",
+        info: "hsl(var(--info))",
+        "phase-voss": "hsl(var(--phase-voss))",
+        "phase-belfort": "hsl(var(--phase-belfort))",
+        "phase-hybrid": "hsl(var(--phase-hybrid))",
+        "phase-close": "hsl(var(--phase-close))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -62,28 +77,27 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        pill: "9999px",
+        xl: "20px",
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "progress-glow": {
+          "0%, 100%": { opacity: "0.6" },
+          "50%": { opacity: "1" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "progress-glow": "progress-glow 2s ease-in-out infinite",
       },
     },
   },
