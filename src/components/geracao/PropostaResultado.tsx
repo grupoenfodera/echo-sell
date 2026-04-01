@@ -282,7 +282,7 @@ export default function PropostaResultado({
 function ObjecaoCard({ objecao }: { objecao: ObjecaoItem }) {
   const [expandido, setExpandido] = useState(false);
   const copyObj = useCopy();
-  const badge = TIPO_BADGE[objecao.tipo];
+  const badge = TIPO_BADGE[objecao.categoria];
 
   return (
     <Card>

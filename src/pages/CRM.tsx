@@ -274,11 +274,7 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
           <Badge variant="outline" className={`text-[10px] ${statusCls}`}>
             {statusLabel}
           </Badge>
-          {cliente.ultima_sessao?.produto && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <FileText className="h-3 w-3" /> {cliente.ultima_sessao.produto}
-            </span>
-          )}
+          </Badge>
         </div>
 
         {/* Footer */}

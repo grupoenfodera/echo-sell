@@ -143,8 +143,7 @@ export default function RoteiroResultado({
   };
 
   const getTempoMin = (key: SecaoKey): number => {
-    if (key === 'tratamento_objecoes') return r.tratamento_objecoes.tempo_min;
-    return (r[key] as { tempo_min: number }).tempo_min;
+    return r[key].duracao_min;
   };
 
   return (
