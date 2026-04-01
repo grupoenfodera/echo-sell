@@ -60,6 +60,8 @@ export default function PropostaResultado({
   const copyProposta = useCopy();
   const copyWhatsApp = useCopy();
   const copyAssunto = useCopy();
+  const [resultadoModalAberto, setResultadoModalAberto] = useState(false);
+  const [resultadoRegistrado, setResultadoRegistrado] = useState<SessaoResultado | null>(null);
 
   const formatPropostaTexto = () => {
     return SECTIONS.map(s => {
