@@ -204,7 +204,7 @@ export default function PropostaResultado({
               </div>
 
               {/* PS */}
-              <p className="text-sm text-muted-foreground italic">P.S.: {email.ps}</p>
+              <p className="text-sm text-muted-foreground italic">{email.assinatura}</p>
 
               {/* WhatsApp button */}
               <Button
