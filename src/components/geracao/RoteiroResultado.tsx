@@ -28,7 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import type { RoteiroJSON } from '@/types/crm';
+import type { RoteiroJSON, RoteiroEtapa } from '@/types/crm';
 import { svpApi } from '@/lib/api-svp';
 
 interface RoteiroResultadoProps {
@@ -56,10 +56,9 @@ function scoreBadgeColor(value: number, max: number) {
 }
 
 const SCORE_LABELS: { key: keyof RoteiroJSON['score_breakdown']; label: string; max: number }[] = [
-  { key: 'personalizacao', label: 'Personalização', max: 30 },
-  { key: 'clareza_proposta', label: 'Clareza', max: 30 },
-  { key: 'urgencia_cta', label: 'Urgência', max: 20 },
-  { key: 'tom_adequado', label: 'Tom', max: 20 },
+  { key: 'clareza', label: 'Clareza', max: 40 },
+  { key: 'objecoes_cobertas', label: 'Objeções', max: 30 },
+  { key: 'adequacao_nicho', label: 'Adequação', max: 30 },
 ];
 
 export default function RoteiroResultado({
@@ -100,8 +99,8 @@ export default function RoteiroResultado({
   const r = roteiro.roteiro_reuniao;
 
   const renderSecaoBody = (key: SecaoKey) => {
-    if (key === 'tratamento_objecoes') {
-      const secao = r.tratamento_objecoes;
+    const secao = r[key];
+    if (key === 'tratamento_objecoes' && secao.objecoes_previstas) {
       return (
         <div className="space-y-3">
           {secao.objecoes_previstas.map((obj, i) => (
@@ -118,25 +117,25 @@ export default function RoteiroResultado({
       );
     }
 
-    const secao = r[key] as { objetivo: string; script?: string; perguntas?: string[]; proximo_passo?: string };
+    const genSecao = secao as RoteiroEtapa & { proximo_passo?: string };
 
     return (
       <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">{secao.objetivo}</p>
-        {secao.script && (
-          <p className="text-sm text-foreground leading-relaxed">{secao.script}</p>
+        <p className="text-sm text-muted-foreground">{genSecao.objetivo}</p>
+        {genSecao.script && (
+          <p className="text-sm text-foreground leading-relaxed">{genSecao.script}</p>
         )}
-        {secao.perguntas && secao.perguntas.length > 0 && (
+        {genSecao.perguntas && genSecao.perguntas.length > 0 && (
           <ol className="list-decimal list-inside space-y-1.5">
-            {secao.perguntas.map((p, i) => (
+            {genSecao.perguntas.map((p, i) => (
               <li key={i} className="text-sm text-foreground">{p}</li>
             ))}
           </ol>
         )}
-        {key === 'fechamento' && secao.proximo_passo && (
+        {key === 'fechamento' && (genSecao as any).proximo_passo && (
           <div className="flex items-start gap-2 rounded-md bg-muted/50 p-3">
             <ArrowRight className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-            <p className="text-sm font-medium text-foreground">{secao.proximo_passo}</p>
+            <p className="text-sm font-medium text-foreground">{(genSecao as any).proximo_passo}</p>
           </div>
         )}
       </div>
@@ -144,8 +143,7 @@ export default function RoteiroResultado({
   };
 
   const getTempoMin = (key: SecaoKey): number => {
-    if (key === 'tratamento_objecoes') return r.tratamento_objecoes.tempo_min;
-    return (r[key] as { tempo_min: number }).tempo_min;
+    return r[key].duracao_min;
   };
 
   return (

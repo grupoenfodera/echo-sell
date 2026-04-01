@@ -33,24 +33,22 @@ interface PropostaResultadoProps {
   onVerCRM?: () => void;
 }
 
-const TIPO_BADGE: Record<ObjecaoItem['tipo'], { label: string; cls: string }> = {
-  preco:        { label: 'Preço',        cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
-  urgencia:     { label: 'Urgência',     cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
-  concorrencia: { label: 'Concorrência', cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
-  confianca:    { label: 'Confiança',    cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-  necessidade:  { label: 'Necessidade',  cls: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+const TIPO_BADGE: Record<ObjecaoItem['categoria'], { label: string; cls: string }> = {
+  preco:       { label: 'Preço',       cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+  tempo:       { label: 'Tempo',       cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
+  confianca:   { label: 'Confiança',   cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+  necessidade: { label: 'Necessidade', cls: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+  autoridade:  { label: 'Autoridade',  cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
 };
 
 const SECTIONS = [
-  { key: 'titulo'        as const, label: 'Título',               icon: FileText },
-  { key: 'introducao'    as const, label: 'Introdução',           icon: MessageSquare },
-  { key: 'diagnostico'   as const, label: 'Diagnóstico',          icon: Search },
-  { key: 'solucao'       as const, label: 'Solução Proposta',     icon: Lightbulb },
-  { key: 'beneficios'    as const, label: 'Benefícios',           icon: CheckCircle },
-  { key: 'investimento'  as const, label: 'Investimento',         icon: DollarSign },
-  { key: 'garantia'      as const, label: 'Garantia',             icon: Shield },
-  { key: 'proximo_passo' as const, label: 'Próximo Passo',        icon: ArrowRight },
-  { key: 'validade'      as const, label: 'Validade da Proposta', icon: Clock },
+  { key: 'titulo'        as const, label: 'Título',          icon: FileText },
+  { key: 'introducao'    as const, label: 'Introdução',      icon: MessageSquare },
+  { key: 'diagnostico'   as const, label: 'Diagnóstico',     icon: Search },
+  { key: 'solucao'       as const, label: 'Solução Proposta', icon: Lightbulb },
+  { key: 'beneficios'    as const, label: 'Benefícios',      icon: CheckCircle },
+  { key: 'proximo_passo' as const, label: 'Próximo Passo',   icon: ArrowRight },
+  { key: 'fechamento'    as const, label: 'Fechamento',      icon: Clock },
 ];
 
 export default function PropostaResultado({
@@ -69,12 +67,15 @@ export default function PropostaResultado({
       if (s.key === 'beneficios' && Array.isArray(val)) {
         return `${s.label}:\n${(val as string[]).map(b => `• ${b}`).join('\n')}`;
       }
+      if (typeof val === 'object' && val !== null) {
+        return `${s.label}:\n${JSON.stringify(val)}`;
+      }
       return `${s.label}:\n${val}`;
     }).join('\n\n');
   };
 
   const formatWhatsApp = () =>
-    `*${email.assunto}*\n\n${email.corpo}\n\n${email.cta}\n\nP.S.: ${email.ps}`;
+    `*${email.assunto}*\n\n${email.saudacao}\n\n${email.corpo}\n\n${email.cta}\n\n${email.assinatura}`;
 
   return (
     <div className="max-w-[680px] mx-auto space-y-6">
@@ -137,6 +138,12 @@ export default function PropostaResultado({
                             </li>
                           ))}
                         </ul>
+                      ) : typeof value === 'object' && value !== null && !Array.isArray(value) ? (
+                        <div className="text-sm text-foreground space-y-1">
+                          {Object.entries(value as Record<string, string>).map(([k, v]) => (
+                            <p key={k}><span className="font-medium capitalize">{k}:</span> {v}</p>
+                          ))}
+                        </div>
                       ) : (
                         <p className="text-sm text-foreground">{value as string}</p>
                       )}
@@ -197,7 +204,7 @@ export default function PropostaResultado({
               </div>
 
               {/* PS */}
-              <p className="text-sm text-muted-foreground italic">P.S.: {email.ps}</p>
+              <p className="text-sm text-muted-foreground italic">{email.assinatura}</p>
 
               {/* WhatsApp button */}
               <Button
@@ -275,7 +282,7 @@ export default function PropostaResultado({
 function ObjecaoCard({ objecao }: { objecao: ObjecaoItem }) {
   const [expandido, setExpandido] = useState(false);
   const copyObj = useCopy();
-  const badge = TIPO_BADGE[objecao.tipo];
+  const badge = TIPO_BADGE[objecao.categoria];
 
   return (
     <Card>

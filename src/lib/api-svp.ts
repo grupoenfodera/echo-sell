@@ -2,11 +2,8 @@ import { supabase } from '@/integrations/supabase/client';
 import type {
   GerarRoteiroPayload,   GerarRoteiroResponse,
   AprovarRoteiroPayload, AprovarRoteiroResponse,
-  GerarPropostaPayload,  GerarPropostaResponse,
-  CrmListarResponse,     CrmDetalheResponse,
-  AtualizarSessaoPayload,
-  AtualizarClientePayload,
-  RegistrarInteracaoPayload,
+  GerarPropostaResponse,
+  CrmListarResponse,
 } from '@/types/crm';
 
 const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
@@ -56,7 +53,7 @@ export const svpApi = {
   aprovarRoteiro: (payload: AprovarRoteiroPayload) =>
     post<AprovarRoteiroResponse>('aprovar-roteiro', payload),
 
-  gerarProposta: (payload: GerarPropostaPayload) =>
+  gerarProposta: (payload: { sessao_id: string }) =>
     post<GerarPropostaResponse>('gerar-proposta', payload),
 
   // ── CRM ─────────────────────────────────────────
@@ -67,14 +64,14 @@ export const svpApi = {
     }),
 
   buscarCliente: (clienteId: string) =>
-    get<CrmDetalheResponse>('crm-listar', { cliente_id: clienteId }),
+    get<CrmListarResponse>('crm-listar', { cliente_id: clienteId }),
 
-  atualizarSessao: (payload: AtualizarSessaoPayload) =>
+  atualizarSessao: (payload: { sessao_id: string; resultado?: string; notas_pos_reuniao?: string }) =>
     post<{ ok: boolean }>('crm-atualizar', payload),
 
-  atualizarCliente: (payload: AtualizarClientePayload) =>
+  atualizarCliente: (payload: { cliente_id: string } & Record<string, unknown>) =>
     post<{ ok: boolean }>('crm-atualizar', payload),
 
-  registrarInteracao: (payload: RegistrarInteracaoPayload) =>
+  registrarInteracao: (payload: { interacao: Record<string, unknown> }) =>
     post<{ ok: boolean }>('crm-atualizar', payload),
 };

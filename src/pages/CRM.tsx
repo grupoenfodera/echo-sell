@@ -209,17 +209,7 @@ export default function CRM() {
                   key={c.id}
                   cliente={c}
                   onClick={() => navigate(`/crm/${c.id}`)}
-                  onRegistrarResultado={
-                    c.ultima_sessao && !c.ultima_sessao.resultado &&
-                    c.ultima_sessao.criado_em &&
-                    differenceInDays(new Date(), new Date(c.ultima_sessao.criado_em)) >= 1
-                      ? () => setResultadoModal({
-                          sessaoId: c.ultima_sessao!.id,
-                          nomeCliente: c.nome,
-                          produto: c.ultima_sessao!.produto,
-                        })
-                      : undefined
-                  }
+                  onRegistrarResultado={undefined}
                 />
               ))}
             </div>
@@ -239,14 +229,7 @@ export default function CRM() {
         nomeCliente={resultadoModal?.nomeCliente}
         produto={resultadoModal?.produto}
         onFechar={() => setResultadoModal(null)}
-        onRegistrado={(resultado) => {
-          setClientes(prev =>
-            prev.map(c =>
-              c.ultima_sessao?.id === resultadoModal?.sessaoId
-                ? { ...c, ultima_sessao: { ...c.ultima_sessao!, resultado } }
-                : c
-            )
-          );
+        onRegistrado={() => {
           setResultadoModal(null);
         }}
       />
@@ -261,7 +244,7 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
   const statusCls = STATUS_CLS[cliente.status] || STATUS_CLS.novo;
   const statusLabel = STATUS_LABEL[cliente.status] || cliente.status;
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  const resultado = cliente.ultima_sessao?.resultado;
+  const resultado = undefined;
   const resBadge = resultado ? RESULTADO_BADGE[resultado] : null;
 
   return (
@@ -291,11 +274,6 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
           <Badge variant="outline" className={`text-[10px] ${statusCls}`}>
             {statusLabel}
           </Badge>
-          {cliente.ultima_sessao?.produto && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <FileText className="h-3 w-3" /> {cliente.ultima_sessao.produto}
-            </span>
-          )}
         </div>
 
         {/* Footer */}
