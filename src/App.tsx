@@ -10,6 +10,10 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Welcome from "./pages/Welcome";
 import Dashboard from "./pages/Dashboard";
+import Onboarding from "./pages/Onboarding";
+import Profile from "./pages/Profile";
+import DnaProfile from "./pages/DnaProfile";
+import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,8 +32,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!session) return <Navigate to="/login" replace />;
 
-  // Redirect to welcome if first access (but not if already on /bem-vindo)
-  if (usuario?.primeiro_acesso && location.pathname !== '/bem-vindo') {
+  const skipRedirectPaths = ['/bem-vindo', '/onboarding'];
+  if (usuario?.primeiro_acesso && !skipRedirectPaths.includes(location.pathname)) {
     return <Navigate to="/bem-vindo" replace />;
   }
 
@@ -64,6 +68,12 @@ const App = () => (
               <Route path="/esqueci-senha" element={<ForgotPassword />} />
               <Route path="/redefinir-senha" element={<ResetPassword />} />
               <Route path="/bem-vindo" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
+              <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+              <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/perfil/dna" element={<ProtectedRoute><DnaProfile /></ProtectedRoute>} />
+              <Route path="/dna-comercial" element={<ProtectedRoute><DnaProfile /></ProtectedRoute>} />
+              <Route path="/perfil/historico" element={<ProtectedRoute><History /></ProtectedRoute>} />
+              <Route path="/historico" element={<ProtectedRoute><History /></ProtectedRoute>} />
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -4,6 +4,22 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun, LogOut, User, Dna, ClipboardList, ChevronDown } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+const TONE_NAME: Record<string, string> = {
+  consultivo: 'Consultivo',
+  direto: 'Direto',
+  relacional: 'Relacional',
+  tecnico: 'Técnico',
+  svp_puro: 'SVP Puro',
+};
+const TONE_ICON: Record<string, string> = {
+  consultivo: '🔵',
+  direto: '🟡',
+  relacional: '🟢',
+  tecnico: '🟣',
+  svp_puro: '⚪',
+};
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
@@ -11,6 +27,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [dnaBadge, setDnaBadge] = useState<{ tom: string; contexto: string } | null>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -19,6 +36,20 @@ const Header = () => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => {
+    if (!usuario?.id) return;
+    supabase
+      .from('usuario_dna')
+      .select('tom_primario, contexto')
+      .eq('usuario_id', usuario.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.tom_primario) {
+          setDnaBadge({ tom: data.tom_primario, contexto: data.contexto || '' });
+        }
+      });
+  }, [usuario?.id]);
 
   const handleLogout = async () => {
     setOpen(false);
@@ -49,6 +80,19 @@ const Header = () => {
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
+
+        {/* DNA Badge */}
+        {dnaBadge && (
+          <button
+            onClick={() => navigate('/perfil/dna')}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-pill bg-card border border-border text-[10px] font-ui text-foreground hover:border-muted-foreground/40 transition-colors"
+          >
+            <span>{TONE_ICON[dnaBadge.tom] || '⚪'}</span>
+            <span>{TONE_NAME[dnaBadge.tom] || dnaBadge.tom}</span>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground">{dnaBadge.contexto}</span>
+          </button>
+        )}
 
         {/* User menu */}
         <div className="relative" ref={menuRef}>
@@ -81,8 +125,8 @@ const Header = () => {
 
               <div className="py-1">
                 <MenuLink icon={<User className="h-3.5 w-3.5" />} label="Meu Perfil" onClick={() => { setOpen(false); navigate('/perfil'); }} />
-                <MenuLink icon={<Dna className="h-3.5 w-3.5" />} label="DNA Comercial" onClick={() => { setOpen(false); navigate('/dna-comercial'); }} />
-                <MenuLink icon={<ClipboardList className="h-3.5 w-3.5" />} label="Histórico" onClick={() => { setOpen(false); navigate('/historico'); }} />
+                <MenuLink icon={<Dna className="h-3.5 w-3.5" />} label="DNA Comercial" onClick={() => { setOpen(false); navigate('/perfil/dna'); }} />
+                <MenuLink icon={<ClipboardList className="h-3.5 w-3.5" />} label="Histórico" onClick={() => { setOpen(false); navigate('/perfil/historico'); }} />
               </div>
 
               <div className="border-t border-border pt-1">
