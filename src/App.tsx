@@ -14,6 +14,7 @@ import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
 import DnaProfile from "./pages/DnaProfile";
 import History from "./pages/History";
+import CRM from "./pages/CRM";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -74,6 +75,8 @@ const App = () => (
               <Route path="/dna-comercial" element={<ProtectedRoute><DnaProfile /></ProtectedRoute>} />
               <Route path="/perfil/historico" element={<ProtectedRoute><History /></ProtectedRoute>} />
               <Route path="/historico" element={<ProtectedRoute><History /></ProtectedRoute>} />
+              <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
+              <Route path="/crm/:id" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>

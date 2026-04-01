@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Moon, Sun, LogOut, User, Dna, ClipboardList, ChevronDown } from 'lucide-react';
+import { Moon, Sun, LogOut, User, Dna, ClipboardList, Users, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const TONE_NAME: Record<string, string> = {
@@ -126,6 +126,7 @@ const Header = () => {
               <div className="py-1">
                 <MenuLink icon={<User className="h-3.5 w-3.5" />} label="Meu Perfil" onClick={() => { setOpen(false); navigate('/perfil'); }} />
                 <MenuLink icon={<Dna className="h-3.5 w-3.5" />} label="DNA Comercial" onClick={() => { setOpen(false); navigate('/perfil/dna'); }} />
+                <MenuLink icon={<Users className="h-3.5 w-3.5" />} label="CRM" onClick={() => { setOpen(false); navigate('/crm'); }} />
                 <MenuLink icon={<ClipboardList className="h-3.5 w-3.5" />} label="Histórico" onClick={() => { setOpen(false); navigate('/perfil/historico'); }} />
               </div>
 
