@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import DnaBanner from '@/components/DnaBanner';
@@ -17,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { user, refreshUsuario } = useAuth();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [dna, setDna] = useState<{ contexto: string | null; tom_primario: string | null } | null>(null);
@@ -183,7 +185,7 @@ const Dashboard = () => {
                 setClienteAtual(null);
               }}
               onVerCRM={() => {
-                console.log('navegar para CRM cliente:', clienteAtual);
+                if (clienteAtual) navigate(`/crm/${clienteAtual}`);
               }}
             />
           )}
