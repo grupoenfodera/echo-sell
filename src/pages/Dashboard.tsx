@@ -60,7 +60,7 @@ const Dashboard = () => {
         nicho: dados.nicho,
         produto: dados.produto,
         preco: dados.preco ? parseFloat(dados.preco.replace(',', '.')) : undefined,
-        contexto: dados.contexto,
+        contexto: dados.contexto || undefined,
         nome_cliente: dados.nome_cliente || undefined,
         dados_extras: {
           empresa: dados.empresa || undefined,
