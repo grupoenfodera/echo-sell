@@ -77,6 +77,7 @@ const modalityLabels: Record<string, string> = {
   m1: 'Diagnóstico Completo',
   m2a: 'Primeiro Contato',
   m2b: 'Reunião de Proposta',
+  sessao: 'Sessão de Venda',
 };
 
 /* ── Helpers ── */
