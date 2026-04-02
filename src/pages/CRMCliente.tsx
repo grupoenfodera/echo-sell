@@ -414,13 +414,33 @@ export default function CRMCliente() {
             className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-200"
           >
             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border shrink-0">
-              <div>
-                <h2 className="text-base font-semibold text-foreground">{sessaoAberta.produto || 'Proposta Completa'}</h2>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-semibold text-foreground truncate">{sessaoAberta.produto || 'Proposta Completa'}</h2>
                 <p className="text-xs text-muted-foreground">
                   {sessaoAberta.nicho && `${sessaoAberta.nicho} · `}
                   {sessaoAberta.criado_em ? format(new Date(sessaoAberta.criado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : ''}
                   {sessaoAberta.roteiro_json?.score && ` · Score ${sessaoAberta.roteiro_json.score}/100`}
                 </p>
+                {/* Insight labels */}
+                {(sessaoAberta.roteiro_json?.maior_medo || sessaoAberta.roteiro_json?.decisao_style || sessaoAberta.roteiro_json?.tom_ideal) && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {sessaoAberta.roteiro_json?.maior_medo && (
+                      <Badge variant="outline" className="text-[10px] gap-1 font-normal">
+                        <span className="font-semibold text-destructive">MAIOR MEDO</span> {sessaoAberta.roteiro_json.maior_medo}
+                      </Badge>
+                    )}
+                    {sessaoAberta.roteiro_json?.decisao_style && (
+                      <Badge variant="outline" className="text-[10px] gap-1 font-normal">
+                        <span className="font-semibold text-primary">DECISÃO</span> {sessaoAberta.roteiro_json.decisao_style}
+                      </Badge>
+                    )}
+                    {sessaoAberta.roteiro_json?.tom_ideal && (
+                      <Badge variant="outline" className="text-[10px] gap-1 font-normal">
+                        <span className="font-semibold text-amber-600 dark:text-amber-400">TOM IDEAL</span> {sessaoAberta.roteiro_json.tom_ideal}
+                      </Badge>
+                    )}
+                  </div>
+                )}
               </div>
               <button onClick={() => setSessaoAberta(null)} className="text-muted-foreground hover:text-foreground p-1">
                 <X className="h-5 w-5" />
