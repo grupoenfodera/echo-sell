@@ -104,12 +104,65 @@ const ETAPAS_CONFIG = [
 
 export function CardRoteiro({ roteiro, loading, error, onAprovar, onRejeitar }: CardRoteiroProps) {
   const r = roteiro.roteiro_reuniao;
-  const etapasMap: Record<string, RoteiroEtapa> = {
-    abertura: r.abertura,
-    descoberta: r.descoberta,
-    apresentacao_solucao: r.apresentacao_solucao,
-    tratamento_objecoes: r.tratamento_objecoes,
-    fechamento: r.fechamento,
+
+  const renderRoteiroContent = () => {
+    if (Array.isArray(r)) {
+      return (
+        <div className="space-y-4">
+          {r.map((bloco, i) => (
+            <Card key={i} className="border-border/50">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold shrink-0">{bloco.numero}</span>
+                  <CardTitle className="text-base flex-1">{bloco.titulo}</CardTitle>
+                  <Badge variant="secondary" className="text-xs shrink-0">{bloco.tempo}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{bloco.script}</p>
+                {bloco.tecnica && (
+                  <div className="flex items-start gap-2 rounded-md bg-accent/50 p-2.5">
+                    <Badge className="shrink-0 text-[10px] bg-primary/10 text-primary border-0">{bloco.tecnica}</Badge>
+                    <p className="text-xs text-muted-foreground">{bloco.nota_tecnica}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    const etapasMap: Record<string, RoteiroEtapa> = {
+      abertura: r.abertura,
+      descoberta: r.descoberta,
+      apresentacao_solucao: r.apresentacao_solucao,
+      tratamento_objecoes: r.tratamento_objecoes,
+      fechamento: r.fechamento,
+    };
+
+    return (
+      <Accordion type="single" collapsible defaultValue="abertura">
+        {ETAPAS_CONFIG.map(({ key, label, icon }) => {
+          const etapa = etapasMap[key];
+          if (!etapa) return null;
+          return (
+            <AccordionItem key={key} value={key}>
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2 text-sm">
+                  <span>{icon}</span>
+                  <span className="font-medium">{label}</span>
+                  <Badge variant="secondary" className="ml-1 text-xs">{etapa.duracao_min} min</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <EtapaContent etapa={etapa} tipo={key} />
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
+    );
   };
 
   return (
@@ -117,44 +170,24 @@ export function CardRoteiro({ roteiro, loading, error, onAprovar, onRejeitar }: 
       <CardHeader className="space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-xl">Roteiro da Reunião</CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant={scoreBadgeVariant(roteiro.score)}>
-              Score {roteiro.score}/100
-            </Badge>
-            <Badge variant="outline">Tempo total: {roteiro.tempo_total_min}min</Badge>
-          </div>
+          <Badge variant={scoreBadgeVariant(roteiro.score)}>
+            Score {roteiro.score}/100
+          </Badge>
         </div>
 
         <p className="text-sm text-muted-foreground italic">{roteiro.resumo_estrategico}</p>
 
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline" className="text-xs">Clareza: {roteiro.score_breakdown.clareza}</Badge>
-          <Badge variant="outline" className="text-xs">Objeções cobertas: {roteiro.score_breakdown.objecoes_cobertas}</Badge>
-          <Badge variant="outline" className="text-xs">Adequação ao nicho: {roteiro.score_breakdown.adequacao_nicho}</Badge>
-        </div>
+        {roteiro.score_breakdown && (
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(roteiro.score_breakdown).map(([key, val]) => (
+              <Badge key={key} variant="outline" className="text-xs">{key}: {val}</Badge>
+            ))}
+          </div>
+        )}
       </CardHeader>
 
       <CardContent>
-        <Accordion type="single" collapsible defaultValue="abertura">
-          {ETAPAS_CONFIG.map(({ key, label, icon }) => {
-            const etapa = etapasMap[key];
-            if (!etapa) return null;
-            return (
-              <AccordionItem key={key} value={key}>
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span>{icon}</span>
-                    <span className="font-medium">{label}</span>
-                    <Badge variant="secondary" className="ml-1 text-xs">{etapa.duracao_min} min</Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <EtapaContent etapa={etapa} tipo={key} />
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
+        {renderRoteiroContent()}
       </CardContent>
 
       <CardFooter className="flex flex-col gap-3">

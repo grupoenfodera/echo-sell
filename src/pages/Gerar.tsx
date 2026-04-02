@@ -122,13 +122,16 @@ export default function Gerar() {
         )}
 
         {(state.etapa === 'proposta' || state.etapa === 'concluido') &&
-          state.proposta && state.email && state.objecoes && (
+          state.roteiro && state.proposta && state.email && state.objecoes && (
           <ResultadoProposta
+            roteiro={state.roteiro}
             proposta={state.proposta}
             email={state.email}
             objecoes={state.objecoes}
             whatsapp={state.whatsapp}
             sessaoId={state.sessaoId!}
+            produto={lastPayload?.produto}
+            preco={lastPayload?.preco}
             onRegistrarResultado={handleRegistrarResultado}
             onNovaGeracao={reiniciar}
           />
