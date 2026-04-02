@@ -218,7 +218,7 @@ const History = () => {
       <Header />
       <main className="pt-[70px] pb-16 px-4 sm:px-6">
         <div className="max-w-[920px] mx-auto">
-          <h1 className="font-heading text-2xl text-foreground mb-6">Histórico de Gerações</h1>
+          <h1 className="font-heading mb-6 text-2xl font-bold text-primary-hover">Histórico de Gerações</h1>
 
           {loading ? (
             <div className="flex justify-center py-20">
