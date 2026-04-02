@@ -173,6 +173,10 @@ Deno.serve(async (req) => {
     if (!contexto && dna?.contexto && dna.contexto !== "ambos") {
       contexto = dna.contexto;
     }
+    // Normalize to lowercase for DB check constraint
+    if (contexto) {
+      contexto = contexto.toLowerCase();
+    }
 
     // ── Build prompt ──
     let systemPrompt = SYSTEM_ROTEIRO;
