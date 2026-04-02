@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { PropostaJSON, EmailJSON, ObjecaoItem, SessaoResultado } from '@/types/crm';
+import type { PropostaJSON, EmailJSON, ObjecaoItem, SessaoResultado, MensagensConfirmacao, FollowUpItem } from '@/types/crm';
 import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import {
   FileText, MessageSquare, Search, Lightbulb, CheckCircle, DollarSign,
   Shield, ArrowRight, Clock, Copy, Check, Mail, ShieldAlert, User,
-  RefreshCw, TrendingUp, ChevronDown, ChevronUp,
+  RefreshCw, TrendingUp, ChevronDown, ChevronUp, ClipboardList, RotateCw,
+  CalendarClock, Timer, Send,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 function useCopy() {
   const [copiado, setCopiado] = useState(false);
@@ -29,6 +31,8 @@ interface PropostaResultadoProps {
   sessaoId: string;
   clienteId: string | null;
   nomeCliente?: string;
+  mensagensConfirmacao?: MensagensConfirmacao | null;
+  followUp?: FollowUpItem[] | null;
   onNovaGeracao: () => void;
   onVerCRM?: () => void;
 }
@@ -53,8 +57,10 @@ const SECTIONS = [
 
 export default function PropostaResultado({
   proposta, email, objecoes, sessaoId, clienteId, nomeCliente,
+  mensagensConfirmacao, followUp,
   onNovaGeracao, onVerCRM,
 }: PropostaResultadoProps) {
+  const navigate = useNavigate();
   const copyProposta = useCopy();
   const copyWhatsApp = useCopy();
   const copyAssunto = useCopy();
