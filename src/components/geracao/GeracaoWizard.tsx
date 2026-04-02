@@ -25,6 +25,7 @@ export interface WizardData {
   processamento_info: string;
   palavras_exatas: string;
   nicho: string;
+  nome_produto: string;
   produto: string;
   resultado_entregue: string;
   contexto: 'b2b' | 'b2c' | '';
@@ -61,6 +62,7 @@ const initialData: WizardData = {
   processamento_info: '',
   palavras_exatas: '',
   nicho: '',
+  nome_produto: '',
   produto: '',
   resultado_entregue: '',
   contexto: '',
@@ -224,8 +226,14 @@ function StepProduto({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="produto">Produto ou Serviço <Req /></Label>
-        <Textarea id="produto" placeholder="Descreva o que você vende e seus diferenciais" value={data.produto} onChange={e => onChange({ produto: e.target.value })} rows={3} />
+        <Label htmlFor="nome_produto">Nome do Produto ou Serviço <Req /></Label>
+        <Input id="nome_produto" placeholder="Ex: Consultoria de Marketing Digital, Plano Premium..." value={data.nome_produto} onChange={e => onChange({ nome_produto: e.target.value })} />
+        {errors.nome_produto && <p className="text-xs text-destructive">{errors.nome_produto}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="produto">Descrição e Diferenciais <Req /></Label>
+        <Textarea id="produto" placeholder="Descreva o que você vende, como funciona e seus diferenciais" value={data.produto} onChange={e => onChange({ produto: e.target.value })} rows={3} />
         {errors.produto && <p className="text-xs text-destructive">{errors.produto}</p>}
       </div>
 
@@ -381,6 +389,7 @@ export default function GeracaoWizard({
     }
     if (s === 1) {
       if (!data.nicho.trim()) errs.nicho = 'Nicho é obrigatório';
+      if (!data.nome_produto.trim()) errs.nome_produto = 'Nome do produto é obrigatório';
       if (!data.produto.trim()) errs.produto = 'Descreva o produto ou serviço';
       if (!data.contexto) errs.contexto = 'Selecione o contexto da venda';
     }
