@@ -131,15 +131,53 @@ const History = () => {
   useEffect(() => {
     if (!usuario?.id) return;
     setLoading(true);
-    supabase
-      .from('geracoes')
-      .select('id, modalidade, contexto_geracao, nicho, produto, nome_cliente, criado_em, resultado_json')
-      .eq('usuario_id', usuario.id)
-      .order('criado_em', { ascending: false })
-      .then(({ data }) => {
-        setGens((data as Gen[]) || []);
-        setLoading(false);
+
+    Promise.all([
+      supabase
+        .from('geracoes')
+        .select('id, modalidade, contexto_geracao, nicho, produto, nome_cliente, criado_em, resultado_json')
+        .eq('usuario_id', usuario.id)
+        .order('criado_em', { ascending: false }),
+      supabase
+        .from('sessoes_venda')
+        .select('id, nicho, produto, contexto, criado_em, roteiro_json, proposta_json, email_json, objecoes_json, whatsapp_json, resultado, preco, dados_formulario')
+        .eq('usuario_id', usuario.id)
+        .order('criado_em', { ascending: false }),
+    ]).then(([geracoesRes, sessoesRes]) => {
+      const geracoes: Gen[] = ((geracoesRes.data as any[]) || []).map(g => ({
+        ...g,
+        source: 'geracoes' as HistorySource,
+      }));
+
+      const sessoes: Gen[] = ((sessoesRes.data as any[]) || []).map(s => ({
+        id: s.id,
+        source: 'sessoes_venda' as HistorySource,
+        modalidade: 'sessao',
+        contexto_geracao: s.contexto || (s.dados_formulario as any)?.contextoGeracao || null,
+        nicho: s.nicho,
+        produto: s.produto,
+        nome_cliente: (s.dados_formulario as any)?.nome_cliente || null,
+        criado_em: s.criado_em,
+        resultado_json: null,
+        roteiro_json: s.roteiro_json,
+        proposta_json: s.proposta_json,
+        email_json: s.email_json,
+        objecoes_json: s.objecoes_json,
+        whatsapp_json: s.whatsapp_json,
+        resultado: s.resultado,
+        preco: s.preco,
+      }));
+
+      // Merge and sort by date descending
+      const merged = [...geracoes, ...sessoes].sort((a, b) => {
+        const da = a.criado_em ? new Date(a.criado_em).getTime() : 0;
+        const db = b.criado_em ? new Date(b.criado_em).getTime() : 0;
+        return db - da;
       });
+
+      setGens(merged);
+      setLoading(false);
+    });
   }, [usuario?.id]);
 
   const copyToClipboard = useCallback((text: string) => {
