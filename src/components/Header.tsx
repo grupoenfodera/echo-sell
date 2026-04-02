@@ -126,7 +126,7 @@ const Header = () => {
               <div className="py-1">
                 <MenuLink icon={<User className="h-3.5 w-3.5" />} label="Meu Perfil" onClick={() => { setOpen(false); navigate('/perfil'); }} />
                 <MenuLink icon={<Dna className="h-3.5 w-3.5" />} label="DNA Comercial" onClick={() => { setOpen(false); navigate('/perfil/dna'); }} />
-                <MenuLink icon={<Users className="h-3.5 w-3.5" />} label="CRM" onClick={() => { setOpen(false); navigate('/crm'); }} />
+                <MenuLink icon={<Users className="h-3.5 w-3.5" />} label="CRM (Em Breve)" onClick={() => {}} disabled />
                 <MenuLink icon={<ClipboardList className="h-3.5 w-3.5" />} label="Histórico" onClick={() => { setOpen(false); navigate('/perfil/historico'); }} />
               </div>
 
@@ -141,10 +141,15 @@ const Header = () => {
   );
 };
 
-const MenuLink = ({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) => (
+const MenuLink = ({ icon, label, onClick, disabled }: { icon: React.ReactNode; label: string; onClick: () => void; disabled?: boolean }) => (
   <button
-    onClick={onClick}
-    className="w-full flex items-center gap-3 px-4 py-2 text-sm font-ui text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+    onClick={disabled ? undefined : onClick}
+    disabled={disabled}
+    className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-ui transition-colors ${
+      disabled
+        ? 'text-muted-foreground/50 cursor-not-allowed'
+        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+    }`}
   >
     {icon}
     {label}
