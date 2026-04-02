@@ -16,6 +16,7 @@ import DnaProfile from "./pages/DnaProfile";
 import History from "./pages/History";
 import CRM from "./pages/CRM";
 import CRMCliente from "./pages/CRMCliente";
+import Gerar from "./pages/Gerar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="/historico" element={<ProtectedRoute><History /></ProtectedRoute>} />
               <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
               <Route path="/crm/:clienteId" element={<ProtectedRoute><CRMCliente /></ProtectedRoute>} />
+              <Route path="/gerar" element={<ProtectedRoute><Gerar /></ProtectedRoute>} />
               <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
