@@ -59,14 +59,13 @@ export default function NovaInteracaoModal({
     setSalvando(true);
     try {
       await svpApi.registrarInteracao({
-        interacao: {
-          cliente_id: clienteId,
-          canal,
-          titulo: titulo.trim() || undefined,
-          conteudo: conteudo.trim() || undefined,
-          direcao: showDirecao ? direcao : undefined,
-          duracao_minutos: showDuracao && duracao ? parseInt(duracao, 10) : undefined,
-          resultado: showResultado && resultado.trim() ? resultado.trim() : undefined,
+        cliente_id: clienteId,
+        canal,
+        titulo: titulo.trim() || undefined,
+        conteudo: conteudo.trim() || undefined,
+        direcao: showDirecao ? direcao : undefined,
+        duracao_minutos: showDuracao && duracao ? parseInt(duracao, 10) : undefined,
+        resultado: showResultado && resultado.trim() ? resultado.trim() : undefined,
         },
       });
 
