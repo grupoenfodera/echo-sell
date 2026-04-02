@@ -62,6 +62,7 @@ const initialData: WizardData = {
   processamento_info: '',
   palavras_exatas: '',
   nicho: '',
+  nome_produto: '',
   produto: '',
   resultado_entregue: '',
   contexto: '',
