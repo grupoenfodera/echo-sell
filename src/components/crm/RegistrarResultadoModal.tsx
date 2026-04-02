@@ -73,11 +73,7 @@ export default function RegistrarResultadoModal({
     if (!resultado) return;
     setSalvando(true);
     try {
-      await svpApi.atualizarSessao({
-        sessao_id: sessaoId,
-        resultado,
-        notas_pos_reuniao: notas || undefined,
-      });
+      await svpApi.atualizarSessao(sessaoId, resultado, notas || undefined);
       toast.success(TOAST_MSG[resultado]);
       onRegistrado(resultado, notas);
       onFechar();

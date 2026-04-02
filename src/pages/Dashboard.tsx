@@ -147,7 +147,7 @@ const Dashboard = () => {
                 setFaseLoading(2);
                 setEtapaView('loading');
                 try {
-                  const res = await svpApi.gerarProposta({ sessao_id: sessaoAtual! });
+                  const res = await svpApi.gerarProposta(sessaoAtual!);
                   setDadosProposta({
                     proposta: res.proposta,
                     email: res.email,

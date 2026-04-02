@@ -66,7 +66,6 @@ export default function NovaInteracaoModal({
         direcao: showDirecao ? direcao : undefined,
         duracao_minutos: showDuracao && duracao ? parseInt(duracao, 10) : undefined,
         resultado: showResultado && resultado.trim() ? resultado.trim() : undefined,
-        },
       });
 
       // Build a local interacao object for optimistic UI
