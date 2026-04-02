@@ -258,6 +258,9 @@ export default function CRMCliente() {
               <Button variant="outline" size="sm" onClick={() => openInteracao()}>
                 <Plus className="h-3.5 w-3.5 mr-1.5" /> Interação
               </Button>
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
           </div>
 
