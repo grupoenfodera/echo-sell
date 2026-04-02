@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun, LogOut, User, Dna, ClipboardList, Users, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import logoSvp from '@/assets/logo-svp.png';
 
 const TONE_NAME: Record<string, string> = {
   consultivo: 'Consultivo',
