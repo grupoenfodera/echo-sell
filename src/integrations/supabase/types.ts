@@ -357,6 +357,130 @@ export type Database = {
           },
         ]
       }
+      personas: {
+        Row: {
+          ativo: boolean | null
+          atualizado_em: string | null
+          criado_em: string | null
+          descricao: string | null
+          id: string
+          nicho: string | null
+          nome: string
+          objecoes_comuns: string | null
+          perfil_decisor: string | null
+          processamento_info: string | null
+          referencia_preco: string | null
+          usuario_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          atualizado_em?: string | null
+          criado_em?: string | null
+          descricao?: string | null
+          id?: string
+          nicho?: string | null
+          nome: string
+          objecoes_comuns?: string | null
+          perfil_decisor?: string | null
+          processamento_info?: string | null
+          referencia_preco?: string | null
+          usuario_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          atualizado_em?: string | null
+          criado_em?: string | null
+          descricao?: string | null
+          id?: string
+          nicho?: string | null
+          nome?: string
+          objecoes_comuns?: string | null
+          perfil_decisor?: string | null
+          processamento_info?: string | null
+          referencia_preco?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personas_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          ativo: boolean | null
+          atualizado_em: string | null
+          case_real: string | null
+          criado_em: string | null
+          descricao: string | null
+          entregaveis_detalhados: string | null
+          formato_duracao: string | null
+          garantia: string | null
+          id: string
+          nicho: string | null
+          nome: string
+          nome_metodologia: string | null
+          objecao_principal: string | null
+          preco_ancora: number | null
+          preco_meta: number | null
+          preco_minimo: number | null
+          resultado_entregue: string | null
+          usuario_id: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          atualizado_em?: string | null
+          case_real?: string | null
+          criado_em?: string | null
+          descricao?: string | null
+          entregaveis_detalhados?: string | null
+          formato_duracao?: string | null
+          garantia?: string | null
+          id?: string
+          nicho?: string | null
+          nome: string
+          nome_metodologia?: string | null
+          objecao_principal?: string | null
+          preco_ancora?: number | null
+          preco_meta?: number | null
+          preco_minimo?: number | null
+          resultado_entregue?: string | null
+          usuario_id: string
+        }
+        Update: {
+          ativo?: boolean | null
+          atualizado_em?: string | null
+          case_real?: string | null
+          criado_em?: string | null
+          descricao?: string | null
+          entregaveis_detalhados?: string | null
+          formato_duracao?: string | null
+          garantia?: string | null
+          id?: string
+          nicho?: string | null
+          nome?: string
+          nome_metodologia?: string | null
+          objecao_principal?: string | null
+          preco_ancora?: number | null
+          preco_meta?: number | null
+          preco_minimo?: number | null
+          resultado_entregue?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessoes_venda: {
         Row: {
           atualizado_em: string | null
@@ -366,7 +490,11 @@ export type Database = {
           dados_formulario: Json | null
           email_gerado_em: string | null
           email_json: Json | null
+          follow_up_gerado_em: string | null
+          follow_up_json: Json | null
           id: string
+          mensagens_confirmacao_geradas_em: string | null
+          mensagens_confirmacao_json: Json | null
           nicho: string | null
           notas_pos_reuniao: string | null
           objecoes_geradas_em: string | null
@@ -380,6 +508,7 @@ export type Database = {
           roteiro_aprovado_em: string | null
           roteiro_gerado_em: string | null
           roteiro_json: Json | null
+          secoes_estado: Json | null
           tokens_proposta: number | null
           tokens_roteiro: number | null
           usuario_id: string
@@ -394,7 +523,11 @@ export type Database = {
           dados_formulario?: Json | null
           email_gerado_em?: string | null
           email_json?: Json | null
+          follow_up_gerado_em?: string | null
+          follow_up_json?: Json | null
           id?: string
+          mensagens_confirmacao_geradas_em?: string | null
+          mensagens_confirmacao_json?: Json | null
           nicho?: string | null
           notas_pos_reuniao?: string | null
           objecoes_geradas_em?: string | null
@@ -408,6 +541,7 @@ export type Database = {
           roteiro_aprovado_em?: string | null
           roteiro_gerado_em?: string | null
           roteiro_json?: Json | null
+          secoes_estado?: Json | null
           tokens_proposta?: number | null
           tokens_roteiro?: number | null
           usuario_id: string
@@ -422,7 +556,11 @@ export type Database = {
           dados_formulario?: Json | null
           email_gerado_em?: string | null
           email_json?: Json | null
+          follow_up_gerado_em?: string | null
+          follow_up_json?: Json | null
           id?: string
+          mensagens_confirmacao_geradas_em?: string | null
+          mensagens_confirmacao_json?: Json | null
           nicho?: string | null
           notas_pos_reuniao?: string | null
           objecoes_geradas_em?: string | null
@@ -436,6 +574,7 @@ export type Database = {
           roteiro_aprovado_em?: string | null
           roteiro_gerado_em?: string | null
           roteiro_json?: Json | null
+          secoes_estado?: Json | null
           tokens_proposta?: number | null
           tokens_roteiro?: number | null
           usuario_id?: string
