@@ -42,10 +42,14 @@ export function FormularioGeracao({ onSubmit, loading, error }: FormularioGeraca
   const [urgenciaReal, setUrgenciaReal] = useState('');
   const [qualificacaoPrevia, setQualificacaoPrevia] = useState('');
   const [objecoesIdentificadas, setObjecoesIdentificadas] = useState('');
+  const [oQueImpediria, setOQueImpediria] = useState('');
   const [tentativaAnterior, setTentativaAnterior] = useState('');
   const [caseReal, setCaseReal] = useState('');
   const [objecaoPrincipal, setObjecaoPrincipal] = useState('');
   const [garantia, setGarantia] = useState('');
+  const [entregaveisDetalhados, setEntregaveisDetalhados] = useState('');
+  const [nomeMetodologia, setNomeMetodologia] = useState('');
+  const [formatoDuracao, setFormatoDuracao] = useState('');
 
   const canAdvanceStep1 = nomeCliente.trim() && perfilDecisor && estadoEmocional;
   const canAdvanceStep2 = nicho.trim() && produto.trim();
@@ -73,10 +77,14 @@ export function FormularioGeracao({ onSubmit, loading, error }: FormularioGeraca
         ...(urgenciaReal && { urgencia_real: urgenciaReal }),
         ...(qualificacaoPrevia && { qualificacao_previa: qualificacaoPrevia }),
         ...(objecoesIdentificadas && { objecoes_identificadas: objecoesIdentificadas }),
+        ...(oQueImpediria && { o_que_impediria: oQueImpediria }),
         ...(tentativaAnterior && { tentativa_anterior: tentativaAnterior }),
         ...(caseReal && { case_real: caseReal }),
         ...(objecaoPrincipal && { objecao_principal: objecaoPrincipal }),
         ...(garantia && { garantia }),
+        ...(entregaveisDetalhados && { entregaveis_detalhados: entregaveisDetalhados }),
+        ...(nomeMetodologia && { nome_metodologia: nomeMetodologia }),
+        ...(formatoDuracao && { formato_duracao: formatoDuracao }),
       },
     };
     onSubmit(payload);
