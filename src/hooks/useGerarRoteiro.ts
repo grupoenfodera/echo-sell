@@ -12,6 +12,7 @@ export interface GeracaoState {
   proposta: PropostaJSON | null;
   email: EmailJSON | null;
   objecoes: ObjecaoItem[] | null;
+  whatsapp: WhatsAppJSON | null;
   loading: boolean;
   error: string | null;
 }
