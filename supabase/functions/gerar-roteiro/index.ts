@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
       .eq("usuario_id", user.id)
       .single();
 
-    let contexto = contextoGeracao || null;
+    let contexto = contextoGeracao || contextoBody || null;
     if (!contexto && dna?.contexto && dna.contexto !== "ambos") {
       contexto = dna.contexto;
     }
