@@ -127,6 +127,7 @@ export default function Gerar() {
             proposta={state.proposta}
             email={state.email}
             objecoes={state.objecoes}
+            whatsapp={state.whatsapp}
             sessaoId={state.sessaoId!}
             onRegistrarResultado={handleRegistrarResultado}
             onNovaGeracao={reiniciar}

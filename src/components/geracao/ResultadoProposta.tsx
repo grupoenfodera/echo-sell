@@ -232,9 +232,10 @@ export function ResultadoProposta({ proposta, email, objecoes, whatsapp, sessaoI
       </div>
 
       <Tabs defaultValue="proposta">
-        <TabsList className="w-full grid grid-cols-3">
+        <TabsList className={`w-full grid ${whatsapp ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="proposta">📄 Proposta</TabsTrigger>
           <TabsTrigger value="email">✉️ Email</TabsTrigger>
+          {whatsapp && <TabsTrigger value="whatsapp">📱 WhatsApp</TabsTrigger>}
           <TabsTrigger value="objecoes">🛡️ Objeções</TabsTrigger>
         </TabsList>
         <TabsContent value="proposta" className="mt-4">
@@ -243,6 +244,11 @@ export function ResultadoProposta({ proposta, email, objecoes, whatsapp, sessaoI
         <TabsContent value="email" className="mt-4">
           <EmailTab email={email} />
         </TabsContent>
+        {whatsapp && (
+          <TabsContent value="whatsapp" className="mt-4">
+            <WhatsAppTab whatsapp={whatsapp} />
+          </TabsContent>
+        )}
         <TabsContent value="objecoes" className="mt-4">
           <ObjecoesTab objecoes={objecoes} />
         </TabsContent>

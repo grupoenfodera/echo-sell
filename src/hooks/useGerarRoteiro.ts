@@ -112,6 +112,7 @@ export function useGerarRoteiro() {
         proposta: res.proposta,
         email: res.email,
         objecoes: res.objecoes,
+        whatsapp: res.whatsapp ?? null,
       }));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Erro ao gerar proposta');

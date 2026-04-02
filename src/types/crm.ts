@@ -181,6 +181,7 @@ export interface GerarPropostaResponse {
   proposta: PropostaJSON;
   email: EmailJSON;
   objecoes: ObjecaoItem[];
+  whatsapp: WhatsAppJSON;
 }
 
 export interface CrmListarResponse {
