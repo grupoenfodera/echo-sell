@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import logoSvp from '@/assets/logo-svp.png';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -86,7 +87,7 @@ const Login = () => {
         className="relative z-10 w-full max-w-sm px-6"
       >
         <div className="text-center mb-10">
-          <h1 className="font-heading font-bold text-3xl tracking-tight text-foreground">SVP</h1>
+          <img src={logoSvp} alt="Método SVP" className="h-16 mx-auto" />
           <p className="font-heading font-normal text-xl text-muted-foreground mt-2">
             Sistema de Vendas PASTOR
           </p>
