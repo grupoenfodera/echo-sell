@@ -486,7 +486,7 @@ function SessaoItem({ sessao, onRegistrarResultado }: { sessao: SessaoVenda; onR
       className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
       onClick={() => {
         if (sessao.roteiro_json) {
-          window.open(`/gerar?sessao=${sessao.id}`, '_blank');
+          onVerRoteiro(sessao);
         }
       }}
     >
