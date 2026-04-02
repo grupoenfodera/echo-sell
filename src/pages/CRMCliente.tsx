@@ -659,6 +659,35 @@ const ETAPAS_CONFIG = [
 
 function RoteiroAccordion({ roteiro }: { roteiro: RoteiroJSON }) {
   const r = roteiro.roteiro_reuniao;
+
+  // Handle both array (new) and object (legacy) formats
+  if (Array.isArray(r)) {
+    return (
+      <Accordion type="single" collapsible defaultValue="bloco-0">
+        {r.map((bloco, i) => (
+          <AccordionItem key={i} value={`bloco-${i}`}>
+            <AccordionTrigger className="hover:no-underline text-sm">
+              <span className="flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">{bloco.numero}</span>
+                <span className="font-medium">{bloco.titulo}</span>
+                <Badge variant="secondary" className="text-[10px] ml-1">{bloco.tempo}</Badge>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-2 text-sm">
+              <p className="whitespace-pre-wrap">{bloco.script}</p>
+              {bloco.tecnica && (
+                <div className="flex items-start gap-2 mt-2">
+                  <Badge variant="secondary" className="text-[10px] shrink-0">{bloco.tecnica}</Badge>
+                  <p className="text-xs text-muted-foreground">{bloco.nota_tecnica}</p>
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    );
+  }
+
   const etapasMap: Record<string, RoteiroEtapa> = {
     abertura: r.abertura,
     descoberta: r.descoberta,
