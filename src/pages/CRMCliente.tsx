@@ -1267,6 +1267,13 @@ function CrmSessaoDrawerContent({ sessao, onSessaoUpdated }: {
             </div>
           </TabsContent>
         )}
+
+        {/* Tab: Setup */}
+        {hasSetup && (
+          <TabsContent value="setup">
+            <CrmSetupTab mensagensConfirmacao={mensagensConfirmacao} followUp={followUp} copyToClipboard={copyToClipboard} />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
