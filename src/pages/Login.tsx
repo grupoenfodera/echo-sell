@@ -87,7 +87,7 @@ const Login = () => {
         className="relative z-10 w-full max-w-sm px-6"
       >
         <div className="text-center mb-10">
-          <img src={logoSvp} alt="Método SVP" className="h-16 mx-auto" />
+          <img src={logoSvp} alt="Método SVP" className="h-[100px] mx-auto" />
           <p className="font-heading font-normal text-xl text-muted-foreground mt-2">
             Sistema de Vendas PASTOR
           </p>
