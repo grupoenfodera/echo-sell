@@ -1,77 +1,72 @@
 import { supabase } from '@/integrations/supabase/client';
 import type {
-  GerarRoteiroPayload,   GerarRoteiroResponse,
+  GerarRoteiroPayload, GerarRoteiroResponse,
   AprovarRoteiroPayload, AprovarRoteiroResponse,
-  GerarPropostaResponse,
-  CrmListarResponse,
+  GerarPropostaResponse, CrmListarResponse,
+  Cliente, SessaoVenda, Interacao
 } from '@/types/crm';
 
-const BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
-async function getAuthHeader(): Promise<string> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error('Usuário não autenticado');
-  return `Bearer ${token}`;
-}
-
-async function post<T>(path: string, body: unknown): Promise<T> {
-  const auth = await getAuthHeader();
-  const res = await fetch(`${BASE}/${path}`, {
-    method: 'POST',
+async function callFunction<T>(name: string, options: RequestInit = {}): Promise<T> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  const res = await fetch(`${FUNCTIONS_URL}/${name}`, {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: auth,
       apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-    },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error ?? `Erro ${res.status}`);
-  return data as T;
-}
-
-async function get<T>(path: string, params?: Record<string, string>): Promise<T> {
-  const auth = await getAuthHeader();
-  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-  const res = await fetch(`${BASE}/${path}${qs}`, {
-    headers: {
-      Authorization: auth,
-      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers ?? {}),
     },
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.error ?? `Erro ${res.status}`);
-  return data as T;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? `HTTP ${res.status}`);
+  }
+  return res.json();
 }
 
-// ── Geração ───────────────────────────────────────
 export const svpApi = {
   gerarRoteiro: (payload: GerarRoteiroPayload) =>
-    post<GerarRoteiroResponse>('gerar-roteiro', payload),
-
-  aprovarRoteiro: (payload: AprovarRoteiroPayload) =>
-    post<AprovarRoteiroResponse>('aprovar-roteiro', payload),
-
-  gerarProposta: (payload: { sessao_id: string }) =>
-    post<GerarPropostaResponse>('gerar-proposta', payload),
-
-  // ── CRM ─────────────────────────────────────────
-  listarClientes: (pagina = 1, porPagina = 20) =>
-    get<CrmListarResponse>('crm-listar', {
-      pagina: String(pagina),
-      por_pagina: String(porPagina),
+    callFunction<GerarRoteiroResponse>('gerar-roteiro', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     }),
 
+  aprovarRoteiro: (payload: AprovarRoteiroPayload) =>
+    callFunction<AprovarRoteiroResponse>('aprovar-roteiro', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  gerarProposta: (sessao_id: string) =>
+    callFunction<GerarPropostaResponse>('gerar-proposta', {
+      method: 'POST',
+      body: JSON.stringify({ sessao_id }),
+    }),
+
+  listarClientes: (pagina = 1, porPagina = 20) =>
+    callFunction<CrmListarResponse>(`crm-listar?pagina=${pagina}&por_pagina=${porPagina}`),
+
   buscarCliente: (clienteId: string) =>
-    get<CrmListarResponse>('crm-listar', { cliente_id: clienteId }),
+    callFunction<CrmListarResponse>(`crm-listar?cliente_id=${clienteId}`),
 
-  atualizarSessao: (payload: { sessao_id: string; resultado?: string; notas_pos_reuniao?: string }) =>
-    post<{ ok: boolean }>('crm-atualizar', payload),
+  atualizarSessao: (sessaoId: string, resultado: string, notas?: string) =>
+    callFunction<{ ok: boolean }>('crm-atualizar', {
+      method: 'POST',
+      body: JSON.stringify({ sessao_id: sessaoId, resultado, notas_pos_reuniao: notas }),
+    }),
 
-  atualizarCliente: (payload: { cliente_id: string } & Record<string, unknown>) =>
-    post<{ ok: boolean }>('crm-atualizar', payload),
+  atualizarCliente: (clienteId: string, campos: Partial<Cliente>) =>
+    callFunction<{ ok: boolean }>('crm-atualizar', {
+      method: 'POST',
+      body: JSON.stringify({ cliente_id: clienteId, ...campos }),
+    }),
 
-  registrarInteracao: (payload: { interacao: Record<string, unknown> }) =>
-    post<{ ok: boolean }>('crm-atualizar', payload),
+  registrarInteracao: (interacao: Omit<Interacao, 'id' | 'usuario_id' | 'criado_em'>) =>
+    callFunction<{ ok: boolean; interacao_id: string }>('crm-atualizar', {
+      method: 'POST',
+      body: JSON.stringify({ interacao }),
+    }),
 };
