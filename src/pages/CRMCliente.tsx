@@ -9,7 +9,7 @@ import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
 import { svpApi } from '@/lib/api-svp';
 import { useAuth } from '@/contexts/AuthContext';
 import type {
-  Cliente, SessaoVenda, Interacao, InteracaoCanal, ClienteStatus, ClienteTemperatura,
+  Cliente, SessaoVenda, Interacao, InteracaoCanal, ClienteStatus, ClienteTemperatura, RoteiroEtapa,
 } from '@/types/crm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,13 +19,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
   ArrowLeft, Edit2, Plus, Phone, Mail, Linkedin, Instagram, UserPlus,
   Circle, Thermometer, Calendar, Clock, StickyNote, FileText, ChevronRight,
-  Sparkles, Loader2, AlertCircle, MessageSquare, ClipboardCheck,
+  Sparkles, Loader2, AlertCircle, MessageSquare, ClipboardCheck, X,
 } from 'lucide-react';
 
 /* ── Maps ──────────────────────────────────────── */
