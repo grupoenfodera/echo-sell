@@ -16,6 +16,7 @@ import DnaProfile from "./pages/DnaProfile";
 import History from "./pages/History";
 import CRM from "./pages/CRM";
 import CRMCliente from "./pages/CRMCliente";
+import Gerar from "./pages/Gerar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
