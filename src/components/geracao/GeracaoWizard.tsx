@@ -226,8 +226,14 @@ function StepProduto({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="produto">Produto ou Serviço <Req /></Label>
-        <Textarea id="produto" placeholder="Descreva o que você vende e seus diferenciais" value={data.produto} onChange={e => onChange({ produto: e.target.value })} rows={3} />
+        <Label htmlFor="nome_produto">Nome do Produto ou Serviço <Req /></Label>
+        <Input id="nome_produto" placeholder="Ex: Consultoria de Marketing Digital, Plano Premium..." value={data.nome_produto} onChange={e => onChange({ nome_produto: e.target.value })} />
+        {errors.nome_produto && <p className="text-xs text-destructive">{errors.nome_produto}</p>}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="produto">Descrição e Diferenciais <Req /></Label>
+        <Textarea id="produto" placeholder="Descreva o que você vende, como funciona e seus diferenciais" value={data.produto} onChange={e => onChange({ produto: e.target.value })} rows={3} />
         {errors.produto && <p className="text-xs text-destructive">{errors.produto}</p>}
       </div>
 
