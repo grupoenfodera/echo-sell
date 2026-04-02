@@ -1000,6 +1000,11 @@ function CrmSessaoDrawerContent({ sessao, onSessaoUpdated }: {
               Objeções
             </TabsTrigger>
           )}
+          {hasSetup && (
+            <TabsTrigger value="setup" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              📋 Setup
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Tab: Roteiro */}
