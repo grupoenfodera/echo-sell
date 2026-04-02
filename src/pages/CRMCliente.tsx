@@ -138,7 +138,6 @@ export default function CRMCliente() {
     setSalvando(true);
     try {
       await svpApi.atualizarCliente(clienteId, {
-        cliente_id: clienteId,
         nome: formEdit.nome.trim(),
         empresa: formEdit.empresa?.trim() || undefined,
         whatsapp: formEdit.whatsapp?.trim() || undefined,
