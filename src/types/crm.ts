@@ -163,6 +163,17 @@ export interface Deal {
   atualizado_em: string;
 }
 
+export interface MensagensConfirmacao {
+  d1: string;
+  d0_10min: string;
+}
+
+export interface FollowUpItem {
+  tentativa: number;
+  momento: string;
+  mensagem: string;
+}
+
 export interface SessaoVenda {
   id: string;
   usuario_id: string;
@@ -184,6 +195,8 @@ export interface SessaoVenda {
   objecoes_geradas_em?: string;
   whatsapp_json?: WhatsAppJSON;
   whatsapp_gerado_em?: string;
+  mensagens_confirmacao_json?: MensagensConfirmacao;
+  follow_up_json?: FollowUpItem[];
   resultado?: SessaoResultado;
   notas_pos_reuniao?: string;
   criado_em: string;

@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type {
   Cliente, SessaoVenda, Interacao, InteracaoCanal, ClienteStatus, ClienteTemperatura, RoteiroEtapa,
+  MensagensConfirmacao, FollowUpItem,
 } from '@/types/crm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +30,7 @@ import {
   ArrowLeft, Edit2, Plus, Phone, Mail, Linkedin, Instagram, UserPlus,
   Circle, Thermometer, Calendar, Clock, StickyNote, FileText, ChevronRight,
   Sparkles, Loader2, AlertCircle, MessageSquare, ClipboardCheck, X, Trash2,
-  Copy, Check, Shield, Save,
+  Copy, Check, Shield, Save, ClipboardList, CalendarClock, RotateCw, Send, RefreshCw,
 } from 'lucide-react';
 
 /* ── Maps ──────────────────────────────────────── */
@@ -837,12 +838,15 @@ function CrmSessaoDrawerContent({ sessao, onSessaoUpdated }: {
   const email = sessao.email_json as any;
   const objecoes = (sessao.objecoes_json as any[]) || [];
   const whatsapp = sessao.whatsapp_json as any;
+  const mensagensConfirmacao = sessao.mensagens_confirmacao_json as MensagensConfirmacao | undefined;
+  const followUp = sessao.follow_up_json as FollowUpItem[] | undefined;
 
   const hasRoteiro = !!roteiro;
   const hasProposta = !!proposta;
   const hasEmail = !!email;
   const hasObjecoes = objecoes.length > 0;
   const hasWhatsapp = !!whatsapp;
+  const hasSetup = !!mensagensConfirmacao || (followUp && followUp.length > 0);
 
   const copyToClipboard = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
@@ -994,6 +998,11 @@ function CrmSessaoDrawerContent({ sessao, onSessaoUpdated }: {
           {hasObjecoes && (
             <TabsTrigger value="objecoes" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
               Objeções
+            </TabsTrigger>
+          )}
+          {hasSetup && (
+            <TabsTrigger value="setup" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              📋 Setup
             </TabsTrigger>
           )}
         </TabsList>
@@ -1258,7 +1267,93 @@ function CrmSessaoDrawerContent({ sessao, onSessaoUpdated }: {
             </div>
           </TabsContent>
         )}
+
+        {/* Tab: Setup */}
+        {hasSetup && (
+          <TabsContent value="setup">
+            <CrmSetupTab mensagensConfirmacao={mensagensConfirmacao} followUp={followUp} copyToClipboard={copyToClipboard} />
+          </TabsContent>
+        )}
       </Tabs>
+    </div>
+  );
+}
+
+/* ── CrmSetupTab ── */
+
+const FOLLOW_UP_BADGES = ['Combinado', '+3 dias', '+7 dias', 'Encerramento'];
+
+function CrmSetupTab({
+  mensagensConfirmacao,
+  followUp,
+  copyToClipboard,
+}: {
+  mensagensConfirmacao?: MensagensConfirmacao;
+  followUp?: FollowUpItem[];
+  copyToClipboard: (text: string) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      {/* Confirmações */}
+      {mensagensConfirmacao && (
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-primary" /> Confirmações
+          </h4>
+
+          <div className="border border-border rounded-xl p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h5 className="text-sm font-medium text-foreground">📅 1 dia antes da reunião</h5>
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => copyToClipboard(mensagensConfirmacao.d1)}>
+                <Copy className="h-3 w-3" /> Copiar
+              </Button>
+            </div>
+            <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed bg-muted/50 rounded-lg p-4">
+              {mensagensConfirmacao.d1}
+            </p>
+          </div>
+
+          <div className="border border-border rounded-xl p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h5 className="text-sm font-medium text-foreground">⏰ 10 minutos antes</h5>
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => copyToClipboard(mensagensConfirmacao.d0_10min)}>
+                <Copy className="h-3 w-3" /> Copiar
+              </Button>
+            </div>
+            <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed bg-muted/50 rounded-lg p-4">
+              {mensagensConfirmacao.d0_10min}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Follow-up */}
+      {followUp && followUp.length > 0 && (
+        <div className="space-y-3">
+          <div>
+            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <RotateCw className="h-4 w-4 text-primary" /> Follow-up pós-reunião
+            </h4>
+            <p className="text-xs text-muted-foreground mt-0.5">Se não fechar na call — envie nesta ordem</p>
+          </div>
+
+          {followUp.map((item, idx) => (
+            <div key={idx} className="border border-border rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <Badge variant="secondary" className="text-xs">
+                  <Send className="h-3 w-3 mr-1" /> {FOLLOW_UP_BADGES[idx] || item.momento}
+                </Badge>
+                <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => copyToClipboard(item.mensagem)}>
+                  <Copy className="h-3 w-3" /> Copiar
+                </Button>
+              </div>
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed bg-muted/50 rounded-lg p-4">
+                {item.mensagem}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
