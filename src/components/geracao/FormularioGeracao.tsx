@@ -22,6 +22,8 @@ export function FormularioGeracao({ onSubmit, loading, error }: FormularioGeraca
   const [contextoGeracao, setContextoGeracao] = useState<'b2b' | 'b2c'>('b2b');
   const [cargo, setCargo] = useState('');
   const [dorPrincipal, setDorPrincipal] = useState('');
+  const [objecaoPrincipal, setObjecaoPrincipal] = useState('');
+  const [momentoVenda, setMomentoVenda] = useState('primeira_reuniao');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
