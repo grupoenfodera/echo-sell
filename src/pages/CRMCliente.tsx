@@ -415,12 +415,7 @@ export default function CRMCliente() {
           >
             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border shrink-0">
               <div className="min-w-0 flex-1">
-                <h2 className="text-base font-semibold text-foreground line-clamp-1">
-                  {(() => {
-                    const txt = sessaoAberta.produto || 'Proposta Completa';
-                    return txt.length > 60 ? txt.slice(0, 60) + '…' : txt;
-                  })()}
-                </h2>
+                <h2 className="text-base font-semibold text-foreground">Proposta Completa</h2>
                 <p className="text-xs text-muted-foreground">
                   {sessaoAberta.nicho && `${sessaoAberta.nicho} · `}
                   {sessaoAberta.criado_em ? format(new Date(sessaoAberta.criado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : ''}
