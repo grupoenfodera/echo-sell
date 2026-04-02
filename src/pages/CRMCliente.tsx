@@ -838,12 +838,15 @@ function CrmSessaoDrawerContent({ sessao, onSessaoUpdated }: {
   const email = sessao.email_json as any;
   const objecoes = (sessao.objecoes_json as any[]) || [];
   const whatsapp = sessao.whatsapp_json as any;
+  const mensagensConfirmacao = sessao.mensagens_confirmacao_json as MensagensConfirmacao | undefined;
+  const followUp = sessao.follow_up_json as FollowUpItem[] | undefined;
 
   const hasRoteiro = !!roteiro;
   const hasProposta = !!proposta;
   const hasEmail = !!email;
   const hasObjecoes = objecoes.length > 0;
   const hasWhatsapp = !!whatsapp;
+  const hasSetup = !!mensagensConfirmacao || (followUp && followUp.length > 0);
 
   const copyToClipboard = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
