@@ -100,6 +100,7 @@ export default function RoteiroResultado({
 
   const renderSecaoBody = (key: SecaoKey) => {
     const secao = r[key];
+    if (!secao) return null;
     if (key === 'tratamento_objecoes' && secao.objecoes_previstas) {
       return (
         <div className="space-y-3">
@@ -143,7 +144,7 @@ export default function RoteiroResultado({
   };
 
   const getTempoMin = (key: SecaoKey): number => {
-    return r[key].duracao_min;
+    return r[key]?.duracao_min ?? 0;
   };
 
   return (
