@@ -39,6 +39,30 @@ export interface RoteiroEtapa {
   objecoes_previstas?: { objecao: string; resposta: string }[];
 }
 
+export interface SecaoRoteiro {
+  id: string;
+  tipo: 'script' | 'instrucao' | 'objecao';
+  label: string;
+  conteudo: string;
+  raciocinio?: string;
+  conteudo_anterior?: string;
+}
+
+export interface BlocoRoteiro {
+  numero: number;
+  bloco: string;
+  titulo: string;
+  tempo: string;
+  secoes: SecaoRoteiro[];
+}
+
+export interface SecaoEstado {
+  aprovada: boolean;
+  editada: boolean;
+  texto_editado?: string;
+  atualizado_em?: string;
+}
+
 export interface RoteiroBloco {
   numero: number;
   bloco: string;
