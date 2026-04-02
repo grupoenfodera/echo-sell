@@ -86,7 +86,7 @@ const Login = () => {
         transition={{ duration: 0.5 }}
         className="relative z-10 w-full max-w-sm px-6"
       >
-        <div className="text-center mb-10">
+        <div className="text-center mb-4">
           <img src={logoSvp} alt="Método SVP" className="h-[300px] mx-auto" />
         </div>
 
