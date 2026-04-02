@@ -107,7 +107,7 @@ export default function PropostaResultado({
 
       {/* Tabs */}
       <Tabs defaultValue="proposta" className="w-full">
-        <TabsList className="w-full grid grid-cols-3">
+        <TabsList className="w-full grid grid-cols-4">
           <TabsTrigger value="proposta" className="gap-1.5">
             <FileText className="h-3.5 w-3.5" /> Proposta
           </TabsTrigger>
@@ -116,6 +116,9 @@ export default function PropostaResultado({
           </TabsTrigger>
           <TabsTrigger value="objecoes" className="gap-1.5">
             <ShieldAlert className="h-3.5 w-3.5" /> Objeções
+          </TabsTrigger>
+          <TabsTrigger value="setup" className="gap-1.5">
+            <ClipboardList className="h-3.5 w-3.5" /> Setup
           </TabsTrigger>
         </TabsList>
 
