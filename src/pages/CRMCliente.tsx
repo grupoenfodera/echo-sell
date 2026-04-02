@@ -281,6 +281,7 @@ export default function CRMCliente() {
                           onRegistrarResultado={() =>
                             setResultadoModal({ sessaoId: s.id, produto: s.produto })
                           }
+                          onVerRoteiro={(sess) => setSessaoAberta(sess)}
                         />
                       ))}
                       {sessoes.length > 5 && (
