@@ -639,3 +639,70 @@ function InteracaoCard({ interacao, isLast }: { interacao: Interacao; isLast: bo
     </div>
   );
 }
+
+/* ── RoteiroAccordion ──────────────────────────── */
+
+import type { RoteiroJSON } from '@/types/crm';
+
+const ETAPAS_CONFIG = [
+  { key: 'abertura', label: 'Abertura', icon: '👋' },
+  { key: 'descoberta', label: 'Descoberta', icon: '🔍' },
+  { key: 'apresentacao_solucao', label: 'Solução', icon: '💡' },
+  { key: 'tratamento_objecoes', label: 'Objeções', icon: '🛡️' },
+  { key: 'fechamento', label: 'Fechamento', icon: '🤝' },
+] as const;
+
+function RoteiroAccordion({ roteiro }: { roteiro: RoteiroJSON }) {
+  const r = roteiro.roteiro_reuniao;
+  const etapasMap: Record<string, RoteiroEtapa> = {
+    abertura: r.abertura,
+    descoberta: r.descoberta,
+    apresentacao_solucao: r.apresentacao_solucao,
+    tratamento_objecoes: r.tratamento_objecoes,
+    fechamento: r.fechamento,
+  };
+
+  return (
+    <Accordion type="single" collapsible defaultValue="abertura">
+      {ETAPAS_CONFIG.map(({ key, label, icon }) => {
+        const etapa = etapasMap[key];
+        if (!etapa) return null;
+        return (
+          <AccordionItem key={key} value={key}>
+            <AccordionTrigger className="hover:no-underline text-sm">
+              <span className="flex items-center gap-2">
+                <span>{icon}</span>
+                <span className="font-medium">{label}</span>
+                <Badge variant="secondary" className="text-[10px] ml-1">{etapa.duracao_min} min</Badge>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-2 text-sm">
+              <p><span className="font-medium text-foreground">Objetivo:</span> {etapa.objetivo}</p>
+              {etapa.script && (
+                <div className="rounded-md bg-muted p-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Script</p>
+                  <p className="whitespace-pre-wrap">{etapa.script}</p>
+                </div>
+              )}
+              {etapa.perguntas && etapa.perguntas.length > 0 && (
+                <ul className="list-disc pl-5 space-y-1">
+                  {etapa.perguntas.map((p, i) => <li key={i}>{p}</li>)}
+                </ul>
+              )}
+              {key === 'tratamento_objecoes' && etapa.objecoes_previstas && (
+                <div className="space-y-2">
+                  {etapa.objecoes_previstas.map((o, i) => (
+                    <div key={i} className="bg-muted/50 rounded p-2 space-y-1">
+                      <p className="text-xs font-medium">❓ {o.objecao}</p>
+                      <p className="text-xs text-muted-foreground">{o.resposta}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        );
+      })}
+    </Accordion>
+  );
+}
