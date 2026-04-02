@@ -44,10 +44,10 @@ function normalizeBlocos(roteiro: RoteiroJSON): BlocoRoteiro[] {
   if (Array.isArray(rr)) {
     // Could be new BlocoRoteiro[] with secoes, or old RoteiroBloco[] without
     if (rr.length > 0 && 'secoes' in rr[0]) {
-      return rr as BlocoRoteiro[];
+      return rr as unknown as BlocoRoteiro[];
     }
     // Old format: RoteiroBloco[] — convert each to BlocoRoteiro with single section
-    return (rr as RoteiroBloco[]).map((b, i) => ({
+    return (rr as unknown as RoteiroBloco[]).map((b, i) => ({
       numero: b.numero ?? i + 1,
       bloco: b.bloco,
       titulo: b.titulo,
