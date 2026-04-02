@@ -82,6 +82,23 @@ const CANAL_FILTERS: { value: InteracaoCanal | 'todos'; label: string }[] = [
   { value: 'proposta', label: '📄 Propostas' },
 ];
 
+/* ── Helpers ────────────────────────────────────── */
+
+function renderHighlightsSimple(text: string) {
+  let result = text;
+  result = result.replace(/\[HL1\](.*?)\[\/HL1\]/gs, '<mark class="bg-primary/20 text-primary px-1 rounded">$1</mark>');
+  result = result.replace(/\[HL2\](.*?)\[\/HL2\]/gs, '<mark class="bg-amber-500/20 text-amber-700 dark:text-amber-400 px-1 rounded">$1</mark>');
+  result = result.replace(/\[HL3\](.*?)\[\/HL3\]/gs, '<mark class="bg-green-500/20 text-green-700 dark:text-green-400 px-1 rounded">$1</mark>');
+  return result;
+}
+
+function formatScript(text: string) {
+  let result = text;
+  result = result.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  result = result.replace(/\[pausa\]/gi, '<span class="text-muted-foreground italic">[pausa]</span>');
+  return result;
+}
+
 /* ── Página ─────────────────────────────────────── */
 
 export default function CRMCliente() {
