@@ -35,6 +35,13 @@ export default function Gerar() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [state.etapa]);
 
+  // Redirect to roteiro page when roteiro is generated
+  useEffect(() => {
+    if (state.etapa === 'roteiro' && state.sessaoId) {
+      navigate(`/roteiro/${state.sessaoId}`, { replace: true });
+    }
+  }, [state.etapa, state.sessaoId, navigate]);
+
   const handleFormSubmit = (payload: GerarRoteiroPayload) => {
     setLastPayload(payload);
     gerarRoteiro(payload);
