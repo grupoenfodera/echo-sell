@@ -150,10 +150,18 @@ function WhatsAppTab({ whatsapp }: { whatsapp: WhatsAppJSON }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 rounded-md p-3">{whatsapp.mensagem_principal}</pre>
-          <Button variant="outline" size="sm" onClick={() => copiarTexto(whatsapp.mensagem_principal)}>
-            <Copy className="mr-2 h-3.5 w-3.5" />
-            Copiar mensagem
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => copiarTexto(whatsapp.mensagem_principal)}>
+              <Copy className="mr-2 h-3.5 w-3.5" />
+              Copiar mensagem
+            </Button>
+            <Button size="sm" className="bg-[#25D366] hover:bg-[#1da851] text-white" asChild>
+              <a href={`https://wa.me/?text=${encodeURIComponent(whatsapp.mensagem_principal)}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                Abrir no WhatsApp
+              </a>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
