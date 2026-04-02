@@ -364,6 +364,55 @@ export default function CRMCliente() {
           setResultadoModal(null);
         }}
       />
+
+      {/* Drawer de Roteiro */}
+      {sessaoAberta && sessaoAberta.roteiro_json && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => setSessaoAberta(null)}>
+          <div
+            onClick={e => e.stopPropagation()}
+            className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-200"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
+              <div>
+                <h2 className="text-base font-semibold text-foreground">{sessaoAberta.produto || 'Roteiro'}</h2>
+                <p className="text-xs text-muted-foreground">
+                  {sessaoAberta.nicho && `${sessaoAberta.nicho} · `}
+                  {sessaoAberta.criado_em ? format(new Date(sessaoAberta.criado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : ''}
+                  {sessaoAberta.roteiro_json.score && ` · Score ${sessaoAberta.roteiro_json.score}/100`}
+                </p>
+              </div>
+              <button onClick={() => setSessaoAberta(null)} className="text-muted-foreground hover:text-foreground p-1">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {sessaoAberta.roteiro_json.resumo_estrategico && (
+                <div className="bg-muted/40 rounded-lg p-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Estratégia</p>
+                  <p className="text-sm text-foreground">{sessaoAberta.roteiro_json.resumo_estrategico}</p>
+                </div>
+              )}
+              <RoteiroAccordion roteiro={sessaoAberta.roteiro_json} />
+
+              {sessaoAberta.proposta_json && (
+                <div className="bg-muted/40 rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Proposta</p>
+                  <p className="text-sm font-semibold text-foreground">{sessaoAberta.proposta_json.titulo}</p>
+                  <p className="text-sm text-foreground">{sessaoAberta.proposta_json.introducao}</p>
+                </div>
+              )}
+
+              {sessaoAberta.email_json && (
+                <div className="bg-muted/40 rounded-lg p-3 space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">Email de Follow-up</p>
+                  <p className="text-sm font-medium text-foreground">{sessaoAberta.email_json.assunto}</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{sessaoAberta.email_json.corpo}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
