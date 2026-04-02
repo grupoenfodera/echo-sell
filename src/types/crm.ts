@@ -101,9 +101,11 @@ export interface WhatsAppJSON {
 
 export interface ObjecaoItem {
   objecao: string;
+  tecnica?: string;
   resposta_curta: string;
   resposta_completa: string;
   categoria: 'preco' | 'tempo' | 'confianca' | 'necessidade' | 'autoridade';
+  se_terceiro?: string;
 }
 
 export interface Interacao {
