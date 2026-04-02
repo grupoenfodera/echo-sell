@@ -16,6 +16,7 @@ interface ResultadoPropostaProps {
   proposta: PropostaJSON;
   email: EmailJSON;
   objecoes: ObjecaoItem[];
+  whatsapp?: WhatsAppJSON | null;
   sessaoId: string;
   onRegistrarResultado: (resultado: string, notas: string) => void;
   onNovaGeracao: () => void;
