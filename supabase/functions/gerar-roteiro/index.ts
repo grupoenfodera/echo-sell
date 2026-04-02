@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
 
     // ── Body ──
     const body = await req.json();
-    const { nicho, produto, preco, contextoGeracao, nome_cliente, cliente_id, dados_extras } = body;
+    const { nicho, produto, preco, contextoGeracao, contexto: contextoBody, nome_cliente, cliente_id, dados_extras } = body;
 
     if (!nicho || !produto) {
       return errorResponse("Campos obrigatórios: nicho, produto.", 400);
