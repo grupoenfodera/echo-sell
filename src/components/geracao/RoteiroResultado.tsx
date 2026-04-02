@@ -100,6 +100,7 @@ export default function RoteiroResultado({
 
   const renderSecaoBody = (key: SecaoKey) => {
     const secao = r[key];
+    if (!secao) return null;
     if (key === 'tratamento_objecoes' && secao.objecoes_previstas) {
       return (
         <div className="space-y-3">
