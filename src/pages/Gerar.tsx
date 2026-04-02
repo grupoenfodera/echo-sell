@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useGerarRoteiro } from '@/hooks/useGerarRoteiro';
 import { FormularioGeracao } from '@/components/geracao/FormularioGeracao';
 import { CardRoteiro } from '@/components/geracao/CardRoteiro';
@@ -25,6 +26,7 @@ const ETAPA_INDEX: Record<string, number> = {
 export default function Gerar() {
   const { state, gerarRoteiro, aprovarRoteiro, rejeitarRoteiro, gerarProposta, reiniciar } = useGerarRoteiro();
   const [lastPayload, setLastPayload] = useState<GerarRoteiroPayload | null>(null);
+  const navigate = useNavigate();
 
   const currentIndex = ETAPA_INDEX[state.etapa] ?? 0;
 
