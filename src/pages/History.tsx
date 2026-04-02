@@ -537,25 +537,26 @@ function SessaoDrawerContent({ gen, copyToClipboard }: { gen: Gen; copyToClipboa
   return (
     <div className="space-y-5">
       {/* Context Card */}
-      {(titulo || resumo) && (
+      {(titulo || perfilDecisor || resumo) && (
         <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+          <div className="flex items-start gap-3">
+            <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
               <FileText className="h-4 w-4 text-primary" />
             </div>
-            <div>
+            <div className="min-w-0 space-y-1">
               <h3 className="text-sm font-semibold text-foreground">
                 {titulo} {subtitulo && <span className="font-normal text-muted-foreground">{subtitulo}</span>}
               </h3>
+              {perfilDecisor && (
+                <p className="text-sm text-foreground leading-relaxed">
+                  <span className="text-primary font-semibold">Perfil do decisor:</span> {perfilDecisor}
+                </p>
+              )}
+              {resumo && !perfilDecisor && (
+                <p className="text-sm text-muted-foreground leading-relaxed">{resumo}</p>
+              )}
             </div>
           </div>
-          {(perfilDecisor || resumo) && (
-            <div className="text-sm text-foreground leading-relaxed">
-              {perfilDecisor && <p><strong className="font-semibold">Perfil do decisor:</strong> {perfilDecisor}</p>}
-              {resumo && !perfilDecisor && <p>{resumo}</p>}
-              {resumo && perfilDecisor && <p className="text-muted-foreground mt-1">{resumo}</p>}
-            </div>
-          )}
         </div>
       )}
 
