@@ -239,6 +239,14 @@ export default function PropostaResultado({
             ))}
           </div>
         </TabsContent>
+
+        {/* Tab Setup */}
+        <TabsContent value="setup">
+          <SetupTabContent
+            mensagensConfirmacao={mensagensConfirmacao}
+            followUp={followUp}
+          />
+        </TabsContent>
       </Tabs>
 
       {/* Banner pós-geração */}
