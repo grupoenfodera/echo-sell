@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type {
   Cliente, SessaoVenda, Interacao, InteracaoCanal, ClienteStatus, ClienteTemperatura, RoteiroEtapa,
+  MensagensConfirmacao, FollowUpItem,
 } from '@/types/crm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,7 +30,7 @@ import {
   ArrowLeft, Edit2, Plus, Phone, Mail, Linkedin, Instagram, UserPlus,
   Circle, Thermometer, Calendar, Clock, StickyNote, FileText, ChevronRight,
   Sparkles, Loader2, AlertCircle, MessageSquare, ClipboardCheck, X, Trash2,
-  Copy, Check, Shield, Save,
+  Copy, Check, Shield, Save, ClipboardList, CalendarClock, RotateCw, Send, RefreshCw,
 } from 'lucide-react';
 
 /* ── Maps ──────────────────────────────────────── */
