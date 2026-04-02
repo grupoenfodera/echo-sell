@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { CheckCircle, Copy, RefreshCw, ChevronDown, Save } from 'lucide-react';
+import { CheckCircle, Copy, RefreshCw, ChevronDown, Save, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PropostaJSON, EmailJSON, ObjecaoItem, WhatsAppJSON } from '@/types/crm';
 
@@ -150,10 +150,18 @@ function WhatsAppTab({ whatsapp }: { whatsapp: WhatsAppJSON }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 rounded-md p-3">{whatsapp.mensagem_principal}</pre>
-          <Button variant="outline" size="sm" onClick={() => copiarTexto(whatsapp.mensagem_principal)}>
-            <Copy className="mr-2 h-3.5 w-3.5" />
-            Copiar mensagem
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => copiarTexto(whatsapp.mensagem_principal)}>
+              <Copy className="mr-2 h-3.5 w-3.5" />
+              Copiar mensagem
+            </Button>
+            <Button size="sm" className="bg-[#25D366] hover:bg-[#1da851] text-white" asChild>
+              <a href={`https://wa.me/?text=${encodeURIComponent(whatsapp.mensagem_principal)}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                Abrir no WhatsApp
+              </a>
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -164,10 +172,18 @@ function WhatsAppTab({ whatsapp }: { whatsapp: WhatsAppJSON }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 rounded-md p-3">{whatsapp.versao_curta}</pre>
-          <Button variant="outline" size="sm" onClick={() => copiarTexto(whatsapp.versao_curta)}>
-            <Copy className="mr-2 h-3.5 w-3.5" />
-            Copiar versão curta
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => copiarTexto(whatsapp.versao_curta)}>
+              <Copy className="mr-2 h-3.5 w-3.5" />
+              Copiar versão curta
+            </Button>
+            <Button size="sm" className="bg-[#25D366] hover:bg-[#1da851] text-white" asChild>
+              <a href={`https://wa.me/?text=${encodeURIComponent(whatsapp.versao_curta)}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="mr-2 h-3.5 w-3.5" />
+                Abrir no WhatsApp
+              </a>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
