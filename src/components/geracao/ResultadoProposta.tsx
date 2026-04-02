@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { CheckCircle, Copy, RefreshCw, ChevronDown, Save } from 'lucide-react';
+import { CheckCircle, Copy, RefreshCw, ChevronDown, Save, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import type { PropostaJSON, EmailJSON, ObjecaoItem, WhatsAppJSON } from '@/types/crm';
 
