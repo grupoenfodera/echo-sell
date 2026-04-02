@@ -487,7 +487,12 @@ function SessaoDrawerContent({ gen, copyToClipboard }: { gen: Gen; copyToClipboa
   }
 
   // Build context info
-  const titulo = [gen.produto, gen.preco ? `R$${Number(gen.preco).toLocaleString('pt-BR')}` : null].filter(Boolean).join(' · ');
+  const produtoNome = (() => {
+    const txt = gen.produto || '';
+    const firstLine = txt.split('\n')[0].trim();
+    return firstLine.length > 80 ? firstLine.slice(0, 80) + '…' : firstLine;
+  })();
+  const titulo = [produtoNome, gen.preco ? `R$${Number(gen.preco).toLocaleString('pt-BR')}` : null].filter(Boolean).join(' · ');
   const subtitulo = gen.nicho ? `— ${gen.nicho}` : '';
   const resumo = roteiro?.resumo_estrategico;
   const perfilDecisor = roteiro?.perfil_decisor || (gen as any).dados_formulario?.perfil_decisor;
