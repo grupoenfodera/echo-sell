@@ -535,9 +535,8 @@ function SessaoItem({ sessao, onRegistrarResultado, onVerRoteiro }: { sessao: Se
     <div
       className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
       onClick={() => {
-        if (sessao.roteiro_json) {
-          onVerRoteiro(sessao);
-        }
+        console.log('Sessao clicada:', sessao.id, 'roteiro_json:', !!sessao.roteiro_json, typeof sessao.roteiro_json);
+        onVerRoteiro(sessao);
       }}
     >
       <div className="flex-1 min-w-0 space-y-1">
