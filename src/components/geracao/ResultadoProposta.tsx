@@ -140,6 +140,40 @@ function EmailTab({ email }: { email: EmailJSON }) {
   );
 }
 
+function WhatsAppTab({ whatsapp }: { whatsapp: WhatsAppJSON }) {
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Mensagem principal</CardTitle>
+          <p className="text-xs text-muted-foreground">Cole diretamente no WhatsApp</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 rounded-md p-3">{whatsapp.mensagem_principal}</pre>
+          <Button variant="outline" size="sm" onClick={() => copiarTexto(whatsapp.mensagem_principal)}>
+            <Copy className="mr-2 h-3.5 w-3.5" />
+            Copiar mensagem
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Versão curta</CardTitle>
+          <p className="text-xs text-muted-foreground">Para quando ele não respondeu — 2 linhas, direto</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 rounded-md p-3">{whatsapp.versao_curta}</pre>
+          <Button variant="outline" size="sm" onClick={() => copiarTexto(whatsapp.versao_curta)}>
+            <Copy className="mr-2 h-3.5 w-3.5" />
+            Copiar versão curta
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function ObjecoesTab({ objecoes }: { objecoes: ObjecaoItem[] }) {
   return (
     <div className="space-y-3">
