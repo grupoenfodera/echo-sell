@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
 
     // ── Body ──
     const body = await req.json();
-    const { nicho, produto, preco, contextoGeracao, nome_cliente, cliente_id, dados_extras } = body;
+    const { nicho, produto, preco, contextoGeracao, contexto: contextoBody, nome_cliente, cliente_id, dados_extras } = body;
 
     if (!nicho || !produto) {
       return errorResponse("Campos obrigatórios: nicho, produto.", 400);
@@ -169,9 +169,13 @@ Deno.serve(async (req) => {
       .eq("usuario_id", user.id)
       .single();
 
-    let contexto = contextoGeracao || null;
+    let contexto = contextoGeracao || contextoBody || null;
     if (!contexto && dna?.contexto && dna.contexto !== "ambos") {
       contexto = dna.contexto;
+    }
+    // Normalize to lowercase for DB check constraint
+    if (contexto) {
+      contexto = contexto.toLowerCase();
     }
 
     // ── Build prompt ──
