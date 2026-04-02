@@ -352,3 +352,142 @@ function ObjecaoCard({ objecao }: { objecao: ObjecaoItem }) {
     </Card>
   );
 }
+
+/* ── SetupTabContent ── */
+
+const FOLLOW_UP_BADGES = ['Combinado', '+3 dias', '+7 dias', 'Encerramento'];
+
+function SetupTabContent({
+  mensagensConfirmacao,
+  followUp,
+}: {
+  mensagensConfirmacao?: MensagensConfirmacao | null;
+  followUp?: FollowUpItem[] | null;
+}) {
+  const navigate = useNavigate();
+  const copySetup = useCopy();
+
+  const hasData = !!mensagensConfirmacao || (followUp && followUp.length > 0);
+
+  if (!hasData) {
+    return (
+      <Card>
+        <CardContent className="pt-6 text-center space-y-4 py-12">
+          <ClipboardList className="h-10 w-10 text-muted-foreground/40 mx-auto" />
+          <div>
+            <p className="text-sm font-medium text-foreground">Setup não disponível</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              As mensagens de confirmação e follow-up são geradas automaticamente nas novas gerações de roteiro.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => navigate('/gerar')}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Gerar novo roteiro
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Seção 1 — Confirmações */}
+      {mensagensConfirmacao && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-primary" /> Confirmações
+          </h3>
+
+          {/* D-1 */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                📅 1 dia antes da reunião
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                {mensagensConfirmacao.d1}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => copySetup.copiar(mensagensConfirmacao.d1)}
+              >
+                {copySetup.copiado ? <><Check className="h-3.5 w-3.5 mr-1.5" /> Copiado!</> : <><Copy className="h-3.5 w-3.5 mr-1.5" /> Copiar</>}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* D-10min */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                ⏰ 10 minutos antes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                {mensagensConfirmacao.d0_10min}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => copySetup.copiar(mensagensConfirmacao.d0_10min)}
+              >
+                {copySetup.copiado ? <><Check className="h-3.5 w-3.5 mr-1.5" /> Copiado!</> : <><Copy className="h-3.5 w-3.5 mr-1.5" /> Copiar</>}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Seção 2 — Follow-up */}
+      {followUp && followUp.length > 0 && (
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <RotateCw className="h-4 w-4 text-primary" /> Follow-up pós-reunião
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Se não fechar na call — envie nesta ordem
+            </p>
+          </div>
+
+          {followUp.map((item, idx) => (
+            <FollowUpCard key={idx} item={item} badgeLabel={FOLLOW_UP_BADGES[idx] || item.momento} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FollowUpCard({ item, badgeLabel }: { item: FollowUpItem; badgeLabel: string }) {
+  const copy = useCopy();
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs">
+            <Send className="h-3 w-3 mr-1" /> {badgeLabel}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+          {item.mensagem}
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={() => copy.copiar(item.mensagem)}
+        >
+          {copy.copiado ? <><Check className="h-3.5 w-3.5 mr-1.5" /> Copiado!</> : <><Copy className="h-3.5 w-3.5 mr-1.5" /> Copiar</>}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
