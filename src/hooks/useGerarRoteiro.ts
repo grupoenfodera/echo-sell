@@ -94,7 +94,10 @@ export function useGerarRoteiro() {
   }, [state.sessaoId]);
 
   const gerarProposta = useCallback(async () => {
-    if (!state.sessaoId) return;
+    if (!state.sessaoId) {
+      setError('Sessão inválida. Reinicie o fluxo.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await svpApi.gerarProposta(state.sessaoId);
