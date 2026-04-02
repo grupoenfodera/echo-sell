@@ -383,6 +383,8 @@ export type Database = {
           tokens_proposta: number | null
           tokens_roteiro: number | null
           usuario_id: string
+          whatsapp_gerado_em: string | null
+          whatsapp_json: Json | null
         }
         Insert: {
           atualizado_em?: string | null
@@ -409,6 +411,8 @@ export type Database = {
           tokens_proposta?: number | null
           tokens_roteiro?: number | null
           usuario_id: string
+          whatsapp_gerado_em?: string | null
+          whatsapp_json?: Json | null
         }
         Update: {
           atualizado_em?: string | null
@@ -435,6 +439,8 @@ export type Database = {
           tokens_proposta?: number | null
           tokens_roteiro?: number | null
           usuario_id?: string
+          whatsapp_gerado_em?: string | null
+          whatsapp_json?: Json | null
         }
         Relationships: [
           {
