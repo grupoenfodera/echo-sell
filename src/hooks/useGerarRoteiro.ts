@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { svpApi } from '@/lib/api-svp';
-import type { RoteiroJSON, GerarRoteiroPayload, PropostaJSON, EmailJSON, ObjecaoItem } from '@/types/crm';
+import type { RoteiroJSON, GerarRoteiroPayload, PropostaJSON, EmailJSON, ObjecaoItem, WhatsAppJSON } from '@/types/crm';
 
 export type GeracaoEtapa = 'formulario' | 'roteiro' | 'proposta' | 'concluido';
 
