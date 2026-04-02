@@ -397,6 +397,8 @@ export default function CRMCliente() {
                     </div>
                   )}
                   <RoteiroAccordion roteiro={sessaoAberta.roteiro_json} />
+                </>
+              )}
 
               {sessaoAberta.proposta_json && (
                 <div className="bg-muted/40 rounded-lg p-3 space-y-2">
