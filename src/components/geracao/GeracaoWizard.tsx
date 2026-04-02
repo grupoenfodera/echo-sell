@@ -86,7 +86,7 @@ function ProgressBar({ currentStep }: { currentStep: number }) {
   return (
     <div className="space-y-2 mb-6">
       <div className="flex justify-between text-sm text-muted-foreground">
-        <span>Etapa {currentStep + 1} de 3 — {STEPS[currentStep].label}</span>
+        <span>Etapa {currentStep + 1} de 3 | {STEPS[currentStep].label}</span>
       </div>
       <Progress value={((currentStep + 1) / 3) * 100} className="h-2" />
       <div className="flex items-center justify-center gap-0 mt-3">
