@@ -378,7 +378,7 @@ export default function CRMCliente() {
                 <p className="text-xs text-muted-foreground">
                   {sessaoAberta.nicho && `${sessaoAberta.nicho} · `}
                   {sessaoAberta.criado_em ? format(new Date(sessaoAberta.criado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : ''}
-                  {sessaoAberta.roteiro_json.score && ` · Score ${sessaoAberta.roteiro_json.score}/100`}
+                  {sessaoAberta.roteiro_json?.score && ` · Score ${sessaoAberta.roteiro_json.score}/100`}
                 </p>
               </div>
               <button onClick={() => setSessaoAberta(null)} className="text-muted-foreground hover:text-foreground p-1">
@@ -386,13 +386,17 @@ export default function CRMCliente() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {sessaoAberta.roteiro_json.resumo_estrategico && (
-                <div className="bg-muted/40 rounded-lg p-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Estratégia</p>
-                  <p className="text-sm text-foreground">{sessaoAberta.roteiro_json.resumo_estrategico}</p>
-                </div>
-              )}
-              <RoteiroAccordion roteiro={sessaoAberta.roteiro_json} />
+              {!sessaoAberta.roteiro_json ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Roteiro não disponível para esta sessão.</p>
+              ) : (
+                <>
+                  {sessaoAberta.roteiro_json.resumo_estrategico && (
+                    <div className="bg-muted/40 rounded-lg p-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Estratégia</p>
+                      <p className="text-sm text-foreground">{sessaoAberta.roteiro_json.resumo_estrategico}</p>
+                    </div>
+                  )}
+                  <RoteiroAccordion roteiro={sessaoAberta.roteiro_json} />
 
               {sessaoAberta.proposta_json && (
                 <div className="bg-muted/40 rounded-lg p-3 space-y-2">
