@@ -137,8 +137,7 @@ export default function CRMCliente() {
     if (!clienteId || !formEdit.nome?.trim()) { toast.error('Nome é obrigatório.'); return; }
     setSalvando(true);
     try {
-      await svpApi.atualizarCliente({
-        cliente_id: clienteId,
+      await svpApi.atualizarCliente(clienteId, {
         nome: formEdit.nome.trim(),
         empresa: formEdit.empresa?.trim() || undefined,
         whatsapp: formEdit.whatsapp?.trim() || undefined,
