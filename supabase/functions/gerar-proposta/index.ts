@@ -2,8 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
@@ -14,13 +13,13 @@ const COST_INPUT_PER_TOKEN = 3.0 / 1_000_000;
 const COST_OUTPUT_PER_TOKEN = 15.0 / 1_000_000;
 
 function errorResponse(message: string, status: number) {
-  return new Response(
-    JSON.stringify({ error: message }),
-    { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
-const SYSTEM_PROPOSTA = `Você é o gerador de propostas comerciais do SVP — Sistema de Vendas Persuasivas.
+const SYSTEM_PROPOSTA = `Você é o gerador de propostas comerciais do SVP — Sistema de Vendas PASTOR.
 
 Com base no roteiro de reunião fornecido, gere:
 1. Uma proposta comercial estruturada
@@ -76,7 +75,10 @@ Deno.serve(async (req) => {
     if (!authHeader) return errorResponse("Não autenticado.", 401);
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) return errorResponse("Token inválido.", 401);
 
     const { sessao_id } = await req.json();
@@ -177,7 +179,7 @@ ${JSON.stringify(sessao.roteiro_json, null, 2)}`;
         email: parsed.email,
         objecoes: parsed.objecoes || [],
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
     console.error("Error:", err);
