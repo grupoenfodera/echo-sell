@@ -389,6 +389,7 @@ export default function GeracaoWizard({
     }
     if (s === 1) {
       if (!data.nicho.trim()) errs.nicho = 'Nicho é obrigatório';
+      if (!data.nome_produto.trim()) errs.nome_produto = 'Nome do produto é obrigatório';
       if (!data.produto.trim()) errs.produto = 'Descreva o produto ou serviço';
       if (!data.contexto) errs.contexto = 'Selecione o contexto da venda';
     }
