@@ -884,7 +884,13 @@ function CrmSessaoDrawerContent({ sessao, onSessaoUpdated }: {
   }
 
   // Context info
-  const titulo = [sessao.produto, sessao.preco ? `R$${Number(sessao.preco).toLocaleString('pt-BR')}` : null].filter(Boolean).join(' · ');
+  const produtoNome = (() => {
+    const txt = sessao.produto || '';
+    // Take only the first line or first 80 chars
+    const firstLine = txt.split('\n')[0].trim();
+    return firstLine.length > 80 ? firstLine.slice(0, 80) + '…' : firstLine;
+  })();
+  const titulo = [produtoNome, sessao.preco ? `R$${Number(sessao.preco).toLocaleString('pt-BR')}` : null].filter(Boolean).join(' · ');
   const subtitulo = sessao.nicho ? `— ${sessao.nicho}` : '';
   const resumo = roteiro?.resumo_estrategico;
   const perfilDecisor = roteiro?.perfil_decisor;
