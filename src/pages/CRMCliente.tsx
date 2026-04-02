@@ -169,6 +169,22 @@ export default function CRMCliente() {
     setModalInteracao(true);
   };
 
+  const handleExcluir = async () => {
+    if (!clienteId) return;
+    setExcluindo(true);
+    try {
+      const { error } = await supabase.from('clientes').delete().eq('id', clienteId);
+      if (error) throw error;
+      toast.success('Cliente excluído com sucesso.');
+      navigate('/crm');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir cliente.');
+    } finally {
+      setExcluindo(false);
+      setConfirmDelete(false);
+    }
+  };
+
   const interacoesFiltradas = filtroCanal === 'todos'
     ? interacoes
     : interacoes.filter(i => i.canal === filtroCanal);
