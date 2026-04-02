@@ -782,3 +782,455 @@ function RoteiroAccordion({ roteiro }: { roteiro: RoteiroJSON }) {
     </Accordion>
   );
 }
+
+/* ── CopyButton ────────────────────────────────── */
+
+function CopyBtn({ onClick }: { onClick: () => void }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex justify-end pt-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="rounded-lg gap-1.5 text-xs"
+        onClick={() => { onClick(); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      >
+        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+        {copied ? 'Copiado' : 'Copiar'}
+      </Button>
+    </div>
+  );
+}
+
+/* ── CrmSessaoDrawerContent ────────────────────── */
+
+function CrmSessaoDrawerContent({ sessao, onSessaoUpdated }: {
+  sessao: SessaoVenda;
+  onSessaoUpdated: (s: SessaoVenda) => void;
+}) {
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const roteiro = sessao.roteiro_json as any;
+  const proposta = sessao.proposta_json as any;
+  const email = sessao.email_json as any;
+  const objecoes = (sessao.objecoes_json as any[]) || [];
+  const whatsapp = sessao.whatsapp_json as any;
+
+  const hasRoteiro = !!roteiro;
+  const hasProposta = !!proposta;
+  const hasEmail = !!email;
+  const hasObjecoes = objecoes.length > 0;
+  const hasWhatsapp = !!whatsapp;
+
+  const copyToClipboard = useCallback((text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copiado!');
+  }, []);
+
+  const startEdit = (field: string, currentValue: string) => {
+    setEditingField(field);
+    setEditValue(currentValue);
+  };
+
+  const saveEdit = async (jsonField: 'email_json' | 'proposta_json' | 'whatsapp_json', path: string) => {
+    setSaving(true);
+    try {
+      const currentJson = sessao[jsonField] as any;
+      const updated = { ...currentJson };
+      // Support nested paths like "corpo"
+      updated[path] = editValue;
+      const { error } = await supabase.from('sessoes_venda').update({ [jsonField]: updated }).eq('id', sessao.id);
+      if (error) throw error;
+      const updatedSessao = { ...sessao, [jsonField]: updated } as SessaoVenda;
+      onSessaoUpdated(updatedSessao);
+      setEditingField(null);
+      toast.success('Salvo!');
+    } catch (err) {
+      toast.error('Erro ao salvar.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!hasRoteiro && !hasProposta && !hasEmail) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <FileText className="h-10 w-10 text-muted-foreground/40 mb-3" />
+        <p className="text-sm text-muted-foreground">Conteúdo não disponível para esta sessão.</p>
+      </div>
+    );
+  }
+
+  // Context info
+  const titulo = [sessao.produto, sessao.preco ? `R$${Number(sessao.preco).toLocaleString('pt-BR')}` : null].filter(Boolean).join(' · ');
+  const subtitulo = sessao.nicho ? `— ${sessao.nicho}` : '';
+  const resumo = roteiro?.resumo_estrategico;
+  const perfilDecisor = roteiro?.perfil_decisor;
+
+  // Insight chips
+  const insightChips = [
+    { label: 'MAIOR MEDO', value: roteiro?.maior_medo },
+    { label: 'DECISÃO', value: roteiro?.decisao_style || roteiro?.decisao },
+    { label: 'TOM IDEAL', value: roteiro?.tom_ideal },
+  ].filter(c => c.value);
+
+  // Normalize roteiro blocks
+  const roteiroBlocks: any[] = (() => {
+    if (!roteiro?.roteiro_reuniao) return [];
+    if (Array.isArray(roteiro.roteiro_reuniao)) return roteiro.roteiro_reuniao;
+    const r = roteiro.roteiro_reuniao;
+    const legacyOrder = [
+      { key: 'abertura', label: 'Abertura', num: 1 },
+      { key: 'descoberta', label: 'Descoberta', num: 2 },
+      { key: 'apresentacao_solucao', label: 'Apresentação da Solução', num: 3 },
+      { key: 'tratamento_objecoes', label: 'Tratamento de Objeções', num: 4 },
+      { key: 'fechamento', label: 'Fechamento', num: 5 },
+    ];
+    return legacyOrder
+      .filter(e => r[e.key])
+      .map(e => ({
+        numero: e.num,
+        titulo: e.label,
+        tempo: `${r[e.key].duracao_min} min`,
+        script: r[e.key].script || r[e.key].objetivo || '',
+        tecnica: r[e.key].tecnicas?.[0] || '',
+        nota_tecnica: '',
+        perguntas: r[e.key].perguntas,
+        pontos_chave: r[e.key].pontos_chave,
+      }));
+  })();
+
+  const defaultTab = hasRoteiro && roteiroBlocks.length > 0 ? 'roteiro' : hasProposta ? 'proposta' : 'email';
+
+  return (
+    <div className="space-y-5">
+      {/* Context Card */}
+      {(titulo || resumo) && (
+        <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+              <FileText className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                {titulo} {subtitulo && <span className="font-normal text-muted-foreground">{subtitulo}</span>}
+              </h3>
+            </div>
+          </div>
+          {(perfilDecisor || resumo) && (
+            <div className="text-sm text-foreground leading-relaxed">
+              {perfilDecisor && <p><strong className="font-semibold">Perfil do decisor:</strong> {perfilDecisor}</p>}
+              {resumo && <p className={perfilDecisor ? 'text-muted-foreground mt-1' : ''}>{resumo}</p>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Insight Chips */}
+      {insightChips.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {insightChips.map(chip => (
+            <div key={chip.label} className="border border-border rounded-lg p-3">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">{chip.label}</p>
+              <p className="text-sm text-foreground leading-snug">{chip.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tabs */}
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <TabsList className="bg-transparent border-0 p-0 h-auto gap-2 mb-4 justify-start flex-wrap">
+          {hasRoteiro && roteiroBlocks.length > 0 && (
+            <TabsTrigger value="roteiro" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              Roteiro
+            </TabsTrigger>
+          )}
+          {hasProposta && (
+            <TabsTrigger value="proposta" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              Proposta
+            </TabsTrigger>
+          )}
+          {hasEmail && (
+            <TabsTrigger value="email" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              E-mail
+            </TabsTrigger>
+          )}
+          {hasWhatsapp && (
+            <TabsTrigger value="whatsapp" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              WhatsApp
+            </TabsTrigger>
+          )}
+          {hasObjecoes && (
+            <TabsTrigger value="objecoes" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              Objeções
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        {/* Tab: Roteiro */}
+        {hasRoteiro && roteiroBlocks.length > 0 && (
+          <TabsContent value="roteiro">
+            <div className="space-y-0 divide-y divide-border border border-border rounded-xl overflow-hidden">
+              {roteiroBlocks.map((bloco: any, i: number) => (
+                <div key={i} className="p-5 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0 mt-0.5">
+                        {bloco.numero}
+                      </span>
+                      <h4 className="text-sm font-semibold text-foreground leading-snug">{bloco.titulo}</h4>
+                    </div>
+                    <span className="text-xs text-primary font-medium shrink-0">{bloco.tempo}</span>
+                  </div>
+                  {bloco.script && (
+                    <div className="pl-10 space-y-2">
+                      <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed" dangerouslySetInnerHTML={{ __html: formatScript(bloco.script) }} />
+                    </div>
+                  )}
+                  {bloco.perguntas?.length > 0 && (
+                    <div className="pl-10 space-y-1">
+                      {bloco.perguntas.map((p: string, pi: number) => (
+                        <p key={pi} className="text-sm text-foreground">P{pi + 1}: "{p}"</p>
+                      ))}
+                    </div>
+                  )}
+                  {bloco.pontos_chave?.length > 0 && (
+                    <div className="pl-10">
+                      <ul className="list-disc pl-4 space-y-1">
+                        {bloco.pontos_chave.map((p: string, pi: number) => (
+                          <li key={pi} className="text-sm text-foreground">{p}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {bloco.tecnica && (
+                    <div className="pl-10 flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+                      <Badge variant="secondary" className="shrink-0 text-[10px] rounded-md">{bloco.tecnica}</Badge>
+                      {bloco.nota_tecnica && <p className="text-xs text-muted-foreground leading-relaxed">{bloco.nota_tecnica}</p>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            {roteiro.alerta_terceiro && (
+              <div className="mt-4 flex items-start gap-2 border border-yellow-300 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800 rounded-lg p-3">
+                <span className="text-sm">⚠️</span>
+                <p className="text-sm text-foreground">{roteiro.alerta_terceiro}</p>
+              </div>
+            )}
+            <CopyBtn onClick={() => {
+              const text = roteiroBlocks.map((b: any) => `${b.numero}. ${b.titulo} (${b.tempo})\n${b.script}`).join('\n\n');
+              copyToClipboard(text);
+            }} />
+          </TabsContent>
+        )}
+
+        {/* Tab: Proposta */}
+        {hasProposta && (
+          <TabsContent value="proposta">
+            <div className="border border-border rounded-xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">Estrutura da proposta</h3>
+                {editingField !== 'proposta_intro' && (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => startEdit('proposta_intro', proposta.abertura || proposta.introducao || '')}>
+                    <Edit2 className="h-3 w-3" /> Editar
+                  </Button>
+                )}
+              </div>
+              <div className="p-5 space-y-5 text-sm text-foreground">
+                {editingField === 'proposta_intro' ? (
+                  <div className="space-y-2">
+                    <Textarea rows={6} value={editValue} onChange={e => setEditValue(e.target.value)} className="text-sm" />
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => setEditingField(null)} disabled={saving}>Cancelar</Button>
+                      <Button size="sm" disabled={saving} onClick={() => saveEdit('proposta_json', proposta.abertura ? 'abertura' : 'introducao')}>
+                        {saving && <Loader2 className="h-3 w-3 mr-1 animate-spin" />} Salvar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {(() => {
+                      const sections: { num: number; title: string; content: string | undefined }[] = [
+                        { num: 1, title: 'ABERTURA', content: proposta.abertura || proposta.introducao },
+                        { num: 2, title: 'O CENÁRIO ATUAL', content: proposta.diagnostico },
+                        { num: 3, title: 'O QUE ENTREGAMOS', content: proposta.solucao },
+                      ];
+                      const beneficiosText = proposta.beneficios?.map((b: string) => `→ ${b}`).join('\n');
+                      const extraSections: { num: number; title: string; content: string | undefined }[] = [];
+                      if (proposta.investimento) {
+                        const inv = proposta.investimento;
+                        const parts = [inv.valor, inv.condicoes, inv.garantia ? `Garantia: ${inv.garantia}` : ''].filter(Boolean);
+                        extraSections.push({ num: sections.length + (beneficiosText ? 2 : 1), title: 'INVESTIMENTO', content: parts.join('\n') });
+                      }
+                      if (proposta.fechamento) {
+                        extraSections.push({ num: sections.length + (beneficiosText ? 2 : 1) + extraSections.length + 1, title: 'FECHAMENTO', content: proposta.fechamento });
+                      }
+                      return (
+                        <>
+                          {sections.filter(s => s.content).map(s => (
+                            <div key={s.num}>
+                              <p className="font-semibold mb-1">{s.num}. {s.title}</p>
+                              <p className="whitespace-pre-wrap leading-relaxed">{s.content}</p>
+                            </div>
+                          ))}
+                          {beneficiosText && (
+                            <div>
+                              <p className="font-semibold mb-1">{sections.filter(s => s.content).length + 1}. BENEFÍCIOS</p>
+                              <p className="whitespace-pre-wrap leading-relaxed">{beneficiosText}</p>
+                            </div>
+                          )}
+                          {extraSections.map(s => (
+                            <div key={s.num}>
+                              <p className="font-semibold mb-1">{s.num}. {s.title}</p>
+                              <p className="whitespace-pre-wrap leading-relaxed">{s.content}</p>
+                            </div>
+                          ))}
+                        </>
+                      );
+                    })()}
+                  </>
+                )}
+              </div>
+            </div>
+            <CopyBtn onClick={() => {
+              const text = [proposta.titulo, proposta.abertura || proposta.introducao, proposta.diagnostico, proposta.solucao, proposta.beneficios?.map((b: string) => `→ ${b}`).join('\n'), proposta.investimento?.valor, proposta.fechamento].filter(Boolean).join('\n\n');
+              copyToClipboard(text);
+            }} />
+          </TabsContent>
+        )}
+
+        {/* Tab: Email */}
+        {hasEmail && (
+          <TabsContent value="email">
+            <div className="border border-border rounded-xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-border bg-muted/30 space-y-1 text-sm">
+                <div className="flex gap-3 items-center justify-between">
+                  <div className="flex gap-3">
+                    <span className="text-muted-foreground w-14 shrink-0">Assunto</span>
+                    <span className="font-semibold text-foreground">{email.assunto}</span>
+                  </div>
+                  {editingField !== 'email_corpo' && (
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => startEdit('email_corpo', email.corpo || '')}>
+                      <Edit2 className="h-3 w-3" /> Editar
+                    </Button>
+                  )}
+                </div>
+                {email.para && (
+                  <div className="flex gap-3">
+                    <span className="text-muted-foreground w-14 shrink-0">Para</span>
+                    <span className="text-foreground">{email.para}</span>
+                  </div>
+                )}
+              </div>
+              <div className="p-5 space-y-4 text-sm text-foreground leading-relaxed">
+                {editingField === 'email_corpo' ? (
+                  <div className="space-y-2">
+                    <Textarea rows={10} value={editValue} onChange={e => setEditValue(e.target.value)} className="text-sm" />
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => setEditingField(null)} disabled={saving}>Cancelar</Button>
+                      <Button size="sm" disabled={saving} onClick={() => saveEdit('email_json', 'corpo')}>
+                        {saving && <Loader2 className="h-3 w-3 mr-1 animate-spin" />} Salvar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {email.saudacao && <p>{email.saudacao}</p>}
+                    {email.corpo && (
+                      <div className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: renderHighlightsSimple(email.corpo) }} />
+                    )}
+                    {email.destaque_1 && (
+                      <div className="bg-primary/10 rounded-md px-3 py-2"><p>{email.destaque_1}</p></div>
+                    )}
+                    {email.destaque_2 && (
+                      <div className="bg-orange-100 dark:bg-orange-900/20 rounded-md px-3 py-2"><p>{email.destaque_2}</p></div>
+                    )}
+                    {email.cta && (
+                      <div className="bg-primary/10 rounded-md px-3 py-2 inline-block"><p>{email.cta}</p></div>
+                    )}
+                    {email.assinatura && <p className="text-muted-foreground">{email.assinatura}</p>}
+                  </>
+                )}
+              </div>
+            </div>
+            <CopyBtn onClick={() => copyToClipboard(`Assunto: ${email.assunto}\n\n${email.saudacao || ''}\n\n${email.corpo}\n\n${email.cta || ''}\n\n${email.assinatura || ''}`)} />
+          </TabsContent>
+        )}
+
+        {/* Tab: WhatsApp */}
+        {hasWhatsapp && (
+          <TabsContent value="whatsapp">
+            <div className="space-y-4">
+              <div className="border border-border rounded-xl p-5">
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="text-sm font-semibold text-foreground">Mensagem principal</h4>
+                  {editingField !== 'whatsapp_principal' && (
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => startEdit('whatsapp_principal', whatsapp.mensagem_principal || '')}>
+                      <Edit2 className="h-3 w-3" /> Editar
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">Cole diretamente no WhatsApp</p>
+                {editingField === 'whatsapp_principal' ? (
+                  <div className="space-y-2">
+                    <Textarea rows={6} value={editValue} onChange={e => setEditValue(e.target.value)} className="text-sm" />
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => setEditingField(null)} disabled={saving}>Cancelar</Button>
+                      <Button size="sm" disabled={saving} onClick={() => saveEdit('whatsapp_json', 'mensagem_principal')}>
+                        {saving && <Loader2 className="h-3 w-3 mr-1 animate-spin" />} Salvar
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm text-foreground whitespace-pre-wrap leading-relaxed">{whatsapp.mensagem_principal}</div>
+                )}
+                <div className="mt-3">
+                  <CopyBtn onClick={() => copyToClipboard(whatsapp.mensagem_principal)} />
+                </div>
+              </div>
+              {whatsapp.versao_curta && (
+                <div className="border border-border rounded-xl p-5">
+                  <h4 className="text-sm font-semibold text-foreground mb-1">Versão curta</h4>
+                  <p className="text-xs text-muted-foreground mb-3">Para quando ele não respondeu</p>
+                  <div className="bg-muted/50 rounded-lg p-4 text-sm text-foreground whitespace-pre-wrap leading-relaxed">{whatsapp.versao_curta}</div>
+                  <div className="mt-3">
+                    <CopyBtn onClick={() => copyToClipboard(whatsapp.versao_curta)} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        )}
+
+        {/* Tab: Objeções */}
+        {hasObjecoes && (
+          <TabsContent value="objecoes">
+            <div className="space-y-3">
+              {objecoes.map((o: any, i: number) => (
+                <div key={i} className="border border-border rounded-xl p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-foreground">"{o.objecao}"</p>
+                    {o.categoria && <Badge variant="secondary" className="text-[10px] shrink-0">{o.categoria}</Badge>}
+                  </div>
+                  {o.tecnica && <p className="text-xs text-muted-foreground">Técnica: <span className="font-medium">{o.tecnica}</span></p>}
+                  <p className="text-sm italic text-muted-foreground">{o.resposta_curta}</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{o.resposta_completa}</p>
+                  {o.se_terceiro && (
+                    <div className="bg-muted/50 rounded-lg p-3 mt-1">
+                      <p className="text-xs font-medium text-muted-foreground mb-0.5">Se terceiro presente:</p>
+                      <p className="text-sm text-foreground">{o.se_terceiro}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+        )}
+      </Tabs>
+    </div>
+  );
+}
