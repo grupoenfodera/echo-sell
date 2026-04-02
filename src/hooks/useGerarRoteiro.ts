@@ -59,18 +59,20 @@ export function useGerarRoteiro() {
     }
   }, []);
 
-  const aprovarRoteiro = useCallback(async () => {
+  const aprovarRoteiro = useCallback(async (): Promise<boolean> => {
     if (!state.sessaoId) {
       setError('Sessão inválida. Gere o roteiro novamente.');
-      return;
+      return false;
     }
     setLoading(true);
     try {
       console.log('Aprovando sessao:', state.sessaoId);
       await svpApi.aprovarRoteiro({ sessao_id: state.sessaoId, aprovado: true });
       setState(s => ({ ...s, loading: false }));
+      return true;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Erro ao aprovar roteiro');
+      return false;
     }
   }, [state.sessaoId]);
 

@@ -43,8 +43,8 @@ export default function Gerar() {
   };
 
   const handleAprovar = async () => {
-    await aprovarRoteiro();
-    if (!state.error) {
+    const ok = await aprovarRoteiro();
+    if (ok) {
       await gerarProposta();
     }
   };

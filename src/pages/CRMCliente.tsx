@@ -482,7 +482,11 @@ function SessaoItem({ sessao, onRegistrarResultado }: { sessao: SessaoVenda; onR
   return (
     <div
       className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-      onClick={() => console.log('Ver sessao:', sessao.id)}
+      onClick={() => {
+        if (sessao.roteiro_json) {
+          window.open(`/gerar?sessao=${sessao.id}`, '_blank');
+        }
+      }}
     >
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2">
