@@ -457,7 +457,7 @@ function EditForm({ form, set, onCancel, onSave, salvando }: {
 
 /* ── SessaoItem ────────────────────────────────── */
 
-function SessaoItem({ sessao, onRegistrarResultado }: { sessao: SessaoVenda; onRegistrarResultado: () => void }) {
+function SessaoItem({ sessao, onRegistrarResultado, onVerRoteiro }: { sessao: SessaoVenda; onRegistrarResultado: () => void; onVerRoteiro: (s: SessaoVenda) => void }) {
   const statusLabel = sessao.roteiro_aprovado === true && sessao.proposta_gerada_em
     ? 'Proposta completa'
     : sessao.roteiro_aprovado === true
