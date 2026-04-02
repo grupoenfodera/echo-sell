@@ -38,6 +38,14 @@ export function useGerarRoteiro() {
     setLoading(true);
     try {
       const res = await svpApi.gerarRoteiro(payload);
+      if (!res.sessao_id) {
+        setError('Erro interno: sessão não foi salva. Tente novamente.');
+        return;
+      }
+      if (!res.roteiro) {
+        setError('Roteiro não foi gerado. Tente novamente.');
+        return;
+      }
       setState(s => ({
         ...s,
         loading: false,
