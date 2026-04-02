@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { svpApi } from '@/lib/api-svp';
-import type { RoteiroJSON, GerarRoteiroPayload, PropostaJSON, EmailJSON, ObjecaoItem } from '@/types/crm';
+import type { RoteiroJSON, GerarRoteiroPayload, PropostaJSON, EmailJSON, ObjecaoItem, WhatsAppJSON } from '@/types/crm';
 
 export type GeracaoEtapa = 'formulario' | 'roteiro' | 'proposta' | 'concluido';
 
@@ -12,6 +12,7 @@ export interface GeracaoState {
   proposta: PropostaJSON | null;
   email: EmailJSON | null;
   objecoes: ObjecaoItem[] | null;
+  whatsapp: WhatsAppJSON | null;
   loading: boolean;
   error: string | null;
 }
@@ -24,6 +25,7 @@ const INITIAL_STATE: GeracaoState = {
   proposta: null,
   email: null,
   objecoes: null,
+  whatsapp: null,
   loading: false,
   error: null,
 };
@@ -110,6 +112,7 @@ export function useGerarRoteiro() {
         proposta: res.proposta,
         email: res.email,
         objecoes: res.objecoes,
+        whatsapp: res.whatsapp ?? null,
       }));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Erro ao gerar proposta');

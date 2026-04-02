@@ -10,12 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { CheckCircle, Copy, RefreshCw, ChevronDown, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import type { PropostaJSON, EmailJSON, ObjecaoItem } from '@/types/crm';
+import type { PropostaJSON, EmailJSON, ObjecaoItem, WhatsAppJSON } from '@/types/crm';
 
 interface ResultadoPropostaProps {
   proposta: PropostaJSON;
   email: EmailJSON;
   objecoes: ObjecaoItem[];
+  whatsapp?: WhatsAppJSON | null;
   sessaoId: string;
   onRegistrarResultado: (resultado: string, notas: string) => void;
   onNovaGeracao: () => void;
@@ -139,6 +140,40 @@ function EmailTab({ email }: { email: EmailJSON }) {
   );
 }
 
+function WhatsAppTab({ whatsapp }: { whatsapp: WhatsAppJSON }) {
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Mensagem principal</CardTitle>
+          <p className="text-xs text-muted-foreground">Cole diretamente no WhatsApp</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 rounded-md p-3">{whatsapp.mensagem_principal}</pre>
+          <Button variant="outline" size="sm" onClick={() => copiarTexto(whatsapp.mensagem_principal)}>
+            <Copy className="mr-2 h-3.5 w-3.5" />
+            Copiar mensagem
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Versão curta</CardTitle>
+          <p className="text-xs text-muted-foreground">Para quando ele não respondeu — 2 linhas, direto</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono bg-muted/50 rounded-md p-3">{whatsapp.versao_curta}</pre>
+          <Button variant="outline" size="sm" onClick={() => copiarTexto(whatsapp.versao_curta)}>
+            <Copy className="mr-2 h-3.5 w-3.5" />
+            Copiar versão curta
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function ObjecoesTab({ objecoes }: { objecoes: ObjecaoItem[] }) {
   return (
     <div className="space-y-3">
@@ -179,7 +214,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function ResultadoProposta({ proposta, email, objecoes, sessaoId, onRegistrarResultado, onNovaGeracao }: ResultadoPropostaProps) {
+export function ResultadoProposta({ proposta, email, objecoes, whatsapp, sessaoId, onRegistrarResultado, onNovaGeracao }: ResultadoPropostaProps) {
   const [resultado, setResultado] = useState('');
   const [notas, setNotas] = useState('');
 
@@ -197,9 +232,10 @@ export function ResultadoProposta({ proposta, email, objecoes, sessaoId, onRegis
       </div>
 
       <Tabs defaultValue="proposta">
-        <TabsList className="w-full grid grid-cols-3">
+        <TabsList className={`w-full grid ${whatsapp ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="proposta">📄 Proposta</TabsTrigger>
           <TabsTrigger value="email">✉️ Email</TabsTrigger>
+          {whatsapp && <TabsTrigger value="whatsapp">📱 WhatsApp</TabsTrigger>}
           <TabsTrigger value="objecoes">🛡️ Objeções</TabsTrigger>
         </TabsList>
         <TabsContent value="proposta" className="mt-4">
@@ -208,6 +244,11 @@ export function ResultadoProposta({ proposta, email, objecoes, sessaoId, onRegis
         <TabsContent value="email" className="mt-4">
           <EmailTab email={email} />
         </TabsContent>
+        {whatsapp && (
+          <TabsContent value="whatsapp" className="mt-4">
+            <WhatsAppTab whatsapp={whatsapp} />
+          </TabsContent>
+        )}
         <TabsContent value="objecoes" className="mt-4">
           <ObjecoesTab objecoes={objecoes} />
         </TabsContent>

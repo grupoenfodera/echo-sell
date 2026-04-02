@@ -72,6 +72,14 @@ export interface EmailJSON {
   assinatura: string;
 }
 
+export interface WhatsAppJSON {
+  mensagem_principal: string;
+  abertura: string;
+  valor_rapido: string;
+  cta: string;
+  versao_curta: string;
+}
+
 export interface ObjecaoItem {
   objecao: string;
   resposta_curta: string;
@@ -129,6 +137,8 @@ export interface SessaoVenda {
   email_gerado_em?: string;
   objecoes_json?: ObjecaoItem[];
   objecoes_geradas_em?: string;
+  whatsapp_json?: WhatsAppJSON;
+  whatsapp_gerado_em?: string;
   resultado?: SessaoResultado;
   notas_pos_reuniao?: string;
   criado_em: string;
@@ -171,6 +181,7 @@ export interface GerarPropostaResponse {
   proposta: PropostaJSON;
   email: EmailJSON;
   objecoes: ObjecaoItem[];
+  whatsapp: WhatsAppJSON;
 }
 
 export interface CrmListarResponse {
