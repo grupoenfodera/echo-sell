@@ -100,6 +100,8 @@ export default function CRMCliente() {
     produto?: string;
   } | null>(null);
   const [sessaoAberta, setSessaoAberta] = useState<SessaoVenda | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
 
   // Edit form state
   const [formEdit, setFormEdit] = useState<Record<string, string>>({});
