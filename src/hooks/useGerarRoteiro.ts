@@ -60,9 +60,13 @@ export function useGerarRoteiro() {
   }, []);
 
   const aprovarRoteiro = useCallback(async () => {
-    if (!state.sessaoId) return;
+    if (!state.sessaoId) {
+      setError('Sessão inválida. Gere o roteiro novamente.');
+      return;
+    }
     setLoading(true);
     try {
+      console.log('Aprovando sessao:', state.sessaoId);
       await svpApi.aprovarRoteiro({ sessao_id: state.sessaoId, aprovado: true });
       setState(s => ({ ...s, loading: false }));
     } catch (e: unknown) {
