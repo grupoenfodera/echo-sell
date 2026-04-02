@@ -647,7 +647,7 @@ function InteracaoCard({ interacao, isLast }: { interacao: Interacao; isLast: bo
 
 /* ── RoteiroAccordion ──────────────────────────── */
 
-import type { RoteiroJSON, RoteiroEtapa } from '@/types/crm';
+import type { RoteiroJSON } from '@/types/crm';
 
 const ETAPAS_CONFIG = [
   { key: 'abertura', label: 'Abertura', icon: '👋' },
