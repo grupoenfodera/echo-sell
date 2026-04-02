@@ -44,7 +44,9 @@ export default function Gerar() {
 
   const handleAprovar = async () => {
     await aprovarRoteiro();
-    gerarProposta();
+    if (!state.error) {
+      await gerarProposta();
+    }
   };
 
   const handleRegistrarResultado = async (resultado: string, notas: string) => {

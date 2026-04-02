@@ -38,6 +38,14 @@ export function useGerarRoteiro() {
     setLoading(true);
     try {
       const res = await svpApi.gerarRoteiro(payload);
+      if (!res.sessao_id) {
+        setError('Erro interno: sessão não foi salva. Tente novamente.');
+        return;
+      }
+      if (!res.roteiro) {
+        setError('Roteiro não foi gerado. Tente novamente.');
+        return;
+      }
       setState(s => ({
         ...s,
         loading: false,
@@ -52,9 +60,13 @@ export function useGerarRoteiro() {
   }, []);
 
   const aprovarRoteiro = useCallback(async () => {
-    if (!state.sessaoId) return;
+    if (!state.sessaoId) {
+      setError('Sessão inválida. Gere o roteiro novamente.');
+      return;
+    }
     setLoading(true);
     try {
+      console.log('Aprovando sessao:', state.sessaoId);
       await svpApi.aprovarRoteiro({ sessao_id: state.sessaoId, aprovado: true });
       setState(s => ({ ...s, loading: false }));
     } catch (e: unknown) {
@@ -82,7 +94,10 @@ export function useGerarRoteiro() {
   }, [state.sessaoId]);
 
   const gerarProposta = useCallback(async () => {
-    if (!state.sessaoId) return;
+    if (!state.sessaoId) {
+      setError('Sessão inválida. Reinicie o fluxo.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await svpApi.gerarProposta(state.sessaoId);
