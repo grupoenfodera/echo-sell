@@ -214,7 +214,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function ResultadoProposta({ proposta, email, objecoes, sessaoId, onRegistrarResultado, onNovaGeracao }: ResultadoPropostaProps) {
+export function ResultadoProposta({ proposta, email, objecoes, whatsapp, sessaoId, onRegistrarResultado, onNovaGeracao }: ResultadoPropostaProps) {
   const [resultado, setResultado] = useState('');
   const [notas, setNotas] = useState('');
 
