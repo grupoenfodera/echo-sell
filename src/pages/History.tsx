@@ -10,8 +10,11 @@ import { useToast } from '@/hooks/use-toast';
 import type { Json } from '@/integrations/supabase/types';
 
 /* ── Types ── */
+type HistorySource = 'geracoes' | 'sessoes_venda';
+
 type Gen = {
   id: string;
+  source: HistorySource;
   modalidade: string;
   contexto_geracao: string | null;
   nicho: string | null;
@@ -19,6 +22,14 @@ type Gen = {
   nome_cliente: string | null;
   criado_em: string | null;
   resultado_json: Json | null;
+  // sessoes_venda fields
+  roteiro_json?: Json | null;
+  proposta_json?: Json | null;
+  email_json?: Json | null;
+  objecoes_json?: Json | null;
+  whatsapp_json?: Json | null;
+  resultado?: string | null;
+  preco?: number | null;
 };
 
 interface Beat {
