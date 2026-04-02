@@ -63,7 +63,7 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-[54px] bg-elevated border-b border-border flex items-center px-4 sm:px-6 no-print">
       <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-        <img src={logoSvp} alt="Método SVP" className="h-9" />
+        <img src={logoSvp} alt="Método SVP" className="h-12" />
         <span className="text-[10px] font-ui font-semibold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-pill">
           MVP
         </span>
