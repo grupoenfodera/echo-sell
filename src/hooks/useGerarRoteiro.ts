@@ -25,6 +25,7 @@ const INITIAL_STATE: GeracaoState = {
   proposta: null,
   email: null,
   objecoes: null,
+  whatsapp: null,
   loading: false,
   error: null,
 };
