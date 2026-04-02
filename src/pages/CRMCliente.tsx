@@ -441,6 +441,29 @@ export default function CRMCliente() {
           </div>
         </div>
       )}
+
+      {/* Confirmação de exclusão */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center" onClick={() => setConfirmDelete(false)}>
+          <div onClick={e => e.stopPropagation()} className="bg-card border border-border rounded-xl p-6 w-full max-w-sm mx-4 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-foreground">Excluir cliente</h3>
+              <p className="text-sm text-muted-foreground">
+                Tem certeza que deseja excluir <strong>{cliente?.nome}</strong>? Esta ação não pode ser desfeita e todas as interações e sessões associadas serão mantidas sem vínculo.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)} disabled={excluindo}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleExcluir} disabled={excluindo}>
+                {excluindo && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                Excluir
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
