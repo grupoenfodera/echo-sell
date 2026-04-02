@@ -366,7 +366,7 @@ export default function CRMCliente() {
       />
 
       {/* Drawer de Roteiro */}
-      {sessaoAberta && sessaoAberta.roteiro_json && (
+      {sessaoAberta && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => setSessaoAberta(null)}>
           <div
             onClick={e => e.stopPropagation()}
