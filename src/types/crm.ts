@@ -39,35 +39,54 @@ export interface RoteiroEtapa {
   objecoes_previstas?: { objecao: string; resposta: string }[];
 }
 
+export interface RoteiroBloco {
+  numero: number;
+  bloco: string;
+  titulo: string;
+  tempo: string;
+  script: string;
+  tecnica: string;
+  nota_tecnica: string;
+}
+
 export interface RoteiroJSON {
-  roteiro_reuniao: {
+  roteiro_reuniao: RoteiroBloco[] | {
     abertura: RoteiroEtapa;
     descoberta: RoteiroEtapa;
     apresentacao_solucao: RoteiroEtapa;
     tratamento_objecoes: RoteiroEtapa;
     fechamento: RoteiroEtapa;
   };
-  tempo_total_min: number;
+  tempo_total_min?: number;
   resumo_estrategico: string;
+  maior_medo?: string;
+  decisao_style?: string;
+  tom_ideal?: string;
+  alerta_terceiro?: string;
   score: number;
-  score_breakdown: { clareza: number; objecoes_cobertas: number; adequacao_nicho: number };
+  score_breakdown?: Record<string, number>;
 }
 
 export interface PropostaJSON {
   titulo: string;
-  introducao: string;
+  abertura?: string;
+  introducao?: string;
   diagnostico: string;
   solucao: string;
   beneficios: string[];
-  investimento: { valor: string; condicoes: string; garantia: string };
+  investimento: { criterio?: string; valor: string; condicoes: string; garantia: string };
+  micro_sins?: string;
   proximo_passo: string;
   fechamento: string;
 }
 
 export interface EmailJSON {
   assunto: string;
+  para?: string;
   saudacao: string;
   corpo: string;
+  destaque_1?: string;
+  destaque_2?: string;
   cta: string;
   assinatura: string;
 }
