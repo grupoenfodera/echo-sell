@@ -298,7 +298,9 @@ const History = () => {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-              {!result ? (
+              {isSessao ? (
+                <SessaoDrawerContent gen={selectedGen} copyToClipboard={copyToClipboard} />
+              ) : !result ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <FileText className="h-10 w-10 text-muted-foreground/40 mb-3" />
                   <p className="text-sm text-muted-foreground font-ui">Conteúdo não disponível para esta geração.</p>
