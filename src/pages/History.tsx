@@ -187,13 +187,17 @@ const History = () => {
   }, [toast]);
 
   const result = useMemo(() => {
-    if (!selectedGen?.resultado_json) return null;
+    if (!selectedGen) return null;
+    if (selectedGen.source === 'sessoes_venda') return null; // handled separately
+    if (!selectedGen.resultado_json) return null;
     try {
       return selectedGen.resultado_json as unknown as SvpResult;
     } catch {
       return null;
     }
   }, [selectedGen]);
+
+  const isSessao = selectedGen?.source === 'sessoes_venda';
 
   // Filter objection beats
   const objectionBeats = useMemo(() => {
