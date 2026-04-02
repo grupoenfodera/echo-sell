@@ -88,9 +88,6 @@ const Login = () => {
       >
         <div className="text-center mb-10">
           <img src={logoSvp} alt="Método SVP" className="h-[100px] mx-auto" />
-          <p className="font-heading font-normal text-xl text-muted-foreground mt-2">
-            Sistema de Vendas PASTOR
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
