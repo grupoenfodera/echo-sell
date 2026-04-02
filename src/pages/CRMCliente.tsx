@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import NovaInteracaoModal from '@/components/crm/NovaInteracaoModal';
 import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
 import { svpApi } from '@/lib/api-svp';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type {
   Cliente, SessaoVenda, Interacao, InteracaoCanal, ClienteStatus, ClienteTemperatura, RoteiroEtapa,
@@ -26,7 +27,7 @@ import {
 import {
   ArrowLeft, Edit2, Plus, Phone, Mail, Linkedin, Instagram, UserPlus,
   Circle, Thermometer, Calendar, Clock, StickyNote, FileText, ChevronRight,
-  Sparkles, Loader2, AlertCircle, MessageSquare, ClipboardCheck, X,
+  Sparkles, Loader2, AlertCircle, MessageSquare, ClipboardCheck, X, Trash2,
 } from 'lucide-react';
 
 /* ── Maps ──────────────────────────────────────── */
@@ -100,6 +101,8 @@ export default function CRMCliente() {
     produto?: string;
   } | null>(null);
   const [sessaoAberta, setSessaoAberta] = useState<SessaoVenda | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
 
   // Edit form state
   const [formEdit, setFormEdit] = useState<Record<string, string>>({});
@@ -165,6 +168,22 @@ export default function CRMCliente() {
   const openInteracao = (canal?: InteracaoCanal) => {
     setCanalInicial(canal);
     setModalInteracao(true);
+  };
+
+  const handleExcluir = async () => {
+    if (!clienteId) return;
+    setExcluindo(true);
+    try {
+      const { error } = await supabase.from('clientes').delete().eq('id', clienteId);
+      if (error) throw error;
+      toast.success('Cliente excluído com sucesso.');
+      navigate('/crm');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir cliente.');
+    } finally {
+      setExcluindo(false);
+      setConfirmDelete(false);
+    }
   };
 
   const interacoesFiltradas = filtroCanal === 'todos'
@@ -239,6 +258,9 @@ export default function CRMCliente() {
               )}
               <Button variant="outline" size="sm" onClick={() => openInteracao()}>
                 <Plus className="h-3.5 w-3.5 mr-1.5" /> Interação
+              </Button>
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
@@ -415,6 +437,29 @@ export default function CRMCliente() {
                   <p className="text-sm text-foreground whitespace-pre-wrap">{sessaoAberta.email_json.corpo}</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmação de exclusão */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center" onClick={() => setConfirmDelete(false)}>
+          <div onClick={e => e.stopPropagation()} className="bg-card border border-border rounded-xl p-6 w-full max-w-sm mx-4 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-foreground">Excluir cliente</h3>
+              <p className="text-sm text-muted-foreground">
+                Tem certeza que deseja excluir <strong>{cliente?.nome}</strong>? Esta ação não pode ser desfeita e todas as interações e sessões associadas serão mantidas sem vínculo.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)} disabled={excluindo}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleExcluir} disabled={excluindo}>
+                {excluindo && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                Excluir
+              </Button>
             </div>
           </div>
         </div>
