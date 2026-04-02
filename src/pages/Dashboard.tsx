@@ -95,7 +95,7 @@ const Dashboard = () => {
       await svpApi.aprovarRoteiro({ sessao_id: roteiroRes.sessao_id, aprovado: true });
 
       setFaseLoading(3);
-      const propostaRes = await svpApi.gerarProposta({ sessao_id: roteiroRes.sessao_id });
+      const propostaRes = await svpApi.gerarProposta(roteiroRes.sessao_id);
       setDadosProposta({
         proposta: propostaRes.proposta,
         email: propostaRes.email,
