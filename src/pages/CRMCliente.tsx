@@ -9,7 +9,7 @@ import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
 import { svpApi } from '@/lib/api-svp';
 import { useAuth } from '@/contexts/AuthContext';
 import type {
-  Cliente, SessaoVenda, Interacao, InteracaoCanal, ClienteStatus, ClienteTemperatura,
+  Cliente, SessaoVenda, Interacao, InteracaoCanal, ClienteStatus, ClienteTemperatura, RoteiroEtapa,
 } from '@/types/crm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,13 +19,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
   ArrowLeft, Edit2, Plus, Phone, Mail, Linkedin, Instagram, UserPlus,
   Circle, Thermometer, Calendar, Clock, StickyNote, FileText, ChevronRight,
-  Sparkles, Loader2, AlertCircle, MessageSquare, ClipboardCheck,
+  Sparkles, Loader2, AlertCircle, MessageSquare, ClipboardCheck, X,
 } from 'lucide-react';
 
 /* ── Maps ──────────────────────────────────────── */
@@ -98,6 +99,7 @@ export default function CRMCliente() {
     sessaoId: string;
     produto?: string;
   } | null>(null);
+  const [sessaoAberta, setSessaoAberta] = useState<SessaoVenda | null>(null);
 
   // Edit form state
   const [formEdit, setFormEdit] = useState<Record<string, string>>({});
@@ -279,6 +281,7 @@ export default function CRMCliente() {
                           onRegistrarResultado={() =>
                             setResultadoModal({ sessaoId: s.id, produto: s.produto })
                           }
+                          onVerRoteiro={(sess) => setSessaoAberta(sess)}
                         />
                       ))}
                       {sessoes.length > 5 && (
@@ -361,6 +364,55 @@ export default function CRMCliente() {
           setResultadoModal(null);
         }}
       />
+
+      {/* Drawer de Roteiro */}
+      {sessaoAberta && sessaoAberta.roteiro_json && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => setSessaoAberta(null)}>
+          <div
+            onClick={e => e.stopPropagation()}
+            className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-200"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
+              <div>
+                <h2 className="text-base font-semibold text-foreground">{sessaoAberta.produto || 'Roteiro'}</h2>
+                <p className="text-xs text-muted-foreground">
+                  {sessaoAberta.nicho && `${sessaoAberta.nicho} · `}
+                  {sessaoAberta.criado_em ? format(new Date(sessaoAberta.criado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : ''}
+                  {sessaoAberta.roteiro_json.score && ` · Score ${sessaoAberta.roteiro_json.score}/100`}
+                </p>
+              </div>
+              <button onClick={() => setSessaoAberta(null)} className="text-muted-foreground hover:text-foreground p-1">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {sessaoAberta.roteiro_json.resumo_estrategico && (
+                <div className="bg-muted/40 rounded-lg p-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Estratégia</p>
+                  <p className="text-sm text-foreground">{sessaoAberta.roteiro_json.resumo_estrategico}</p>
+                </div>
+              )}
+              <RoteiroAccordion roteiro={sessaoAberta.roteiro_json} />
+
+              {sessaoAberta.proposta_json && (
+                <div className="bg-muted/40 rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Proposta</p>
+                  <p className="text-sm font-semibold text-foreground">{sessaoAberta.proposta_json.titulo}</p>
+                  <p className="text-sm text-foreground">{sessaoAberta.proposta_json.introducao}</p>
+                </div>
+              )}
+
+              {sessaoAberta.email_json && (
+                <div className="bg-muted/40 rounded-lg p-3 space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">Email de Follow-up</p>
+                  <p className="text-sm font-medium text-foreground">{sessaoAberta.email_json.assunto}</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{sessaoAberta.email_json.corpo}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -455,7 +507,7 @@ function EditForm({ form, set, onCancel, onSave, salvando }: {
 
 /* ── SessaoItem ────────────────────────────────── */
 
-function SessaoItem({ sessao, onRegistrarResultado }: { sessao: SessaoVenda; onRegistrarResultado: () => void }) {
+function SessaoItem({ sessao, onRegistrarResultado, onVerRoteiro }: { sessao: SessaoVenda; onRegistrarResultado: () => void; onVerRoteiro: (s: SessaoVenda) => void }) {
   const statusLabel = sessao.roteiro_aprovado === true && sessao.proposta_gerada_em
     ? 'Proposta completa'
     : sessao.roteiro_aprovado === true
@@ -484,7 +536,7 @@ function SessaoItem({ sessao, onRegistrarResultado }: { sessao: SessaoVenda; onR
       className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
       onClick={() => {
         if (sessao.roteiro_json) {
-          window.open(`/gerar?sessao=${sessao.id}`, '_blank');
+          onVerRoteiro(sessao);
         }
       }}
     >
@@ -585,5 +637,72 @@ function InteracaoCard({ interacao, isLast }: { interacao: Interacao; isLast: bo
         )}
       </div>
     </div>
+  );
+}
+
+/* ── RoteiroAccordion ──────────────────────────── */
+
+import type { RoteiroJSON } from '@/types/crm';
+
+const ETAPAS_CONFIG = [
+  { key: 'abertura', label: 'Abertura', icon: '👋' },
+  { key: 'descoberta', label: 'Descoberta', icon: '🔍' },
+  { key: 'apresentacao_solucao', label: 'Solução', icon: '💡' },
+  { key: 'tratamento_objecoes', label: 'Objeções', icon: '🛡️' },
+  { key: 'fechamento', label: 'Fechamento', icon: '🤝' },
+] as const;
+
+function RoteiroAccordion({ roteiro }: { roteiro: RoteiroJSON }) {
+  const r = roteiro.roteiro_reuniao;
+  const etapasMap: Record<string, RoteiroEtapa> = {
+    abertura: r.abertura,
+    descoberta: r.descoberta,
+    apresentacao_solucao: r.apresentacao_solucao,
+    tratamento_objecoes: r.tratamento_objecoes,
+    fechamento: r.fechamento,
+  };
+
+  return (
+    <Accordion type="single" collapsible defaultValue="abertura">
+      {ETAPAS_CONFIG.map(({ key, label, icon }) => {
+        const etapa = etapasMap[key];
+        if (!etapa) return null;
+        return (
+          <AccordionItem key={key} value={key}>
+            <AccordionTrigger className="hover:no-underline text-sm">
+              <span className="flex items-center gap-2">
+                <span>{icon}</span>
+                <span className="font-medium">{label}</span>
+                <Badge variant="secondary" className="text-[10px] ml-1">{etapa.duracao_min} min</Badge>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="space-y-2 text-sm">
+              <p><span className="font-medium text-foreground">Objetivo:</span> {etapa.objetivo}</p>
+              {etapa.script && (
+                <div className="rounded-md bg-muted p-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Script</p>
+                  <p className="whitespace-pre-wrap">{etapa.script}</p>
+                </div>
+              )}
+              {etapa.perguntas && etapa.perguntas.length > 0 && (
+                <ul className="list-disc pl-5 space-y-1">
+                  {etapa.perguntas.map((p, i) => <li key={i}>{p}</li>)}
+                </ul>
+              )}
+              {key === 'tratamento_objecoes' && etapa.objecoes_previstas && (
+                <div className="space-y-2">
+                  {etapa.objecoes_previstas.map((o, i) => (
+                    <div key={i} className="bg-muted/50 rounded p-2 space-y-1">
+                      <p className="text-xs font-medium">❓ {o.objecao}</p>
+                      <p className="text-xs text-muted-foreground">{o.resposta}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        );
+      })}
+    </Accordion>
   );
 }
