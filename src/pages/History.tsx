@@ -481,168 +481,354 @@ function SessaoDrawerContent({ gen, copyToClipboard }: { gen: Gen; copyToClipboa
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <FileText className="h-10 w-10 text-muted-foreground/40 mb-3" />
-        <p className="text-sm text-muted-foreground font-ui">Conteúdo não disponível para esta sessão.</p>
+        <p className="text-sm text-muted-foreground">Conteúdo não disponível para esta sessão.</p>
       </div>
     );
   }
 
-  const defaultTab = hasRoteiro ? 'roteiro' : hasProposta ? 'proposta' : 'email';
+  // Build context info
+  const titulo = [gen.produto, gen.preco ? `R$${Number(gen.preco).toLocaleString('pt-BR')}` : null].filter(Boolean).join(' · ');
+  const subtitulo = gen.nicho ? `— ${gen.nicho}` : '';
+  const resumo = roteiro?.resumo_estrategico;
+  const perfilDecisor = roteiro?.perfil_decisor || (gen as any).dados_formulario?.perfil_decisor;
+
+  // Insight chips
+  const insightChips = [
+    { label: 'MAIOR MEDO', value: roteiro?.maior_medo },
+    { label: 'DECISÃO', value: roteiro?.decisao_style || roteiro?.decisao },
+    { label: 'TOM IDEAL', value: roteiro?.tom_ideal },
+  ].filter(c => c.value);
+
+  // Normalize roteiro blocks (handle both array and legacy object)
+  const roteiroBlocks: any[] = (() => {
+    if (!roteiro?.roteiro_reuniao) return [];
+    if (Array.isArray(roteiro.roteiro_reuniao)) return roteiro.roteiro_reuniao;
+    // Legacy object format
+    const r = roteiro.roteiro_reuniao;
+    const legacyOrder = [
+      { key: 'abertura', label: 'Abertura', num: 1 },
+      { key: 'descoberta', label: 'Descoberta', num: 2 },
+      { key: 'apresentacao_solucao', label: 'Apresentação da Solução', num: 3 },
+      { key: 'tratamento_objecoes', label: 'Tratamento de Objeções', num: 4 },
+      { key: 'fechamento', label: 'Fechamento', num: 5 },
+    ];
+    return legacyOrder
+      .filter(e => r[e.key])
+      .map(e => ({
+        numero: e.num,
+        titulo: e.label,
+        tempo: `${r[e.key].duracao_min} min`,
+        script: r[e.key].script || r[e.key].objetivo || '',
+        tecnica: r[e.key].tecnicas?.[0] || '',
+        nota_tecnica: '',
+        perguntas: r[e.key].perguntas,
+        pontos_chave: r[e.key].pontos_chave,
+        dicas: r[e.key].dicas,
+      }));
+  })();
+
+  const defaultTab = hasRoteiro && roteiroBlocks.length > 0 ? 'roteiro' : hasProposta ? 'proposta' : 'email';
 
   return (
-    <Tabs defaultValue={defaultTab} className="w-full">
-      <TabsList className="w-full flex overflow-x-auto gap-0.5 bg-muted/50 rounded-lg p-1 mb-4">
-        {hasRoteiro && <TabsTrigger value="roteiro" className="text-xs font-ui flex-1 min-w-fit gap-1"><MessageSquare className="h-3 w-3" /> Roteiro</TabsTrigger>}
-        {hasProposta && <TabsTrigger value="proposta" className="text-xs font-ui flex-1 min-w-fit gap-1"><FileText className="h-3 w-3" /> Proposta</TabsTrigger>}
-        {hasEmail && <TabsTrigger value="email" className="text-xs font-ui flex-1 min-w-fit gap-1"><Mail className="h-3 w-3" /> E-mail</TabsTrigger>}
-        {hasWhatsapp && <TabsTrigger value="whatsapp" className="text-xs font-ui flex-1 min-w-fit gap-1"><MessageSquare className="h-3 w-3" /> WhatsApp</TabsTrigger>}
-        {hasObjecoes && <TabsTrigger value="objecoes" className="text-xs font-ui flex-1 min-w-fit gap-1"><Shield className="h-3 w-3" /> Objeções</TabsTrigger>}
-      </TabsList>
-
-      {/* Roteiro */}
-      {hasRoteiro && (
-        <TabsContent value="roteiro">
-          <div className="space-y-4">
-            {roteiro.resumo_estrategico && (
-              <div className="bg-muted/30 rounded-lg p-4">
-                <h4 className="text-xs font-ui font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Estratégia</h4>
-                <p className="text-sm font-body text-foreground">{roteiro.resumo_estrategico}</p>
-              </div>
-            )}
-            {Array.isArray(roteiro.roteiro_reuniao) ? (
-              roteiro.roteiro_reuniao.map((bloco: any, i: number) => (
-                <div key={i} className="border border-border rounded-xl overflow-hidden">
-                  <div className="bg-muted/40 px-4 py-3 border-b border-border flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0">{bloco.numero}</span>
-                    <span className="text-sm font-heading text-foreground font-semibold flex-1">{bloco.titulo}</span>
-                    <Badge variant="outline" className="text-[10px] font-ui">{bloco.tempo}</Badge>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    <p className="text-sm font-body text-foreground whitespace-pre-wrap leading-relaxed">{bloco.script}</p>
-                    {bloco.tecnica && (
-                      <div className="flex items-start gap-2 rounded-md bg-accent/50 p-2.5">
-                        <Badge className="shrink-0 text-[10px] bg-primary/10 text-primary border-0">{bloco.tecnica}</Badge>
-                        <p className="text-xs text-muted-foreground">{bloco.nota_tecnica}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">Formato de roteiro legado.</p>
-            )}
+    <div className="space-y-5">
+      {/* Context Card */}
+      {(titulo || resumo) && (
+        <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+              <FileText className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                {titulo} {subtitulo && <span className="font-normal text-muted-foreground">{subtitulo}</span>}
+              </h3>
+            </div>
           </div>
-        </TabsContent>
+          {(perfilDecisor || resumo) && (
+            <div className="text-sm text-foreground leading-relaxed">
+              {perfilDecisor && <p><strong className="font-semibold">Perfil do decisor:</strong> {perfilDecisor}</p>}
+              {resumo && !perfilDecisor && <p>{resumo}</p>}
+              {resumo && perfilDecisor && <p className="text-muted-foreground mt-1">{resumo}</p>}
+            </div>
+          )}
+        </div>
       )}
 
-      {/* Proposta */}
-      {hasProposta && (
-        <TabsContent value="proposta">
-          <div className="space-y-4">
-            <h3 className="text-base font-heading text-foreground font-semibold">{proposta.titulo}</h3>
-            {(proposta.abertura || proposta.introducao) && (
-              <div className="bg-muted/30 rounded-lg p-4">
-                <p className="text-sm font-body text-foreground whitespace-pre-wrap">{proposta.abertura || proposta.introducao}</p>
+      {/* Insight Chips */}
+      {insightChips.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {insightChips.map(chip => (
+            <div key={chip.label} className="border border-border rounded-lg p-3">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">{chip.label}</p>
+              <p className="text-sm text-foreground leading-snug">{chip.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tabs */}
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <TabsList className="bg-transparent border-0 p-0 h-auto gap-2 mb-4 justify-start">
+          {hasRoteiro && roteiroBlocks.length > 0 && (
+            <TabsTrigger value="roteiro" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              Roteiro da reunião
+            </TabsTrigger>
+          )}
+          {hasProposta && (
+            <TabsTrigger value="proposta" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              Proposta
+            </TabsTrigger>
+          )}
+          {hasEmail && (
+            <TabsTrigger value="email" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              E-mail
+            </TabsTrigger>
+          )}
+          {hasWhatsapp && (
+            <TabsTrigger value="whatsapp" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              WhatsApp
+            </TabsTrigger>
+          )}
+          {hasObjecoes && (
+            <TabsTrigger value="objecoes" className="rounded-lg border border-border bg-card data-[state=active]:bg-muted data-[state=active]:border-foreground/20 text-sm px-4 py-2 shadow-none">
+              Objeções
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        {/* ── Tab: Roteiro ── */}
+        {hasRoteiro && roteiroBlocks.length > 0 && (
+          <TabsContent value="roteiro">
+            <div className="space-y-0 divide-y divide-border border border-border rounded-xl overflow-hidden">
+              {roteiroBlocks.map((bloco: any, i: number) => (
+                <div key={i} className="p-5 space-y-3">
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0 mt-0.5">
+                        {bloco.numero}
+                      </span>
+                      <h4 className="text-sm font-semibold text-foreground leading-snug">{bloco.titulo}</h4>
+                    </div>
+                    <span className="text-xs text-primary font-medium shrink-0">{bloco.tempo}</span>
+                  </div>
+
+                  {/* Script */}
+                  {bloco.script && (
+                    <div className="pl-10 space-y-2">
+                      <div
+                        className="text-sm text-foreground whitespace-pre-wrap leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: formatScript(bloco.script) }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Perguntas (legacy) */}
+                  {bloco.perguntas?.length > 0 && (
+                    <div className="pl-10 space-y-1">
+                      {bloco.perguntas.map((p: string, pi: number) => (
+                        <p key={pi} className="text-sm text-foreground">P{pi + 1}: "{p}"</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pontos-chave (legacy) */}
+                  {bloco.pontos_chave?.length > 0 && (
+                    <div className="pl-10">
+                      <ul className="list-disc pl-4 space-y-1">
+                        {bloco.pontos_chave.map((p: string, pi: number) => (
+                          <li key={pi} className="text-sm text-foreground">{p}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Technique badge */}
+                  {bloco.tecnica && (
+                    <div className="pl-10 flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+                      <Badge variant="secondary" className="shrink-0 text-[10px] rounded-md">
+                        {bloco.tecnica}
+                      </Badge>
+                      {bloco.nota_tecnica && (
+                        <p className="text-xs text-muted-foreground leading-relaxed">{bloco.nota_tecnica}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Alerta terceiro */}
+            {roteiro.alerta_terceiro && (
+              <div className="mt-4 flex items-start gap-2 border border-yellow-300 bg-yellow-50 dark:bg-yellow-900/10 dark:border-yellow-800 rounded-lg p-3">
+                <span className="text-sm">⚠️</span>
+                <p className="text-sm text-foreground">{roteiro.alerta_terceiro}</p>
               </div>
             )}
-            {proposta.diagnostico && (
-              <div className="bg-muted/30 rounded-lg p-4">
-                <h4 className="text-xs font-ui font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Cenário atual</h4>
-                <p className="text-sm font-body text-foreground whitespace-pre-wrap">{proposta.diagnostico}</p>
+
+            <CopyButton onClick={() => {
+              const text = roteiroBlocks.map((b: any) => `${b.numero}. ${b.titulo} (${b.tempo})\n${b.script}`).join('\n\n');
+              copyToClipboard(text);
+            }} />
+          </TabsContent>
+        )}
+
+        {/* ── Tab: Proposta ── */}
+        {hasProposta && (
+          <TabsContent value="proposta">
+            <div className="border border-border rounded-xl overflow-hidden">
+              <div className="px-5 py-4 border-b border-border">
+                <h3 className="text-sm font-semibold text-foreground">Estrutura da proposta</h3>
               </div>
-            )}
-            {proposta.solucao && (
-              <div className="bg-muted/30 rounded-lg p-4">
-                <h4 className="text-xs font-ui font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Solução</h4>
-                <p className="text-sm font-body text-foreground whitespace-pre-wrap">{proposta.solucao}</p>
+              <div className="p-5 space-y-5 text-sm text-foreground">
+                {/* Build numbered sections from proposta fields */}
+                {(() => {
+                  const sections: { num: number; title: string; content: string | undefined }[] = [
+                    { num: 1, title: 'ABERTURA', content: proposta.abertura || proposta.introducao },
+                    { num: 2, title: 'O CENÁRIO ATUAL', content: proposta.diagnostico },
+                    { num: 3, title: 'O QUE ENTREGAMOS', content: proposta.solucao },
+                  ];
+
+                  // Add beneficios as part of section 3 or separate
+                  const beneficiosText = proposta.beneficios?.map((b: string) => `→ ${b}`).join('\n');
+
+                  const extraSections: { num: number; title: string; content: string | undefined }[] = [];
+                  if (proposta.investimento) {
+                    const inv = proposta.investimento;
+                    const parts = [inv.valor, inv.condicoes, inv.garantia ? `Garantia: ${inv.garantia}` : ''].filter(Boolean);
+                    extraSections.push({ num: sections.length + (beneficiosText ? 2 : 1), title: 'INVESTIMENTO', content: parts.join('\n') });
+                  }
+                  if (proposta.fechamento) {
+                    extraSections.push({ num: sections.length + (beneficiosText ? 2 : 1) + extraSections.length + 1, title: 'FECHAMENTO', content: proposta.fechamento });
+                  }
+
+                  return (
+                    <>
+                      {sections.filter(s => s.content).map(s => (
+                        <div key={s.num}>
+                          <p className="font-semibold mb-1">{s.num}. {s.title}</p>
+                          <p className="whitespace-pre-wrap leading-relaxed">{s.content}</p>
+                        </div>
+                      ))}
+                      {beneficiosText && (
+                        <div>
+                          <p className="font-semibold mb-1">{sections.filter(s => s.content).length + 1}. BENEFÍCIOS</p>
+                          <p className="whitespace-pre-wrap leading-relaxed">{beneficiosText}</p>
+                        </div>
+                      )}
+                      {extraSections.map(s => (
+                        <div key={s.num}>
+                          <p className="font-semibold mb-1">{s.num}. {s.title}</p>
+                          <p className="whitespace-pre-wrap leading-relaxed">{s.content}</p>
+                        </div>
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
-            )}
-            {proposta.beneficios?.length > 0 && (
-              <div className="bg-muted/30 rounded-lg p-4">
-                <h4 className="text-xs font-ui font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Benefícios</h4>
-                <ul className="space-y-1">
-                  {proposta.beneficios.map((b: string, i: number) => (
-                    <li key={i} className="text-sm font-body text-foreground flex items-start gap-2"><span className="text-primary">→</span> {b}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {proposta.investimento && (
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <h4 className="text-xs font-ui font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Investimento</h4>
-                <p className="text-base font-bold text-foreground">{proposta.investimento.valor}</p>
-                <p className="text-sm text-muted-foreground">{proposta.investimento.condicoes}</p>
-                {proposta.investimento.garantia && <p className="text-sm text-muted-foreground">Garantia: {proposta.investimento.garantia}</p>}
-              </div>
-            )}
-            {proposta.fechamento && (
-              <p className="text-sm font-body text-foreground italic">{proposta.fechamento}</p>
-            )}
+            </div>
             <CopyButton onClick={() => {
               const text = [proposta.titulo, proposta.abertura || proposta.introducao, proposta.diagnostico, proposta.solucao, proposta.beneficios?.map((b: string) => `→ ${b}`).join('\n'), proposta.investimento?.valor, proposta.fechamento].filter(Boolean).join('\n\n');
               copyToClipboard(text);
             }} />
-          </div>
-        </TabsContent>
-      )}
+          </TabsContent>
+        )}
 
-      {/* Email */}
-      {hasEmail && (
-        <TabsContent value="email">
-          <div className="space-y-4">
-            <div className="bg-muted/30 rounded-lg p-4 space-y-1 text-sm border-b border-border">
-              <div className="flex gap-2"><span className="font-medium text-muted-foreground w-16">Assunto</span><span className="font-semibold text-foreground">{email.assunto}</span></div>
-              {email.para && <div className="flex gap-2"><span className="font-medium text-muted-foreground w-16">Para</span><span className="text-foreground">{email.para}</span></div>}
-            </div>
-            <div className="bg-muted/30 rounded-lg p-4 space-y-3">
-              <p className="text-sm font-body text-foreground">{email.saudacao}</p>
-              <p className="text-sm font-body text-foreground whitespace-pre-wrap">{email.corpo}</p>
-              {email.destaque_1 && <div className="border-l-4 border-primary bg-primary/5 p-3 rounded-r-md"><p className="text-sm text-foreground">{email.destaque_1}</p></div>}
-              {email.destaque_2 && <div className="border-l-4 border-orange-400 bg-orange-50 dark:bg-orange-900/10 p-3 rounded-r-md"><p className="text-sm text-foreground">{email.destaque_2}</p></div>}
-              <p className="text-sm font-body text-foreground font-semibold">{email.cta}</p>
-              <p className="text-sm text-muted-foreground">{email.assinatura}</p>
+        {/* ── Tab: Email ── */}
+        {hasEmail && (
+          <TabsContent value="email">
+            <div className="border border-border rounded-xl overflow-hidden">
+              {/* Header */}
+              <div className="px-5 py-3 border-b border-border bg-muted/30 space-y-1 text-sm">
+                <div className="flex gap-3">
+                  <span className="text-muted-foreground w-14 shrink-0">Assunto</span>
+                  <span className="font-semibold text-foreground">{email.assunto}</span>
+                </div>
+                {email.para && (
+                  <div className="flex gap-3">
+                    <span className="text-muted-foreground w-14 shrink-0">Para</span>
+                    <span className="text-foreground">{email.para}</span>
+                  </div>
+                )}
+              </div>
+              {/* Body */}
+              <div className="p-5 space-y-4 text-sm text-foreground leading-relaxed">
+                {email.saudacao && <p>{email.saudacao}</p>}
+                {email.corpo && (
+                  <div className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: renderHighlightsSimple(email.corpo) }} />
+                )}
+                {email.destaque_1 && (
+                  <div className="bg-primary/10 rounded-md px-3 py-2">
+                    <p>{email.destaque_1}</p>
+                  </div>
+                )}
+                {email.destaque_2 && (
+                  <div className="bg-orange-100 dark:bg-orange-900/20 rounded-md px-3 py-2">
+                    <p>{email.destaque_2}</p>
+                  </div>
+                )}
+                {email.cta && (
+                  <div className="bg-primary/10 rounded-md px-3 py-2 inline-block">
+                    <p>{email.cta}</p>
+                  </div>
+                )}
+                {email.assinatura && <p className="text-muted-foreground">{email.assinatura}</p>}
+              </div>
             </div>
             <CopyButton onClick={() => copyToClipboard(`Assunto: ${email.assunto}\n\n${email.saudacao}\n\n${email.corpo}\n\n${email.cta}\n\n${email.assinatura}`)} />
-          </div>
-        </TabsContent>
-      )}
+          </TabsContent>
+        )}
 
-      {/* WhatsApp */}
-      {hasWhatsapp && (
-        <TabsContent value="whatsapp">
-          <div className="space-y-4">
-            <div className="bg-muted/30 rounded-lg p-4">
-              <h4 className="text-xs font-ui font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Mensagem principal</h4>
-              <p className="text-sm font-body text-foreground whitespace-pre-wrap">{whatsapp.mensagem_principal}</p>
-            </div>
-            <CopyButton onClick={() => copyToClipboard(whatsapp.mensagem_principal)} />
-            <div className="bg-muted/30 rounded-lg p-4">
-              <h4 className="text-xs font-ui font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Versão curta</h4>
-              <p className="text-sm font-body text-foreground whitespace-pre-wrap">{whatsapp.versao_curta}</p>
-            </div>
-            <CopyButton onClick={() => copyToClipboard(whatsapp.versao_curta)} />
-          </div>
-        </TabsContent>
-      )}
-
-      {/* Objeções */}
-      {hasObjecoes && (
-        <TabsContent value="objecoes">
-          <div className="space-y-3">
-            {objecoes.map((o: any, i: number) => (
-              <div key={i} className="border border-border rounded-lg p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-semibold text-foreground">"{o.objecao}"</p>
-                  {o.categoria && <Badge variant="secondary" className="text-[10px] shrink-0">{o.categoria}</Badge>}
+        {/* ── Tab: WhatsApp ── */}
+        {hasWhatsapp && (
+          <TabsContent value="whatsapp">
+            <div className="space-y-4">
+              <div className="border border-border rounded-xl p-5">
+                <h4 className="text-sm font-semibold text-foreground mb-1">Mensagem principal</h4>
+                <p className="text-xs text-muted-foreground mb-3">Cole diretamente no WhatsApp</p>
+                <div className="bg-muted/50 rounded-lg p-4 text-sm text-foreground whitespace-pre-wrap leading-relaxed">{whatsapp.mensagem_principal}</div>
+                <div className="mt-3">
+                  <CopyButton onClick={() => copyToClipboard(whatsapp.mensagem_principal)} />
                 </div>
-                {o.tecnica && <p className="text-xs text-muted-foreground">Técnica: <span className="font-medium">{o.tecnica}</span></p>}
-                <p className="text-sm italic text-muted-foreground">{o.resposta_curta}</p>
-                <p className="text-sm text-foreground whitespace-pre-wrap">{o.resposta_completa}</p>
               </div>
-            ))}
-          </div>
-        </TabsContent>
-      )}
-    </Tabs>
+              <div className="border border-border rounded-xl p-5">
+                <h4 className="text-sm font-semibold text-foreground mb-1">Versão curta</h4>
+                <p className="text-xs text-muted-foreground mb-3">Para quando ele não respondeu</p>
+                <div className="bg-muted/50 rounded-lg p-4 text-sm text-foreground whitespace-pre-wrap leading-relaxed">{whatsapp.versao_curta}</div>
+                <div className="mt-3">
+                  <CopyButton onClick={() => copyToClipboard(whatsapp.versao_curta)} />
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        )}
+
+        {/* ── Tab: Objeções ── */}
+        {hasObjecoes && (
+          <TabsContent value="objecoes">
+            <div className="space-y-3">
+              {objecoes.map((o: any, i: number) => (
+                <div key={i} className="border border-border rounded-xl p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-foreground">"{o.objecao}"</p>
+                    {o.categoria && <Badge variant="secondary" className="text-[10px] shrink-0">{o.categoria}</Badge>}
+                  </div>
+                  {o.tecnica && <p className="text-xs text-muted-foreground">Técnica: <span className="font-medium">{o.tecnica}</span></p>}
+                  <p className="text-sm italic text-muted-foreground">{o.resposta_curta}</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{o.resposta_completa}</p>
+                  {o.se_terceiro && (
+                    <div className="bg-muted/50 rounded-lg p-3 mt-1">
+                      <p className="text-xs font-medium text-muted-foreground mb-0.5">Se terceiro presente:</p>
+                      <p className="text-sm text-foreground">{o.se_terceiro}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+        )}
+      </Tabs>
+    </div>
   );
 }
 
