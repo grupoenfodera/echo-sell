@@ -25,6 +25,7 @@ export interface WizardData {
   processamento_info: string;
   palavras_exatas: string;
   nicho: string;
+  nome_produto: string;
   produto: string;
   resultado_entregue: string;
   contexto: 'b2b' | 'b2c' | '';
