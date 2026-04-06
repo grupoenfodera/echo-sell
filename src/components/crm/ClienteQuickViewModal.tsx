@@ -168,9 +168,9 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
           </div>
 
           {/* BODY */}
-          <div className="grid grid-cols-1 sm:grid-cols-[240px_1fr] min-h-[360px]">
-            {/* LEFT SIDEBAR */}
-            <div className="border-r border-border p-4 space-y-5 bg-muted/20">
+          <div className="flex" style={{ flex: 1, overflow: 'hidden' }}>
+             {/* LEFT SIDEBAR */}
+             <div className="space-y-5" style={{ width: '240px', borderRight: '1px solid #2e2e42', padding: '20px', overflowY: 'auto', flexShrink: 0 }}>
               <div className="space-y-2">
                 <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Contato</h3>
                 {cliente.whatsapp && (
