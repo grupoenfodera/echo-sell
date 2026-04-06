@@ -282,52 +282,57 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                             const isGerando = gerandoPeca === peca.tipo;
                             const Icon = peca.icon;
 
-                            if (isGerando) {
-                              return (
-                                <span
-                                  key={peca.tipo}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium animate-pulse"
-                                  style={{ background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52', minWidth: '70px' }}
-                                >
-                                  <Loader2 className="h-3 w-3 animate-spin" /> Gerando...
-                                </span>
-                              );
-                            }
+                             const PECA_EMOJIS: Record<string, string> = { proposta: '📄', email: '📧', whatsapp: '💬', objecoes: '🛡' };
+                             const emoji = PECA_EMOJIS[peca.tipo] || '';
 
-                            if (temPeca) {
-                              return (
-                                <button
-                                  key={peca.tipo}
-                                  onClick={() => navigate(`/roteiro/${sessao.id}`)}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all animate-scale-in"
-                                  style={{ background: '#34d39922', color: '#34d399', border: '1px solid #34d39944' }}
-                                >
-                                  ✓ <Icon className="h-3 w-3" /> {peca.label}
-                                </button>
-                              );
-                            }
+                             if (isGerando) {
+                               return (
+                                 <span
+                                   key={peca.tipo}
+                                   className="animate-pulse"
+                                   style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52', minWidth: '70px' }}
+                                 >
+                                   <Loader2 className="h-3 w-3 animate-spin" /> Gerando...
+                                 </span>
+                               );
+                             }
 
-                            return (
-                              <Popover key={peca.tipo}>
-                                <PopoverTrigger asChild>
-                                  <button
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-colors"
-                                    style={{ background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52' }}
-                                  >
-                                    + <Icon className="h-3 w-3" /> {peca.label}
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-3 space-y-2" side="top">
-                                  <p className="text-xs text-foreground">Gerar {peca.label.toLowerCase()} para este cliente?</p>
-                                  <div className="flex gap-2">
-                                    <Button size="sm" variant="outline" className="text-xs h-7 px-2">Cancelar</Button>
-                                    <Button size="sm" className="text-xs h-7 px-2" onClick={() => handleGerarPeca(peca.tipo)}>
-                                      Gerar
-                                    </Button>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            );
+                             if (temPeca) {
+                               return (
+                                 <button
+                                   key={peca.tipo}
+                                   onClick={() => navigate(`/roteiro/${sessao.id}`)}
+                                   className="animate-scale-in"
+                                   style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#34d39922', color: '#34d399', border: '1px solid #34d39944' }}
+                                 >
+                                   ✓ {emoji} {peca.label}
+                                 </button>
+                               );
+                             }
+
+                             return (
+                               <Popover key={peca.tipo}>
+                                 <PopoverTrigger asChild>
+                                   <button
+                                     className="transition-colors"
+                                     style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52' }}
+                                     onMouseEnter={e => { e.currentTarget.style.background = '#7c5cfc22'; e.currentTarget.style.color = '#7c5cfc'; e.currentTarget.style.borderColor = '#7c5cfc55'; }}
+                                     onMouseLeave={e => { e.currentTarget.style.background = '#2a2a3a'; e.currentTarget.style.color = '#5a5a7a'; e.currentTarget.style.borderColor = '#3a3a52'; }}
+                                   >
+                                     + {emoji} {peca.label}
+                                   </button>
+                                 </PopoverTrigger>
+                                 <PopoverContent className="w-auto p-3 space-y-2" side="top">
+                                   <p className="text-xs text-foreground">Gerar {peca.label.toLowerCase()} para este cliente?</p>
+                                   <div className="flex gap-2">
+                                     <Button size="sm" variant="outline" className="text-xs h-7 px-2">Cancelar</Button>
+                                     <Button size="sm" className="text-xs h-7 px-2" onClick={() => handleGerarPeca(peca.tipo)}>
+                                       Gerar
+                                     </Button>
+                                   </div>
+                                 </PopoverContent>
+                               </Popover>
+                             );
                           })}
                         </div>
 
