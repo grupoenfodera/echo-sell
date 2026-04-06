@@ -612,9 +612,9 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
                   <TooltipTrigger asChild>
                     <span
                       className="h-1.5 flex-1 rounded-full transition-colors"
-                      style={done
+                     style={done
                         ? { background: '#7c5cfc' }
-                        : { background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))' }
+                        : { background: '#2a2a3a', border: '1px solid #3a3a52' }
                       }
                     />
                   </TooltipTrigger>
