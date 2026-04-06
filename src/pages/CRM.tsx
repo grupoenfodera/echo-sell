@@ -123,6 +123,16 @@ function mapColunaToStatus(coluna: PipelineColuna): ClienteStatus {
   }
 }
 
+function mapColunaToTemp(coluna: PipelineColuna): ClienteTemperatura {
+  switch (coluna) {
+    case 'novo_lead':        return 'frio';
+    case 'roteiro_pronto':   return 'morno';
+    case 'proposta_enviada': return 'morno';
+    case 'follow_up':        return 'ativo';
+    case 'fechado':          return 'ativo';
+  }
+}
+
 /* ── Peças config ──────────────────────────────── */
 
 type PecaTipo = 'proposta' | 'email' | 'whatsapp' | 'objecoes';
@@ -210,16 +220,31 @@ export default function CRM() {
 
     const novaColuna = destination.droppableId as PipelineColuna;
     const novoStatus = mapColunaToStatus(novaColuna);
+    const novaTemp   = mapColunaToTemp(novaColuna);
+    const colTitulo  = COLUNAS.find(c => c.id === novaColuna)?.titulo ?? novaColuna;
 
-    // Optimistic update
+    // Optimistic update — status + temperatura simultaneamente
     setClientes(prev => prev.map(c =>
-      c.id === draggableId ? { ...c, status: novoStatus } : c
+      c.id === draggableId
+        ? { ...c, status: novoStatus, temperatura: novaTemp }
+        : c
     ));
     setSavingDragId(draggableId);
 
     try {
-      await svpApi.atualizarCliente(draggableId, { status: novoStatus });
-      toast.success('Status atualizado');
+      // 1. Persiste status + temperatura no banco
+      await svpApi.atualizarCliente(draggableId, { status: novoStatus, temperatura: novaTemp });
+
+      // 2. Registra movimentação na timeline de atividade
+      await svpApi.registrarInteracao({
+        cliente_id: draggableId,
+        canal: 'nota',
+        direcao: 'interno',
+        titulo: `Movido para ${colTitulo}`,
+        conteudo: `Pipeline atualizado → ${colTitulo}`,
+      });
+
+      toast.success(`Movido para ${colTitulo}`);
     } catch {
       carregarClientes();
       toast.error('Erro ao atualizar status');
