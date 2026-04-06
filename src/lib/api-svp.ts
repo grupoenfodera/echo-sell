@@ -89,6 +89,9 @@ export const svpApi = {
   buscarCliente: (clienteId: string) =>
     callFunction<CrmListarResponse>(`crm-listar?cliente_id=${clienteId}`),
 
+  buscarSessao: (sessaoId: string) =>
+    callFunction<CrmListarResponse>(`crm-listar?sessao_id=${sessaoId}`),
+
   atualizarSessao: (sessaoId: string, resultado: string, notas?: string) =>
     callFunction<{ ok: boolean }>('crm-atualizar', {
       method: 'POST',

@@ -290,12 +290,7 @@ export default function RoteiroPage() {
   useEffect(() => {
     if (!sessao_id) return;
     setLoading(true);
-    svpApi.buscarCliente(sessao_id) // try via crm-listar
-      .then(() => {
-        // Try fetching session directly
-        return callFn<{ sessoes?: SessaoVenda[] }>(`crm-listar?sessao_id=${sessao_id}`);
-      })
-      .catch(() => callFn<{ sessoes?: SessaoVenda[] }>(`crm-listar?sessao_id=${sessao_id}`))
+    svpApi.buscarSessao(sessao_id)
       .then(res => {
         const s = res.sessoes?.[0];
         if (!s) {
@@ -304,7 +299,6 @@ export default function RoteiroPage() {
           return;
         }
         if (!s.roteiro_json) {
-          // Still generating — redirect to loading page
           navigate(`/loading/${sessao_id}`, { replace: true });
           return;
         }

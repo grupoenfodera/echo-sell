@@ -200,22 +200,12 @@ export default function RoteiroResultado({
       await svpApi.aprovarRoteiro({ sessao_id: sessaoId, aprovado: false });
 
       // 2. Fetch session to get dados_formulario
-      const res = await svpApi.buscarCliente(sessaoId).catch(() => null);
       let sessaoData: any = null;
-      if (!res) {
-        // fallback: try crm-listar with sessao_id
-        const listRes = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crm-listar?sessao_id=${sessaoId}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${(await (await import('@/integrations/supabase/client')).supabase.auth.getSession()).data.session?.access_token}`,
-            },
-          }
-        );
-        const listData = await listRes.json();
-        sessaoData = listData?.sessoes?.[0];
+      try {
+        const res = await svpApi.buscarSessao(sessaoId);
+        sessaoData = res.sessoes?.[0];
+      } catch {
+        // ignore
       }
 
       const form = sessaoData?.dados_formulario;
