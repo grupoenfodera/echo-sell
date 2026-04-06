@@ -36,10 +36,17 @@ export function useGerarRoteiro() {
   const setLoading = (loading: boolean) => setState(s => ({ ...s, loading, error: null }));
   const setError = (error: string) => setState(s => ({ ...s, loading: false, error }));
 
-  const gerarRoteiro = useCallback(async (payload: GerarRoteiroPayload) => {
+  const gerarRoteiro = useCallback(async (payload: GerarRoteiroPayload): Promise<{ async: boolean; sessaoId?: string } | void> => {
     setLoading(true);
     try {
-      const res = await svpApi.gerarRoteiro(payload);
+      const { data: res, httpStatus } = await svpApi.gerarRoteiroAsync(payload);
+
+      // Async flow: 202 means generation is in background
+      if (httpStatus === 202 && res.sessao_id) {
+        setState(s => ({ ...s, loading: false, sessaoId: res.sessao_id }));
+        return { async: true, sessaoId: res.sessao_id };
+      }
+
       if (!res.sessao_id) {
         setError('Erro interno: sessão não foi salva. Tente novamente.');
         return;
@@ -56,6 +63,7 @@ export function useGerarRoteiro() {
         clienteId: res.cliente_id ?? null,
         roteiro: res.roteiro,
       }));
+      return { async: false, sessaoId: res.sessao_id };
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Erro ao gerar roteiro');
     }
