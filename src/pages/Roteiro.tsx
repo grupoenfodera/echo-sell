@@ -630,6 +630,14 @@ export default function RoteiroPage() {
         </main>
       </div>
 
+      {/* ── PECAS PANEL ── */}
+      {sessao && (
+        <PecasPanel
+          sessao={sessao}
+          onSessaoUpdate={(updates) => setSessao(prev => prev ? { ...prev, ...updates } : prev)}
+        />
+      )}
+
       {/* ── FOOTER ── */}
       <footer className="h-14 border-t border-border bg-card flex items-center px-4 gap-4 shrink-0 z-20">
         <div className="flex items-center gap-3 flex-1">
@@ -647,27 +655,14 @@ export default function RoteiroPage() {
             <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Anterior
           </Button>
 
-          {faseAtiva < blocos.length - 1 ? (
+          {faseAtiva < blocos.length - 1 && (
             <Button
               size="sm"
               onClick={() => setFaseAtiva(f => f + 1)}
             >
               Próxima <ArrowRight className="h-3.5 w-3.5 ml-1" />
             </Button>
-          ) : allApproved ? (
-            <Button
-              size="sm"
-              onClick={handleGerarProposta}
-              disabled={gerandoProposta}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              {gerandoProposta ? (
-                <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Gerando...</>
-              ) : (
-                <><Sparkles className="mr-1.5 h-3.5 w-3.5" /> Gerar proposta completa</>
-              )}
-            </Button>
-          ) : null}
+          )}
         </div>
       </footer>
     </div>
