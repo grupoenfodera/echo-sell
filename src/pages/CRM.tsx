@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import {
-  Search, Plus, Users, FileText, Clock, Loader2, AlertCircle, MessageSquare,
+  Search, Plus, Users, Clock, Loader2, AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
