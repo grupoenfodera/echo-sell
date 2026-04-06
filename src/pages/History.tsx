@@ -188,6 +188,23 @@ const History = () => {
     toast({ title: 'Copiado!', description: 'Conteúdo copiado para a área de transferência.' });
   }, [toast]);
 
+  const handleDelete = useCallback(async (gen: Gen) => {
+    setDeletingId(gen.id);
+    try {
+      const table = gen.source === 'sessoes_venda' ? 'sessoes_venda' : 'geracoes';
+      const { error } = await supabase.from(table).delete().eq('id', gen.id);
+      if (error) throw error;
+      setGens(prev => prev.filter(g => g.id !== gen.id));
+      if (selectedGen?.id === gen.id) setSelectedGen(null);
+      toast({ title: 'Excluído', description: 'Registro removido do histórico.' });
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível excluir.', variant: 'destructive' });
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    }
+  }, [selectedGen, toast]);
+
   const result = useMemo(() => {
     if (!selectedGen) return null;
     if (selectedGen.source === 'sessoes_venda') return null; // handled separately
