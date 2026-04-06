@@ -173,6 +173,7 @@ export default function RoteiroResultado({
   onAprovado,
   onRejeitado,
 }: RoteiroResultadoProps) {
+  const navigate = useNavigate();
   const [aprovando, setAprovando] = useState(false);
   const [rejeitando, setRejeitando] = useState(false);
   const [dialogAberto, setDialogAberto] = useState(false);
@@ -191,18 +192,63 @@ export default function RoteiroResultado({
     }
   };
 
-  const handleRejeitar = async () => {
+  const handleRejeitar = useCallback(async () => {
     setRejeitando(true);
+    setDialogAberto(false);
     try {
+      // 1. Reject the current roteiro
       await svpApi.aprovarRoteiro({ sessao_id: sessaoId, aprovado: false });
-      setDialogAberto(false);
-      onRejeitado();
+
+      // 2. Fetch session to get dados_formulario
+      const res = await svpApi.buscarCliente(sessaoId).catch(() => null);
+      let sessaoData: any = null;
+      if (!res) {
+        // fallback: try crm-listar with sessao_id
+        const listRes = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/crm-listar?sessao_id=${sessaoId}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              Authorization: `Bearer ${(await (await import('@/integrations/supabase/client')).supabase.auth.getSession()).data.session?.access_token}`,
+            },
+          }
+        );
+        const listData = await listRes.json();
+        sessaoData = listData?.sessoes?.[0];
+      }
+
+      const form = sessaoData?.dados_formulario;
+      if (!form) {
+        toast.error('Não foi possível recuperar os dados da sessão.');
+        setRejeitando(false);
+        return;
+      }
+
+      // 3. Call gerar-roteiro with same data
+      const payload = {
+        nicho: form.nicho || sessaoData?.nicho,
+        produto: form.produto || sessaoData?.produto,
+        preco: form.preco || sessaoData?.preco,
+        contextoGeracao: form.contextoGeracao || sessaoData?.contexto,
+        nome_cliente: form.nome_cliente,
+        cliente_id: form.cliente_id || sessaoData?.cliente_id,
+        dados_extras: form.dados_extras,
+      };
+
+      const novoRoteiro = await svpApi.gerarRoteiro(payload);
+
+      // 4. Navigate to the new session
+      if (novoRoteiro.sessao_id) {
+        navigate(`/roteiro/${novoRoteiro.sessao_id}`, { replace: true });
+      }
+      toast.success('Roteiro regenerado com sucesso!');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao regenerar roteiro.');
     } finally {
       setRejeitando(false);
     }
-  };
+  }, [sessaoId, navigate]);
 
   // Compute total time
   const tempoTotal = roteiro.tempo_total_min || blocos.reduce((sum, b) => {
