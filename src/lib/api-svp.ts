@@ -8,7 +8,7 @@ import type {
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
-async function callFunction<T>(name: string, options: RequestInit = {}): Promise<T> {
+async function callFunction<T>(name: string, options: RequestInit = {}): Promise<{ data: T; status: number }> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
   const res = await fetch(`${FUNCTIONS_URL}/${name}`, {
@@ -20,11 +20,12 @@ async function callFunction<T>(name: string, options: RequestInit = {}): Promise
       ...(options.headers ?? {}),
     },
   });
-  if (!res.ok) {
+  if (!res.ok && res.status !== 202) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error ?? `HTTP ${res.status}`);
   }
-  return res.json();
+  const data = await res.json();
+  return { data, status: res.status };
 }
 
 export const svpApi = {
