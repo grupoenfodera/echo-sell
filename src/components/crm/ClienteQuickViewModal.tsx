@@ -336,25 +336,23 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                           })}
                         </div>
 
-                        {/* Botões */}
-                        <div className="flex items-center gap-2">
-                          {sessao.roteiro_json && (
-                            <Button
-                              variant="outline" size="sm"
-                              className="text-xs gap-1"
-                              onClick={() => navigate(`/roteiro/${sessao.id}`)}
-                            >
-                              Ver roteiro <ChevronRight className="h-3 w-3" />
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost" size="sm"
-                            className="text-xs gap-1"
-                            onClick={() => { onClose(); navigate('/'); }}
-                          >
-                            <Plus className="h-3 w-3" /> Nova sessão
-                          </Button>
-                        </div>
+                         {/* Botões */}
+                         <div className="flex items-center" style={{ gap: '8px', marginTop: '12px' }}>
+                           {sessao.roteiro_json && (
+                             <button
+                               onClick={() => navigate(`/roteiro/${sessao.id}`)}
+                               style={{ border: '1px solid #7c5cfc', color: '#7c5cfc', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
+                             >
+                               Ver roteiro →
+                             </button>
+                           )}
+                           <button
+                             onClick={() => { onClose(); navigate('/'); }}
+                             style={{ border: '1px solid #3a3a52', color: '#9090b0', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
+                           >
+                             + Nova sessão
+                           </button>
+                         </div>
                       </>
                     ) : (
                       <div className="text-center py-6">
