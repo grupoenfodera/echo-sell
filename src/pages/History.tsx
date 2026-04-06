@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Eye, X, Copy, Check, User, FileText, Mail, Shield, MessageSquare } from 'lucide-react';
+import { Eye, X, Copy, Check, User, FileText, Mail, Shield, MessageSquare, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -128,6 +128,8 @@ const History = () => {
   const [gens, setGens] = useState<Gen[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGen, setSelectedGen] = useState<Gen | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!usuario?.id) return;
@@ -185,6 +187,23 @@ const History = () => {
     navigator.clipboard.writeText(text);
     toast({ title: 'Copiado!', description: 'Conteúdo copiado para a área de transferência.' });
   }, [toast]);
+
+  const handleDelete = useCallback(async (gen: Gen) => {
+    setDeletingId(gen.id);
+    try {
+      const table = gen.source === 'sessoes_venda' ? 'sessoes_venda' : 'geracoes';
+      const { error } = await supabase.from(table).delete().eq('id', gen.id);
+      if (error) throw error;
+      setGens(prev => prev.filter(g => g.id !== gen.id));
+      if (selectedGen?.id === gen.id) setSelectedGen(null);
+      toast({ title: 'Excluído', description: 'Registro removido do histórico.' });
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível excluir.', variant: 'destructive' });
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    }
+  }, [selectedGen, toast]);
 
   const result = useMemo(() => {
     if (!selectedGen) return null;
@@ -259,15 +278,47 @@ const History = () => {
                       )}
                     </div>
 
-                    {/* Action */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-lg gap-1.5 shrink-0 self-start sm:self-center"
-                      onClick={() => setSelectedGen(g)}
-                    >
-                      <Eye className="h-3.5 w-3.5" /> Ver proposta completa
-                    </Button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg gap-1.5"
+                        onClick={() => setSelectedGen(g)}
+                      >
+                        <Eye className="h-3.5 w-3.5" /> Ver proposta completa
+                      </Button>
+                      {confirmDeleteId === g.id ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="rounded-lg text-xs"
+                            disabled={deletingId === g.id}
+                            onClick={() => handleDelete(g)}
+                          >
+                            {deletingId === g.id ? 'Excluindo...' : 'Confirmar'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-lg text-xs"
+                            onClick={() => setConfirmDeleteId(null)}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => setConfirmDeleteId(g.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
