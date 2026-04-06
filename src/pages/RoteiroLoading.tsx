@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, AlertCircle, RotateCcw, ArrowLeft } from 'lucide-react';
+import { AlertCircle, RotateCcw, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { svpApi } from '@/lib/api-svp';
 import Header from '@/components/Header';
 
-const MAX_ATTEMPTS = 120; // 120 × 3s = 6 min
+const MAX_ATTEMPTS = 100; // 100 × 3s = 5 min
 const POLL_INTERVAL = 3000;
 
 const TIPS = [
@@ -23,7 +23,6 @@ export default function RoteiroLoading() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<'gerando' | 'erro' | 'timeout'>('gerando');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [attempts, setAttempts] = useState(0);
   const [tipIdx, setTipIdx] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const attemptRef = useRef(0);
@@ -44,12 +43,10 @@ export default function RoteiroLoading() {
   const poll = useCallback(async () => {
     if (!sessao_id) return;
     attemptRef.current += 1;
-    setAttempts(attemptRef.current);
 
     if (attemptRef.current > MAX_ATTEMPTS) {
       stopPolling();
       setStatus('timeout');
-      setErrorMsg('A geração está demorando mais do que o esperado. Tente novamente.');
       return;
     }
 
@@ -65,11 +62,10 @@ export default function RoteiroLoading() {
       if (res.status === 'erro') {
         stopPolling();
         setStatus('erro');
-        setErrorMsg(res.erro || 'Erro ao gerar o roteiro. Tente novamente.');
+        setErrorMsg(res.erro || 'Houve um erro ao gerar o roteiro. Tente novamente.');
         return;
       }
     } catch (err) {
-      // Network errors — keep polling, don't stop
       console.warn('Polling error:', err);
     }
   }, [sessao_id, navigate, stopPolling]);
@@ -80,23 +76,10 @@ export default function RoteiroLoading() {
     setStatus('gerando');
     setErrorMsg(null);
 
-    // Initial poll immediately
     poll();
-
     intervalRef.current = setInterval(poll, POLL_INTERVAL);
     return () => stopPolling();
   }, [sessao_id, poll, stopPolling]);
-
-  const handleRetry = () => {
-    attemptRef.current = 0;
-    setAttempts(0);
-    setStatus('gerando');
-    setErrorMsg(null);
-    poll();
-    intervalRef.current = setInterval(poll, POLL_INTERVAL);
-  };
-
-  const progressPct = Math.min((attempts / MAX_ATTEMPTS) * 100, 100);
 
   return (
     <>
@@ -109,13 +92,10 @@ export default function RoteiroLoading() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              {/* Spinner */}
+              {/* Animated spinner */}
               <div className="relative mx-auto w-20 h-20">
                 <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
                 <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-bold text-primary">{Math.round(progressPct)}%</span>
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -123,7 +103,7 @@ export default function RoteiroLoading() {
                   Gerando seu roteiro...
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Seu roteiro está sendo gerado com qualidade máxima... isso leva cerca de 60 segundos
+                  O Claude está analisando o perfil do lead e criando scripts personalizados. Isso leva cerca de 60 segundos.
                 </p>
               </div>
 
@@ -138,19 +118,22 @@ export default function RoteiroLoading() {
                 {TIPS[tipIdx]}
               </motion.p>
 
-              {/* Progress bar */}
+              {/* Indeterminate progress bar */}
               <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
                 <motion.div
-                  className="h-full bg-primary rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPct}%` }}
-                  transition={{ duration: 0.5 }}
+                  className="h-full bg-primary rounded-full w-1/3"
+                  animate={{ x: ['-100%', '400%'] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                 />
               </div>
+
+              <p className="text-xs text-muted-foreground">
+                Você pode fechar esta aba — o roteiro ficará salvo no histórico.
+              </p>
             </motion.div>
           )}
 
-          {(status === 'erro' || status === 'timeout') && (
+          {status === 'erro' && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -162,23 +145,43 @@ export default function RoteiroLoading() {
 
               <div className="space-y-2">
                 <h2 className="text-xl font-heading font-bold text-foreground">
-                  {status === 'timeout' ? 'Tempo esgotado' : 'Erro na geração'}
+                  Erro na geração
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {errorMsg}
+                  {errorMsg || 'Houve um erro ao gerar o roteiro. Tente novamente.'}
                 </p>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Button onClick={handleRetry} className="w-full">
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Tentar novamente
-                </Button>
-                <Button variant="outline" onClick={() => navigate('/')} className="w-full">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Voltar ao início
-                </Button>
+              <Button onClick={() => navigate('/gerar', { replace: true })} className="w-full">
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Tentar novamente
+              </Button>
+            </motion.div>
+          )}
+
+          {status === 'timeout' && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="space-y-4"
+            >
+              <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center">
+                <Clock className="h-8 w-8 text-amber-500" />
               </div>
+
+              <div className="space-y-2">
+                <h2 className="text-xl font-heading font-bold text-foreground">
+                  Tempo esgotado
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  A geração está demorando mais que o esperado. Verifique o histórico em alguns minutos.
+                </p>
+              </div>
+
+              <Button onClick={() => navigate('/historico')} className="w-full">
+                <Clock className="mr-2 h-4 w-4" />
+                Ver histórico
+              </Button>
             </motion.div>
           )}
         </div>
