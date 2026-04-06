@@ -314,20 +314,37 @@ export default function CRM() {
 
                   return (
                     <div key={col.id} className="w-[280px] shrink-0 flex flex-col">
-                      {/* Column header */}
+                      {/* Column header — colored top stripe + card bg */}
                       <div
-                        className="px-3 py-2.5 mb-0"
+                        className="px-3 py-2.5 mb-0 bg-card"
                         style={{
-                          background: '#20232B',
                           borderRadius: '10px 10px 0 0',
-                          border: '1px solid #2B2F3C',
-                          borderBottom: 'none',
+                          borderTop: `3px solid ${col.borderColor}`,
+                          borderLeft: '1px solid hsl(var(--border))',
+                          borderRight: '1px solid hsl(var(--border))',
+                          borderBottom: '1px solid hsl(var(--border))',
                         }}
                       >
                         <div className="flex items-center gap-2">
-                          <span className={`h-2.5 w-2.5 rounded-full ${col.dotCls}`} />
-                          <span className="text-xs font-semibold text-foreground uppercase tracking-wide">{col.titulo}</span>
-                          <span className="ml-auto text-[11px] text-muted-foreground font-medium">{items.length}</span>
+                          <span
+                            className="h-2 w-2 rounded-full shrink-0"
+                            style={{ background: col.borderColor }}
+                          />
+                          <span
+                            className="text-[11px] font-semibold uppercase tracking-widest"
+                            style={{ color: col.borderColor }}
+                          >
+                            {col.titulo}
+                          </span>
+                          <span
+                            className="ml-auto text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded-md"
+                            style={{
+                              background: `${col.borderColor}18`,
+                              color: col.borderColor,
+                            }}
+                          >
+                            {items.length}
+                          </span>
                           {isFechado && items.length > 0 && (
                             <button
                               onClick={() => setFechadoColapsado(p => !p)}
@@ -355,10 +372,8 @@ export default function CRM() {
                               }`}
                               style={{
                                 maxHeight: 'calc(100vh - 310px)',
-                                borderTop: `3px solid ${col.borderColor}`,
-                                border: `1px solid ${snapshot.isDraggingOver ? 'hsl(var(--primary) / 0.3)' : '#2B2F3C'}`,
-                                borderTopWidth: '3px',
-                                borderTopColor: col.borderColor,
+                                border: `1px solid ${snapshot.isDraggingOver ? `${col.borderColor}55` : 'hsl(var(--border))'}`,
+                                borderTop: 'none',
                               }}
                             >
                               {items.length === 0 ? (
