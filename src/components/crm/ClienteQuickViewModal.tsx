@@ -189,10 +189,10 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                   <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                   <span>{statusLabel}</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-foreground">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>{agingText ? `há ${agingText}` : 'Sem contato'}</span>
-                </div>
+                <div className="flex items-center gap-2 text-xs">
+                   <Clock className="h-3.5 w-3.5" style={{ color: agingColor }} />
+                   <span style={{ color: agingColor }}>{agingText ? `há ${agingText}` : 'Sem contato'}</span>
+                 </div>
                 <div className="flex items-center gap-2 text-xs text-foreground">
                   <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
                   <span>Criado há {criadoText}</span>
