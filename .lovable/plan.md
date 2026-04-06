@@ -1,62 +1,30 @@
 
 
-## Plano: Modal de detalhe do cliente no CRM (inline, sem navegar)
+## Correções visuais no modal ClienteQuickViewModal
 
-### O que muda
+### Arquivo: `src/components/crm/ClienteQuickViewModal.tsx`
 
-Ao clicar em um card do pipeline (ou da lista), em vez de navegar para `/crm/${id}`, abre um **Dialog/modal** sobre o pipeline com um resumo do cliente — igual aos screenshots de referencia.
+**1. Seção "Última sessão" — redesenhar como card de metadados**
+- Remover o bloco atual (linhas 215-225) que renderiza produto/nicho inline com ícone
+- Substituir por um card com `border-left: 3px solid #7c5cfc` contendo:
+  - Linha 1: label "ÚLTIMA SESSÃO" (10px, uppercase, `#5a5a7a`) + data da sessão à direita (12px, `#9090b0`)
+  - Linha 2: `sessao.nicho` (13px, bold, `#e8e8f0`)
+  - Linha 3: `sessao.produto` (12px, `#9090b0`, truncate)
+  - Linha 4: Badge pill "Score X/100" (roxo `#7c5cfc`)
+- Separador entre o card e os chips de peças
+- Chips de peças: verde gerado (`#34d399` tons), cinza pendente (`#2a2a3a`/`#5a5a7a`/`#3a3a52`)
+- Estado vazio: "Nenhuma sessão registrada" + botão centralizado
 
-### Layout do modal
+**2. Score — remover do header**
+- Linha 139-141: remover `score` da subtítulo do header. Mostrar apenas `cliente.empresa` ou `cliente.nicho` (sem score).
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  [A] Ari Souza                                 🔥 Quente  X │
-│      Marketing Digital · Score 88/100                       │
-├──────────────────────────┬──────────────────────────────────┤
-│  CONTATO                 │  ÚLTIMA SESSÃO                   │
-│  💬 (11) 98888-0002      │  📋 Reunião · Marketing Digital  │
-│  📧 ari@agencia.com      │               Score 88/100       │
-│                          │  [Roteiro ✓][Proposta ✓][E-mail ✓│
-│  PIPELINE                │  ][WhatsApp +][Objeções ✓]       │
-│  📍 Proposta Enviada      │                                  │
-│  ⏱ há 4 dias             │  [Ver roteiro →] [+ Nova sessão] │
-│  📅 Criado há 5 dias      │                                  │
-│                          ├──────────────────────────────────┤
-│  AÇÕES RÁPIDAS           │  ATIVIDADE          [+ Registrar]│
-│  [📋 Registrar contato]  │  🛡 Objeções geradas    há 3 dias │
-│  [✏️ Editar]              │  📧 E-mail de follow-up  há 3 dias│
-│                          │  📄 Proposta comercial   há 4 dias│
-│                          │  📋 Roteiro gerado       há 4 dias│
-└──────────────────────────┴──────────────────────────────────┘
-```
+**3. Header — subtítulo com nicho/empresa**
+- Substituir a linha de subtítulo por: `cliente.nicho ?? cliente.empresa` (se existir), com `font-size: 12px, color: #9090b0`
 
-### Mudanças por arquivo
+**4. Avatar — cor dinâmica por temperatura**
+- Criar mapa de cores por temperatura: `ativo`→`#ff6b4a`, `morno`→`#f5c842`, `frio`→`#4a9eff`, fallback→`#9090b0`
+- Aplicar `style={{ background, color }}` no div do avatar (linha 134) em vez de `bg-primary/10`
 
-**1. `src/pages/CRM.tsx`**
-
-- Adicionar estado `clienteSelecionado: Cliente | null`
-- Ao clicar em PipelineCard ou ListClienteCard, setar `clienteSelecionado` em vez de `navigate(/crm/id)`
-- Criar componente `ClienteQuickViewModal` renderizado no CRM com Dialog
-- O modal busca dados detalhados via `svpApi.buscarCliente(id)` ao abrir (sessoes, interacoes)
-- Seções do modal:
-  - **Header**: avatar + nome + subtitulo (empresa · score da ultima sessao) + badge temperatura + botao fechar
-  - **Coluna esquerda**: CONTATO (whatsapp, email), PIPELINE (status mapeado, aging, data criacao), ACOES RAPIDAS (Registrar contato → abre NovaInteracaoModal, Editar → navega para /crm/id)
-  - **Coluna direita superior**: ULTIMA SESSAO — info da sessao + badges de pecas (verde=gerada, cinza=gerar) clicaveis para gerar via `svpApi.gerarPeca` + botoes "Ver roteiro" e "+ Nova sessao"
-  - **Coluna direita inferior**: ATIVIDADE — timeline das ultimas interacoes + botao "+ Registrar"
-- Badges de pecas: mesma logica do PipelineCard (estado local, loading inline, gerar on-demand)
-- Botao "Editar" navega para `/crm/${id}` (pagina completa existente)
-- Botao "Ver roteiro" navega para `/roteiro/${sessao.id}`
-
-**2. Nao alterar**
-
-- Pagina `/crm/${id}` (CRMCliente.tsx) — continua existindo para edicao completa
-- APIs, edge functions, tipos
-- Fluxo de geracao de roteiro e pecas
-
-### Detalhe tecnico
-
-- O modal usa `Dialog` do shadcn com `sm:max-w-[700px]`
-- Score vem de `sessao.roteiro_json?.score`
-- Interacoes ordenadas por `criado_em` desc, limitar a ~5 ultimas no modal
-- Ao gerar peca com sucesso no modal, atualizar estado local dos badges (sem reload)
+**5. Modal — largura**
+- DialogContent: `sm:min-w-[720px] sm:max-w-[860px]` (linha 132)
 
