@@ -260,7 +260,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                          <div style={{ borderTop: '1px solid #2e2e42', margin: '12px 0' }} />
 
                         {/* Chips de peças */}
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap" style={{ gap: '6px' }}>
                           {sessao.roteiro_json ? (
                             <button
                               onClick={() => navigate(`/roteiro/${sessao.id}`)}
