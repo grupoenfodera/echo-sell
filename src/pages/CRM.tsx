@@ -237,15 +237,61 @@ export default function CRM() {
   );
 }
 
+/* ── Peças config ──────────────────────────────── */
+
+type PecaTipo = 'proposta' | 'email' | 'whatsapp' | 'objecoes';
+
+const PECAS_CONFIG: { tipo: PecaTipo; label: string; emoji: string; temKey: keyof UltimaSessao }[] = [
+  { tipo: 'proposta', label: 'Proposta', emoji: '📄', temKey: 'tem_proposta' },
+  { tipo: 'email', label: 'E-mail', emoji: '📧', temKey: 'tem_email' },
+  { tipo: 'whatsapp', label: 'WhatsApp', emoji: '💬', temKey: 'tem_whatsapp' },
+  { tipo: 'objecoes', label: 'Objeções', emoji: '🛡️', temKey: 'tem_objecoes' },
+];
+
 /* ── ClienteCard ───────────────────────────────── */
 
 function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Cliente; onClick: () => void; onRegistrarResultado?: () => void }) {
+  const navigate = useNavigate();
   const temp = TEMP_BADGE[cliente.temperatura] || TEMP_BADGE.frio;
   const statusCls = STATUS_CLS[cliente.status] || STATUS_CLS.novo;
   const statusLabel = STATUS_LABEL[cliente.status] || cliente.status;
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  const resultado = undefined;
-  const resBadge = resultado ? RESULTADO_BADGE[resultado] : null;
+
+  const sessao = cliente.ultima_sessao;
+
+  // Local overrides after generating a piece
+  const [localTem, setLocalTem] = useState<Partial<Record<PecaTipo, boolean>>>({});
+  const [gerando, setGerando] = useState<PecaTipo | null>(null);
+  const [erroTipo, setErroTipo] = useState<PecaTipo | null>(null);
+
+  const handleGerarPeca = useCallback(async (tipo: PecaTipo, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!sessao) return;
+    setGerando(tipo);
+    setErroTipo(null);
+    try {
+      await svpApi.gerarPeca(sessao.id, tipo);
+      setLocalTem(prev => ({ ...prev, [tipo]: true }));
+      toast.success(`${PECAS_CONFIG.find(p => p.tipo === tipo)!.label} gerada!`);
+    } catch {
+      setErroTipo(tipo);
+      toast.error(`Erro ao gerar ${tipo}`);
+    } finally {
+      setGerando(null);
+    }
+  }, [sessao]);
+
+  const handleClickPeca = useCallback((tipo: PecaTipo, temPeca: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!sessao) return;
+    if (temPeca) {
+      navigate(`/roteiro/${sessao.id}`);
+    } else {
+      handleGerarPeca(tipo, e);
+    }
+  }, [sessao, navigate, handleGerarPeca]);
+
+  const isGerando = sessao?.geracao_status === 'gerando';
 
   return (
     <Card
@@ -269,12 +315,62 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
           </Badge>
         </div>
 
-        {/* Middle */}
+        {/* Status */}
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className={`text-[10px] ${statusCls}`}>
             {statusLabel}
           </Badge>
         </div>
+
+        {/* Peças bar */}
+        {sessao && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {/* Roteiro badge */}
+            {isGerando ? (
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                <Loader2 className="h-3 w-3 animate-spin" /> Roteiro...
+              </span>
+            ) : sessao.tem_roteiro ? (
+              <button
+                onClick={e => { e.stopPropagation(); navigate(`/roteiro/${sessao.id}`); }}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-green-500/10 text-green-600 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+              >
+                ✓ 📋 Roteiro
+              </button>
+            ) : null}
+
+            {/* Other pieces */}
+            {PECAS_CONFIG.map(peca => {
+              const temPeca = localTem[peca.tipo] ?? (sessao as any)[peca.temKey];
+              const isGerandoThis = gerando === peca.tipo;
+              const hasError = erroTipo === peca.tipo;
+
+              if (isGerandoThis) {
+                return (
+                  <span key={peca.tipo} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Gerando...
+                  </span>
+                );
+              }
+
+              return (
+                <button
+                  key={peca.tipo}
+                  onClick={e => handleClickPeca(peca.tipo, temPeca, e)}
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium border transition-colors ${
+                    temPeca
+                      ? 'bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20'
+                      : hasError
+                        ? 'bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20'
+                        : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                  }`}
+                >
+                  {temPeca ? '✓' : hasError ? '!' : ''} {peca.emoji} {temPeca ? peca.label : `Gerar`}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-2 pt-1">
@@ -284,21 +380,6 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
               ? `Último contato ${formatDistanceToNow(new Date(cliente.ultimo_contato_em), { addSuffix: true, locale: ptBR })}`
               : 'Sem contato registrado'}
           </span>
-          {resBadge && (
-            <Badge variant="secondary" className={`text-[10px] ${resBadge.cls}`}>
-              {resBadge.label}
-            </Badge>
-          )}
-          {!resBadge && onRegistrarResultado && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-              onClick={e => { e.stopPropagation(); onRegistrarResultado(); }}
-            >
-              <MessageSquare className="h-3 w-3 mr-0.5" /> Como foi?
-            </Button>
-          )}
         </div>
       </CardContent>
     </Card>
