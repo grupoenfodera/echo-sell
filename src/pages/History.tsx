@@ -606,62 +606,90 @@ function SessaoDrawerContent({ gen, copyToClipboard }: { gen: Gen; copyToClipboa
         {hasRoteiro && roteiroBlocks.length > 0 && (
           <TabsContent value="roteiro">
             <div className="space-y-0 divide-y divide-border border border-border rounded-xl overflow-hidden">
-              {roteiroBlocks.map((bloco: any, i: number) => (
-                <div key={i} className="p-5 space-y-3">
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0 mt-0.5">
-                        {bloco.numero}
-                      </span>
-                      <h4 className="text-sm font-semibold text-foreground leading-snug">{bloco.titulo}</h4>
-                    </div>
-                    <span className="text-xs text-primary font-medium shrink-0">{bloco.tempo}</span>
-                  </div>
+              {roteiroBlocks.map((bloco: any, i: number) => {
+                // Extract displayable text: prefer secoes (new format), fallback to flat script
+                const scriptText = bloco.script
+                  || (bloco.secoes?.map((s: any) => s.conteudo).filter(Boolean).join('\n\n'))
+                  || '';
 
-                  {/* Script */}
-                  {bloco.script && (
-                    <div className="pl-10 space-y-2">
-                      <div
-                        className="text-sm text-foreground whitespace-pre-wrap leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: formatScript(bloco.script) }}
-                      />
+                return (
+                  <div key={i} className="p-5 space-y-3">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0 mt-0.5">
+                          {bloco.numero}
+                        </span>
+                        <h4 className="text-sm font-semibold text-foreground leading-snug">{bloco.titulo}</h4>
+                      </div>
+                      <span className="text-xs text-primary font-medium shrink-0">{bloco.tempo}</span>
                     </div>
-                  )}
 
-                  {/* Perguntas (legacy) */}
-                  {bloco.perguntas?.length > 0 && (
-                    <div className="pl-10 space-y-1">
-                      {bloco.perguntas.map((p: string, pi: number) => (
-                        <p key={pi} className="text-sm text-foreground">P{pi + 1}: "{p}"</p>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Pontos-chave (legacy) */}
-                  {bloco.pontos_chave?.length > 0 && (
-                    <div className="pl-10">
-                      <ul className="list-disc pl-4 space-y-1">
-                        {bloco.pontos_chave.map((p: string, pi: number) => (
-                          <li key={pi} className="text-sm text-foreground">{p}</li>
+                    {/* Secoes (new format) */}
+                    {bloco.secoes?.length > 0 ? (
+                      <div className="pl-10 space-y-3">
+                        {bloco.secoes.map((secao: any, si: number) => (
+                          <div key={si} className="space-y-1">
+                            {secao.label && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{secao.label}</span>
+                                {secao.tipo && (
+                                  <Badge variant="outline" className="text-[10px]">{secao.tipo}</Badge>
+                                )}
+                              </div>
+                            )}
+                            {secao.conteudo && (
+                              <div
+                                className="text-sm text-foreground whitespace-pre-wrap leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: formatScript(secao.conteudo) }}
+                              />
+                            )}
+                          </div>
                         ))}
-                      </ul>
-                    </div>
-                  )}
+                      </div>
+                    ) : scriptText ? (
+                      <div className="pl-10 space-y-2">
+                        <div
+                          className="text-sm text-foreground whitespace-pre-wrap leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: formatScript(scriptText) }}
+                        />
+                      </div>
+                    ) : null}
 
-                  {/* Technique badge */}
-                  {bloco.tecnica && (
-                    <div className="pl-10 flex items-start gap-2 rounded-lg bg-muted/50 p-3">
-                      <Badge variant="secondary" className="shrink-0 text-[10px] rounded-md">
-                        {bloco.tecnica}
-                      </Badge>
-                      {bloco.nota_tecnica && (
-                        <p className="text-xs text-muted-foreground leading-relaxed">{bloco.nota_tecnica}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {/* Perguntas (legacy) */}
+                    {bloco.perguntas?.length > 0 && (
+                      <div className="pl-10 space-y-1">
+                        {bloco.perguntas.map((p: string, pi: number) => (
+                          <p key={pi} className="text-sm text-foreground">P{pi + 1}: "{p}"</p>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Pontos-chave (legacy) */}
+                    {bloco.pontos_chave?.length > 0 && (
+                      <div className="pl-10">
+                        <ul className="list-disc pl-4 space-y-1">
+                          {bloco.pontos_chave.map((p: string, pi: number) => (
+                            <li key={pi} className="text-sm text-foreground">{p}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Technique badge */}
+                    {bloco.tecnica && (
+                      <div className="pl-10 flex items-start gap-2 rounded-lg bg-muted/50 p-3">
+                        <Badge variant="secondary" className="shrink-0 text-[10px] rounded-md">
+                          {bloco.tecnica}
+                        </Badge>
+                        {bloco.nota_tecnica && (
+                          <p className="text-xs text-muted-foreground leading-relaxed">{bloco.nota_tecnica}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Alerta terceiro */}
