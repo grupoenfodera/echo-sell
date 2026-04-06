@@ -535,7 +535,8 @@ function PipelineCard({ cliente, isDragging, isFechado, onClick, dragHandleProps
       {/* Name + temp badge */}
       <div className="flex items-center gap-2">
         <div
-          className="h-7 w-7 rounded-full flex items-center justify-center shrink-0"
+          {...dragHandleProps}
+          className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing"
           style={{ background: tc.bg, color: tc.text }}
         >
           <span className="text-[10px] font-bold">{initials}</span>
