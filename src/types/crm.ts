@@ -53,11 +53,12 @@ export interface RoteiroEtapa {
 
 export interface SecaoRoteiro {
   id: string;
-  tipo: 'script' | 'instrucao' | 'objecao';
+  tipo: 'script' | 'instrucao' | 'objecao' | 'insight';
   label: string;
   conteudo: string;
   raciocinio?: string;
   conteudo_anterior?: string;
+  collapsedByDefault?: boolean;
 }
 
 export interface BlocoRoteiro {
@@ -80,9 +81,28 @@ export interface RoteiroBloco {
   bloco: string;
   titulo: string;
   tempo: string;
-  script: string;
-  tecnica: string;
-  nota_tecnica: string;
+  objetivo?: string;
+  // abertura / diagnostico / solucao
+  script?: string;
+  instrucoes_conduta?: string;
+  adaptacoes?: string;
+  // diagnostico
+  perguntas?: string[];
+  // solucao
+  fases?: { nome: string; descricao: string; ganho_cliente: string; micro_sin: string }[];
+  // oferta
+  script_entregaveis?: string;
+  script_proximos_passos?: string;
+  script_preco?: string;
+  script_avanco?: string;
+  // objecoes
+  objecoes?: { situacao: string; resposta: string; instrucao?: string }[];
+  // fechamento
+  script_fechou?: string;
+  script_nao_fechou?: string;
+  // legacy fallbacks
+  tecnica?: string;
+  nota_tecnica?: string;
 }
 
 export interface RoteiroJSON {
@@ -93,8 +113,10 @@ export interface RoteiroJSON {
     tratamento_objecoes: RoteiroEtapa;
     fechamento: RoteiroEtapa;
   };
+  mensagens_confirmacao?: MensagensConfirmacao;
+  follow_up?: FollowUpItem[];
   tempo_total_min?: number;
-  resumo_estrategico: string;
+  resumo_estrategico?: string;
   maior_medo?: string;
   decisao_style?: string;
   tom_ideal?: string;

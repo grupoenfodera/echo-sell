@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { AlertCircle, RotateCcw, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { svpApi } from '@/lib/api-svp';
-import Header from '@/components/Header';
 
 const MAX_ATTEMPTS = 100; // 100 × 3s = 5 min
 const POLL_INTERVAL = 3000;
@@ -83,8 +82,7 @@ export default function RoteiroLoading() {
 
   return (
     <>
-      <Header />
-      <main className="pt-[70px] min-h-screen flex items-center justify-center px-4">
+      <main className="min-h-screen flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center space-y-6">
           {status === 'gerando' && (
             <motion.div

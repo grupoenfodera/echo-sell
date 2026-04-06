@@ -6,7 +6,6 @@ import { CardRoteiro } from '@/components/geracao/CardRoteiro';
 import { ResultadoProposta } from '@/components/geracao/ResultadoProposta';
 import { svpApi } from '@/lib/api-svp';
 import { toast } from 'sonner';
-import Header from '@/components/Header';
 import type { GerarRoteiroPayload } from '@/types/crm';
 import { Check } from 'lucide-react';
 
@@ -76,8 +75,7 @@ export default function Gerar() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-[calc(100vh-52px)] bg-background">
       <main className="container max-w-3xl mx-auto py-8 px-4 space-y-8">
         {/* Stepper */}
         <nav className="flex items-center justify-center gap-0">

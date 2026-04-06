@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Archive, Loader2, Package } from 'lucide-react';
-import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -104,9 +103,8 @@ export default function Produtos() {
   const formatPrice = (v: number | null | undefined) => v != null ? `R$ ${v.toLocaleString('pt-BR')}` : '—';
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-[70px] pb-16 px-4 sm:px-6">
+    <div className="min-h-[calc(100vh-52px)] bg-background">
+      <main className="pb-16 px-4 sm:px-6 pt-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 className="font-heading text-2xl font-bold text-foreground">📦 Produtos</h1>

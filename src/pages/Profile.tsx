@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Header from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,8 +44,7 @@ const Profile = () => {
 
   return (
     <>
-      <Header />
-      <main className="pt-[70px] pb-16 px-4 sm:px-6">
+      <main className="pb-16 px-4 sm:px-6 pt-6">
         <div className="max-w-[920px] mx-auto">
           <h1 className="font-heading text-2xl text-foreground mb-6">Meu Perfil</h1>
 

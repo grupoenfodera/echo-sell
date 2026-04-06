@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import Header from '@/components/Header';
 import DnaBanner from '@/components/DnaBanner';
 import HistorySection from '@/components/HistorySection';
 import GeracaoWizard from '@/components/geracao/GeracaoWizard';
@@ -137,9 +136,8 @@ const Dashboard = () => {
 
   return (
     <>
-      <Header />
       <DnaBanner />
-      <main className="pt-[70px] pb-16 px-4 sm:px-6">
+      <main className="pb-16 px-4 sm:px-6 pt-6">
         <div className="max-w-[920px] mx-auto">
           {etapaView === 'wizard' && (
             <>

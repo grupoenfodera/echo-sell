@@ -251,6 +251,7 @@ Deno.serve(async (req) => {
         dados_formulario: body,
         roteiro_json: roteiro,
         roteiro_gerado_em: new Date().toISOString(),
+        geracao_status: "pronto",
         tokens_roteiro: tokensTotal,
       })
       .select("id")

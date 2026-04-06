@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -234,8 +233,7 @@ const History = () => {
 
   return (
     <>
-      <Header />
-      <main className="pt-[70px] pb-16 px-4 sm:px-6">
+      <main className="pb-16 px-4 sm:px-6 pt-6">
         <div className="max-w-[920px] mx-auto">
           <h1 className="font-heading mb-6 text-2xl font-bold text-primary-hover">Histórico de Gerações</h1>
 

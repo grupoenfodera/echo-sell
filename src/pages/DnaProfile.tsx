@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,8 +43,7 @@ const DnaProfile = () => {
   if (loading) {
     return (
       <>
-        <Header />
-        <main className="pt-[70px] flex items-center justify-center min-h-[60vh]">
+        <main className="flex items-center justify-center min-h-[60vh]">
           <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </main>
       </>
@@ -55,8 +53,7 @@ const DnaProfile = () => {
   if (!dna) {
     return (
       <>
-        <Header />
-        <main className="pt-[70px] pb-16 px-4 sm:px-6">
+        <main className="pb-16 px-4 sm:px-6 pt-6">
           <div className="max-w-[920px] mx-auto text-center py-20">
             <p className="text-muted-foreground font-body mb-4">DNA Comercial não configurado.</p>
             <Button onClick={() => navigate('/onboarding')} className="rounded-pill">Configurar agora</Button>
@@ -72,8 +69,7 @@ const DnaProfile = () => {
 
   return (
     <>
-      <Header />
-      <main className="pt-[70px] pb-16 px-4 sm:px-6">
+      <main className="pb-16 px-4 sm:px-6 pt-6">
         <div className="max-w-[920px] mx-auto">
           <h1 className="font-heading text-2xl text-foreground mb-6">DNA Comercial</h1>
 

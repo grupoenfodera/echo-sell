@@ -22,7 +22,7 @@ const DnaBanner = () => {
   if (hasDna || dismissed) return null;
 
   return (
-    <div className="fixed top-[54px] left-0 right-0 z-40 bg-[hsl(33_100%_57%/0.1)] border-b border-[hsl(var(--warn))] px-4 py-2.5 flex items-center justify-between no-print">
+    <div className="fixed top-[52px] left-[192px] right-0 z-40 bg-[hsl(33_100%_57%/0.1)] border-b border-[hsl(var(--warn))] px-4 py-2.5 flex items-center justify-between no-print">
       <div className="flex items-center gap-2 text-[hsl(var(--warn))]">
         <Settings className="h-3.5 w-3.5 shrink-0" />
         <p className="text-xs font-ui">
