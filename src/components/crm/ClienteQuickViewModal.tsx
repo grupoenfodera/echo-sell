@@ -155,9 +155,16 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                  <p className="truncate" style={{ color: '#9090b0', fontSize: '12px' }}>{subtitleText}</p>
                )}
              </div>
-            <Badge className={`shrink-0 text-[10px] ${temp.cls}`}>
-              {temp.emoji} {temp.label}
-            </Badge>
+             <span
+               className="shrink-0"
+               style={{
+                 fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
+                 background: avatarColor.bg, color: avatarColor.color,
+                 border: `1px solid ${avatarColor.color}44`,
+               }}
+             >
+               {temp.label.toUpperCase()}
+             </span>
           </div>
 
           {/* BODY */}
