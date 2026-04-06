@@ -54,6 +54,17 @@ export const svpApi = {
       body: JSON.stringify(payload),
     }),
 
+  /** Like gerarRoteiro but returns HTTP status to detect 202 async */
+  gerarRoteiroAsync: (payload: GerarRoteiroPayload) =>
+    callFunctionWithStatus<GerarRoteiroResponse & { status?: string }>('gerar-roteiro', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  /** Poll roteiro generation status */
+  roteiroStatus: (sessaoId: string) =>
+    callFunction<{ sessao_id: string; status: 'gerando' | 'pronto' | 'erro'; pronto: boolean; erro?: string }>(`roteiro-status?sessao_id=${sessaoId}`),
+
   aprovarRoteiro: (payload: AprovarRoteiroPayload) =>
     callFunction<AprovarRoteiroResponse>('aprovar-roteiro', {
       method: 'POST',
