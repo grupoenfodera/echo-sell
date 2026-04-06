@@ -86,12 +86,18 @@ export function useGerarRoteiro() {
     }
   }, [state.sessaoId]);
 
-  const rejeitarRoteiro = useCallback(async (payload: GerarRoteiroPayload) => {
+  const rejeitarRoteiro = useCallback(async (payload: GerarRoteiroPayload): Promise<{ async: boolean; sessaoId?: string } | void> => {
     if (!state.sessaoId) return;
     setLoading(true);
     try {
       await svpApi.aprovarRoteiro({ sessao_id: state.sessaoId, aprovado: false });
-      const res = await svpApi.gerarRoteiro(payload);
+      const { data: res, httpStatus } = await svpApi.gerarRoteiroAsync(payload);
+
+      if (httpStatus === 202 && res.sessao_id) {
+        setState(s => ({ ...s, loading: false, sessaoId: res.sessao_id }));
+        return { async: true, sessaoId: res.sessao_id };
+      }
+
       setState(s => ({
         ...s,
         loading: false,
@@ -100,6 +106,7 @@ export function useGerarRoteiro() {
         clienteId: res.cliente_id ?? null,
         roteiro: res.roteiro,
       }));
+      return { async: false, sessaoId: res.sessao_id };
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Erro ao regenerar roteiro');
     }
