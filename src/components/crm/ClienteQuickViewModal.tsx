@@ -366,17 +366,17 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                        </div>
                      )}
 
-                  {/* ATIVIDADE */}
-                  <div className="flex-1 p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Atividade</h3>
-                      <button
-                        onClick={() => setInteracaoModal(true)}
-                        className="text-[10px] font-medium text-primary hover:underline flex items-center gap-0.5"
-                      >
-                        <Plus className="h-3 w-3" /> Registrar
-                      </button>
-                    </div>
+                   {/* ATIVIDADE */}
+                   <div className="space-y-3" style={{ marginTop: '24px' }}>
+                     <div className="flex items-center justify-between">
+                       <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a' }}>Atividade</h3>
+                       <button
+                         onClick={() => setInteracaoModal(true)}
+                         style={{ fontSize: '11px', color: '#7c5cfc', cursor: 'pointer', background: 'none', border: 'none' }}
+                       >
+                         ↑ Registrar
+                       </button>
+                     </div>
 
                     {interacoes.length === 0 ? (
                       <p className="text-xs text-muted-foreground italic">Nenhuma atividade registrada</p>
