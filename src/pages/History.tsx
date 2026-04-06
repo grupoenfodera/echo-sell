@@ -128,6 +128,8 @@ const History = () => {
   const [gens, setGens] = useState<Gen[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGen, setSelectedGen] = useState<Gen | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!usuario?.id) return;
