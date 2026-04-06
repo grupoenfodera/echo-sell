@@ -305,7 +305,15 @@ export default function CRM() {
                   return (
                     <div key={col.id} className="w-[280px] shrink-0 flex flex-col">
                       {/* Column header */}
-                      <div className="rounded-t-lg bg-card border border-border px-3 py-2.5 mb-0">
+                      <div
+                        className="px-3 py-2.5 mb-0"
+                        style={{
+                          background: '#22222f',
+                          borderRadius: '10px 10px 0 0',
+                          border: '1px solid #2e2e42',
+                          borderBottom: 'none',
+                        }}
+                      >
                         <div className="flex items-center gap-2">
                           <span className={`h-2.5 w-2.5 rounded-full ${col.dotCls}`} />
                           <span className="text-xs font-semibold text-foreground uppercase tracking-wide">{col.titulo}</span>
