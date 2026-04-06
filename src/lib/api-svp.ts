@@ -8,7 +8,26 @@ import type {
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
-async function callFunction<T>(name: string, options: RequestInit = {}): Promise<{ data: T; status: number }> {
+async function callFunction<T>(name: string, options: RequestInit = {}): Promise<T> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  const res = await fetch(`${FUNCTIONS_URL}/${name}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers ?? {}),
+    },
+  });
+  if (!res.ok && res.status !== 202) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+async function callFunctionWithStatus<T>(name: string, options: RequestInit = {}): Promise<{ data: T; httpStatus: number }> {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
   const res = await fetch(`${FUNCTIONS_URL}/${name}`, {
@@ -25,7 +44,7 @@ async function callFunction<T>(name: string, options: RequestInit = {}): Promise
     throw new Error(err.error ?? `HTTP ${res.status}`);
   }
   const data = await res.json();
-  return { data, status: res.status };
+  return { data, httpStatus: res.status };
 }
 
 export const svpApi = {
