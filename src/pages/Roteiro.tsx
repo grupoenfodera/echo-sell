@@ -283,7 +283,7 @@ export default function RoteiroPage() {
   const [focusedSecao, setFocusedSecao] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [gerandoProposta, setGerandoProposta] = useState(false);
+  
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Load session data
