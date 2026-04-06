@@ -216,8 +216,8 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
               </div>
             </div>
 
-            {/* RIGHT CONTENT */}
-            <div className="flex flex-col">
+             {/* RIGHT CONTENT */}
+             <div className="flex flex-col" style={{ flex: 1, padding: '20px 24px', overflowY: 'auto' }}>
               {loading ? (
                 <div className="flex-1 flex items-center justify-center">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
