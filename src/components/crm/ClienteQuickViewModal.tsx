@@ -5,7 +5,7 @@ import { ptBR } from 'date-fns/locale';
 import { svpApi } from '@/lib/api-svp';
 import type { Cliente, SessaoVenda, Interacao, ClienteTemperatura } from '@/types/crm';
 import NovaInteracaoModal from './NovaInteracaoModal';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/popover';
 import {
   MessageSquare, Mail, MapPin, Clock, CalendarDays, ClipboardList,
-  Pencil, ChevronRight, Plus, Loader2, Phone, FileText, Shield, Send, Maximize2,
+  ChevronRight, Plus, Loader2, Phone, FileText, Shield, Send, Maximize2, X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -185,315 +185,262 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
   return (
     <>
       <Dialog open={!!cliente} onOpenChange={v => { if (!v) onClose(); }}>
-        <DialogContent className="p-0 gap-0 [&>button:first-of-type]:hidden" style={{ width: '820px', maxWidth: '95vw', height: '88vh', display: 'flex', flexDirection: 'column', borderRadius: '16px', background: '#161820', border: '1px solid #2B2F3C', overflow: 'hidden' }}>
+        <DialogContent
+          className="p-0 gap-0 bg-card border-border [&>button:first-of-type]:hidden"
+          style={{
+            position: 'fixed',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            left: 'auto',
+            width: '480px',
+            maxWidth: '95vw',
+            height: '100vh',
+            maxHeight: '100vh',
+            borderRadius: '12px 0 0 12px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            transform: 'none',
+            translate: 'none',
+            margin: 0,
+          }}
+        >
+          <DialogTitle className="sr-only">{cliente.nome}</DialogTitle>
+
           {/* HEADER */}
-          <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid #2B2F3C' }}>
-             <div
-               className="rounded-full flex items-center justify-center shrink-0"
-               style={{ height: '44px', width: '44px', background: avatarColor.bg, color: avatarColor.color }}
-             >
-               <span style={{ fontSize: '18px', fontWeight: 700 }}>{initials}</span>
-             </div>
-             <div className="flex-1 min-w-0">
-               <h2 className="font-semibold truncate" style={{ fontSize: '18px', color: '#E8EAF0' }}>{cliente.nome}</h2>
-               {subtitleText && (
-                 <p className="truncate" style={{ color: '#7A7F92', fontSize: '12px' }}>{subtitleText}</p>
-               )}
-             </div>
-             <span
-               className="shrink-0"
-               style={{
-                 fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px',
-                 background: avatarColor.bg, color: avatarColor.color,
-                 border: `1px solid ${avatarColor.color}44`,
-               }}
-              >
-                {temp.label.toUpperCase()}
-              </span>
-              <button
-                onClick={() => { onClose(); navigate(`/crm/${cliente.id}`); }}
-                title="Abrir tela cheia"
-                style={{ padding: '6px', borderRadius: '6px', background: 'transparent', border: '1px solid #2B2F3C', color: '#7A7F92', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
-              >
-                <Maximize2 style={{ width: '14px', height: '14px' }} />
-              </button>
-          </div>
-
-          {/* BODY */}
-          <div className="flex" style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-             {/* LEFT SIDEBAR */}
-             <div className="space-y-5" style={{ width: '240px', borderRight: '1px solid #2B2F3C', padding: '20px', overflowY: 'auto', flexShrink: 0 }}>
-              <div className="space-y-2">
-                <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4A4F60' }}>Contato</h3>
-                 <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
-                   <MessageSquare style={{ width: '16px', height: '16px', color: '#4A4F60' }} />
-                   <span style={{ color: '#7A7F92' }}>{cliente.whatsapp || '—'}</span>
-                 </div>
-                 <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
-                   <Mail style={{ width: '16px', height: '16px', color: '#4A4F60' }} />
-                   <span className="truncate" style={{ color: '#7A7F92' }}>{cliente.email || '—'}</span>
-                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4A4F60', marginTop: '20px' }}>Pipeline</h3>
-                 <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
-                   <MapPin style={{ width: '16px', height: '16px', color: '#4A4F60' }} />
-                   <span style={{ color: '#E8EAF0' }}>📍 {statusLabel}</span>
-                 </div>
-                 <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
-                   <Clock style={{ width: '16px', height: '16px', color: agingColor }} />
-                   <span style={{ color: agingColor }}>⏱ {agingText ? `há ${agingText}` : 'Sem contato'}</span>
-                 </div>
-                 <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
-                   <CalendarDays style={{ width: '16px', height: '16px', color: '#4A4F60' }} />
-                   <span style={{ color: '#7A7F92' }}>📅 Criado há {criadoText}</span>
-                 </div>
-              </div>
-
-              <div className="space-y-2">
-               <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4A4F60', marginTop: '20px' }}>Ações rápidas</h3>
-                 <button
-                   onClick={() => setInteracaoModal(true)}
-                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #2B2F3C', color: '#7A7F92', background: 'transparent', borderRadius: '8px', fontSize: '13px', textAlign: 'left', cursor: 'pointer' }}
-                 >
-                   📝 Registrar contato
-                 </button>
-                 <button
-                   onClick={() => { onClose(); navigate(`/crm/${cliente.id}`); }}
-                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #2B2F3C', color: '#7A7F92', background: 'transparent', borderRadius: '8px', fontSize: '13px', textAlign: 'left', cursor: 'pointer', marginTop: '6px' }}
-                 >
-                   ✏️ Editar
-                 </button>
-              </div>
+          <div className="flex items-center gap-3 px-5 py-4 border-b border-border shrink-0">
+            <div
+              className="rounded-full flex items-center justify-center shrink-0 text-sm font-bold"
+              style={{ height: '40px', width: '40px', background: avatarColor.bg, color: avatarColor.color }}
+            >
+              {initials}
             </div>
-
-             {/* RIGHT CONTENT */}
-             <div className="flex flex-col" style={{ flex: 1, padding: '20px 24px', overflowY: 'auto' }}>
-              {loading ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <>
-                   {/* ÚLTIMA SESSÃO — card de metadados */}
-                   <div className="space-y-3">
-                     <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4A4F60', marginBottom: '10px' }}>Última sessão</h3>
-                     {sessao ? (
-                       <>
-                         {/* Card com borda roxa */}
-                         <div
-                           style={{ background: '#20232B', border: '1px solid #2B2F3C', borderLeft: '3px solid #1E3FA8', borderRadius: '10px', padding: '14px' }}
-                         >
-                           <div className="flex items-center justify-between">
-                             <span style={{ fontSize: '10px', color: '#4A4F60' }}>
-                               Última sessão
-                             </span>
-                             {sessaoDate && (
-                               <span style={{ fontSize: '11px', color: '#4A4F60' }}>{sessaoDate}</span>
-                             )}
-                           </div>
-                           <p className="truncate" style={{ fontSize: '13px', fontWeight: 700, color: '#E8EAF0' }}>
-                             {sessao.nicho ?? 'Sem nicho'}
-                           </p>
-                           <p className="truncate" style={{ fontSize: '12px', color: '#7A7F92', maxHeight: '2.6em', overflow: 'hidden' }}>
-                             {sessao.produto ?? 'Sem produto'}
-                           </p>
-                           <div>
-                             <span
-                               style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: '#1E3FA822', color: '#8AB4FF', border: '1px solid #1E3FA844' }}
-                             >
-                               {score != null ? `Score ${score}/100` : '—'}
-                             </span>
-                           </div>
-                        </div>
-
-                         {/* Separador */}
-                         <div style={{ borderTop: '1px solid #2B2F3C', margin: '12px 0' }} />
-
-                        {/* Chips de peças */}
-                        <div className="flex flex-wrap" style={{ gap: '6px' }}>
-                           {sessao.roteiro_json ? (
-                             <button
-                               onClick={() => navigate(`/roteiro/${sessao.id}`)}
-                               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#34d39922', color: '#34d399', border: '1px solid #34d39944' }}
-                             >
-                               ✓ 📋 Roteiro
-                             </button>
-                           ) : (
-                             <span
-                               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: '#20232B', color: '#4A4F60', border: '1px solid #2B2F3C' }}
-                             >
-                               📋 Roteiro
-                             </span>
-                           )}
-
-                          {PECAS.map(peca => {
-                            const s = localSessao ?? sessao;
-                            const temPeca = !!(s as any)[peca.jsonKey];
-                            const isGerando = gerandoPeca === peca.tipo;
-                            const Icon = peca.icon;
-
-                             const PECA_EMOJIS: Record<string, string> = { proposta: '📄', email: '📧', whatsapp: '💬', objecoes: '🛡' };
-                             const emoji = PECA_EMOJIS[peca.tipo] || '';
-
-                             if (isGerando) {
-                               return (
-                                 <span
-                                   key={peca.tipo}
-                                   className="animate-pulse"
-                                   style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: '#20232B', color: '#4A4F60', border: '1px solid #2B2F3C', minWidth: '70px' }}
-                                 >
-                                   <Loader2 className="h-3 w-3 animate-spin" /> Gerando...
-                                 </span>
-                               );
-                             }
-
-                             if (temPeca) {
-                               return (
-                                 <button
-                                   key={peca.tipo}
-                                   onClick={() => navigate(`/roteiro/${sessao.id}`)}
-                                   className="animate-scale-in"
-                                   style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#34d39922', color: '#34d399', border: '1px solid #34d39944' }}
-                                 >
-                                   ✓ {emoji} {peca.label}
-                                 </button>
-                               );
-                             }
-
-                             return (
-                               <Popover key={peca.tipo}>
-                                 <PopoverTrigger asChild>
-                                   <button
-                                     className="transition-colors"
-                                     style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#20232B', color: '#4A4F60', border: '1px solid #2B2F3C' }}
-                                     onMouseEnter={e => { e.currentTarget.style.background = '#1E3FA822'; e.currentTarget.style.color = '#8AB4FF'; e.currentTarget.style.borderColor = '#1E3FA855'; }}
-                                     onMouseLeave={e => { e.currentTarget.style.background = '#20232B'; e.currentTarget.style.color = '#4A4F60'; e.currentTarget.style.borderColor = '#2B2F3C'; }}
-                                   >
-                                     + {emoji} {peca.label}
-                                   </button>
-                                 </PopoverTrigger>
-                                 <PopoverContent className="w-auto p-3 space-y-2" side="top">
-                                   <p className="text-xs text-foreground">Gerar {peca.label.toLowerCase()} para este cliente?</p>
-                                   <div className="flex gap-2">
-                                     <Button size="sm" variant="outline" className="text-xs h-7 px-2">Cancelar</Button>
-                                     <Button size="sm" className="text-xs h-7 px-2" onClick={() => handleGerarPeca(peca.tipo)}>
-                                       Gerar
-                                     </Button>
-                                   </div>
-                                 </PopoverContent>
-                               </Popover>
-                             );
-                          })}
-                        </div>
-
-                         {/* Botões */}
-                         <div className="flex items-center" style={{ gap: '8px', marginTop: '12px' }}>
-                           {sessao.roteiro_json && (
-                             <button
-                               onClick={() => navigate(`/roteiro/${sessao.id}`)}
-                               style={{ border: '1px solid #1E3FA8', color: '#8AB4FF', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
-                             >
-                               Ver roteiro →
-                             </button>
-                           )}
-                           <button
-                             onClick={() => { onClose(); navigate('/'); }}
-                             style={{ border: '1px solid #2B2F3C', color: '#7A7F92', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
-                           >
-                             + Nova sessão
-                           </button>
-                         </div>
-                      </>
-                     ) : (
-                       <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                         <p style={{ fontSize: '13px', color: '#4A4F60' }}>Nenhuma sessão registrada</p>
-                         <button
-                           onClick={() => { onClose(); navigate('/'); }}
-                           style={{ marginTop: '12px', border: '1px solid #2B2F3C', color: '#7A7F92', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
-                         >
-                           + Nova sessão
-                         </button>
-                       </div>
-                     )}
-                   </div>
-
-                   {/* ATIVIDADE */}
-                   <div style={{ marginTop: '28px' }}>
-                     <div className="flex items-center justify-between" style={{ marginBottom: '14px' }}>
-                       <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4A4F60' }}>Atividade</h3>
-                       <button
-                         onClick={() => setInteracaoModal(true)}
-                         style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: '#8AB4FF', cursor: 'pointer', background: '#1E3FA815', border: '1px solid #1E3FA833', borderRadius: '6px', padding: '3px 8px' }}
-                       >
-                         <Plus style={{ width: '10px', height: '10px' }} /> Registrar
-                       </button>
-                     </div>
-
-                     {timeline.length === 0 ? (
-                       <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                         <p style={{ fontSize: '13px', color: '#4A4F60', fontStyle: 'italic' }}>Nenhuma atividade registrada</p>
-                         <button
-                           onClick={() => setInteracaoModal(true)}
-                           style={{ marginTop: '8px', fontSize: '12px', color: '#8AB4FF', background: 'none', border: 'none', cursor: 'pointer' }}
-                         >
-                           + Registrar primeiro contato
-                         </button>
-                       </div>
-                     ) : (
-                       <ScrollArea>
-                         <div style={{ position: 'relative', paddingLeft: '14px' }}>
-                           {/* Vertical connecting line */}
-                           <div style={{ position: 'absolute', left: '13px', top: '14px', bottom: '14px', width: '1px', background: '#2B2F3C' }} />
-
-                           {timeline.slice(0, 10).map((entry, idx) => {
-                             const Icon = entry.icon;
-                             const ago = formatDistanceToNow(entry.date, { addSuffix: false, locale: ptBR });
-                             const isLast = idx === Math.min(timeline.length, 10) - 1;
-                             return (
-                               <div
-                                 key={entry.id}
-                                 className="flex items-start gap-2.5"
-                                 style={{ paddingBottom: isLast ? 0 : '14px' }}
-                               >
-                                 {/* Dot icon */}
-                                 <div
-                                   className="flex items-center justify-center shrink-0"
-                                   style={{
-                                     position: 'relative', zIndex: 1,
-                                     height: '26px', width: '26px', borderRadius: '50%',
-                                     background: `${entry.color}18`,
-                                     border: `1px solid ${entry.color}44`,
-                                   }}
-                                 >
-                                   <Icon style={{ width: '11px', height: '11px', color: entry.color }} />
-                                 </div>
-                                 {/* Content */}
-                                 <div className="flex-1 min-w-0" style={{ paddingTop: '3px' }}>
-                                   <div className="flex items-start justify-between gap-2">
-                                     <p
-                                       className="truncate"
-                                       style={{ fontSize: '13px', color: entry.synthetic ? '#9BA4B5' : '#E8EAF0', fontWeight: entry.synthetic ? 400 : 500, lineHeight: 1.3 }}
-                                     >
-                                       {entry.label}
-                                     </p>
-                                     <span style={{ fontSize: '10px', color: '#3D4252', flexShrink: 0, paddingTop: '1px' }}>há {ago}</span>
-                                   </div>
-                                   {entry.detail && (
-                                     <p className="truncate" style={{ fontSize: '11px', color: '#4A4F60', marginTop: '1px' }}>{entry.detail}</p>
-                                   )}
-                                 </div>
-                               </div>
-                             );
-                           })}
-                         </div>
-                       </ScrollArea>
-                     )}
-                  </div>
-                </>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-foreground truncate text-[15px] leading-tight">{cliente.nome}</h2>
+              {subtitleText && (
+                <p className="truncate text-muted-foreground text-[11px] mt-0.5">{subtitleText}</p>
               )}
             </div>
+            <span
+              className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ background: avatarColor.bg, color: avatarColor.color, border: `1px solid ${avatarColor.color}44` }}
+            >
+              {temp.label.toUpperCase()}
+            </span>
+            <button
+              onClick={() => { onClose(); navigate(`/crm/${cliente.id}`); }}
+              title="Abrir tela cheia"
+              className="shrink-0 p-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={onClose}
+              className="shrink-0 p-1.5 rounded-md border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {/* META STRIP — pipeline + contato inline */}
+          <div className="flex items-center gap-3 px-5 py-2.5 border-b border-border bg-muted/30 shrink-0 flex-wrap">
+            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <MapPin className="h-3 w-3" /> {statusLabel}
+            </span>
+            <span className="text-border">·</span>
+            <span className="flex items-center gap-1.5 text-[11px]" style={{ color: agingColor }}>
+              <Clock className="h-3 w-3" />
+              {agingText ? `há ${agingText}` : 'Sem contato'}
+            </span>
+            {cliente.whatsapp && (
+              <>
+                <span className="text-border">·</span>
+                <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <MessageSquare className="h-3 w-3" /> {cliente.whatsapp}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* BODY — scrollable single column */}
+          <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <>
+                {/* ÚLTIMA SESSÃO */}
+                <div className="space-y-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Última sessão</p>
+                  {sessao ? (
+                    <>
+                      <div className="rounded-lg border border-border bg-muted/30 border-l-[3px] px-4 py-3 space-y-1" style={{ borderLeftColor: 'hsl(var(--primary))' }}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">Sessão</span>
+                          {sessaoDate && <span className="text-[10px] text-muted-foreground">{sessaoDate}</span>}
+                        </div>
+                        <p className="text-sm font-semibold text-foreground truncate">{sessao.nicho ?? 'Sem nicho'}</p>
+                        <p className="text-xs text-muted-foreground truncate">{sessao.produto ?? 'Sem produto'}</p>
+                        {score != null && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                            Score {score}/100
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Chips de peças */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {sessao.roteiro_json ? (
+                          <button
+                            onClick={() => navigate(`/roteiro/${sessao.id}`)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 cursor-pointer hover:bg-emerald-500/25 transition-colors"
+                          >
+                            ✓ 📋 Roteiro
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground border border-border">
+                            📋 Roteiro
+                          </span>
+                        )}
+
+                        {PECAS.map(peca => {
+                          const s = localSessao ?? sessao;
+                          const temPeca = !!(s as any)[peca.jsonKey];
+                          const isGerando = gerandoPeca === peca.tipo;
+                          const PECA_EMOJIS: Record<string, string> = { proposta: '📄', email: '📧', whatsapp: '💬', objecoes: '🛡' };
+                          const emoji = PECA_EMOJIS[peca.tipo] || '';
+
+                          if (isGerando) {
+                            return (
+                              <span key={peca.tipo} className="animate-pulse inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground border border-border min-w-[70px]">
+                                <Loader2 className="h-3 w-3 animate-spin" /> Gerando...
+                              </span>
+                            );
+                          }
+                          if (temPeca) {
+                            return (
+                              <button
+                                key={peca.tipo}
+                                onClick={() => navigate(`/roteiro/${sessao.id}`)}
+                                className="animate-scale-in inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 cursor-pointer hover:bg-emerald-500/25 transition-colors"
+                              >
+                                ✓ {emoji} {peca.label}
+                              </button>
+                            );
+                          }
+                          return (
+                            <Popover key={peca.tipo}>
+                              <PopoverTrigger asChild>
+                                <button className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground border border-border cursor-pointer hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-colors">
+                                  + {emoji} {peca.label}
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-3 space-y-2" side="top">
+                                <p className="text-xs text-foreground">Gerar {peca.label.toLowerCase()} para este cliente?</p>
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="outline" className="text-xs h-7 px-2">Cancelar</Button>
+                                  <Button size="sm" className="text-xs h-7 px-2" onClick={() => handleGerarPeca(peca.tipo)}>Gerar</Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          );
+                        })}
+                      </div>
+
+                      {/* Ações */}
+                      <div className="flex items-center gap-2">
+                        {sessao.roteiro_json && (
+                          <Button size="sm" variant="default" className="text-xs h-8" onClick={() => navigate(`/roteiro/${sessao.id}`)}>
+                            Ver roteiro →
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => { onClose(); navigate('/'); }}>
+                          + Nova sessão
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-sm text-muted-foreground">Nenhuma sessão registrada</p>
+                      <Button size="sm" variant="outline" className="text-xs h-8 mt-3" onClick={() => { onClose(); navigate('/'); }}>
+                        + Nova sessão
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-border" />
+
+                {/* AÇÕES RÁPIDAS */}
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="flex-1 text-xs h-8 justify-start" onClick={() => setInteracaoModal(true)}>
+                    📝 Registrar contato
+                  </Button>
+                  <Button size="sm" variant="outline" className="flex-1 text-xs h-8 justify-start" onClick={() => { onClose(); navigate(`/crm/${cliente.id}`); }}>
+                    ✏️ Editar perfil
+                  </Button>
+                </div>
+
+                <div className="border-t border-border" />
+
+                {/* ATIVIDADE */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Atividade</p>
+                    <button
+                      onClick={() => setInteracaoModal(true)}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-primary/10 border border-primary/20 rounded-md px-2 py-1 hover:bg-primary/20 transition-colors cursor-pointer"
+                    >
+                      <Plus className="h-2.5 w-2.5" /> Registrar
+                    </button>
+                  </div>
+
+                  {timeline.length === 0 ? (
+                    <div className="text-center py-6">
+                      <p className="text-sm text-muted-foreground italic">Nenhuma atividade registrada</p>
+                      <button
+                        onClick={() => setInteracaoModal(true)}
+                        className="mt-2 text-xs text-primary hover:underline cursor-pointer bg-transparent border-none"
+                      >
+                        + Registrar primeiro contato
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative pl-3.5">
+                      <div className="absolute left-3 top-3 bottom-3 w-px bg-border" />
+                      {timeline.slice(0, 10).map((entry, idx) => {
+                        const Icon = entry.icon;
+                        const ago = formatDistanceToNow(entry.date, { addSuffix: false, locale: ptBR });
+                        const isLast = idx === Math.min(timeline.length, 10) - 1;
+                        return (
+                          <div key={entry.id} className="flex items-start gap-2.5" style={{ paddingBottom: isLast ? 0 : '12px' }}>
+                            <div
+                              className="relative z-10 flex items-center justify-center shrink-0 rounded-full"
+                              style={{ height: '24px', width: '24px', background: `${entry.color}18`, border: `1px solid ${entry.color}44` }}
+                            >
+                              <Icon style={{ width: '10px', height: '10px', color: entry.color }} />
+                            </div>
+                            <div className="flex-1 min-w-0 pt-0.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="truncate text-[12px] text-foreground leading-snug" style={{ fontWeight: entry.synthetic ? 400 : 500, opacity: entry.synthetic ? 0.75 : 1 }}>
+                                  {entry.label}
+                                </p>
+                                <span className="text-[10px] text-muted-foreground/60 shrink-0">há {ago}</span>
+                              </div>
+                              {entry.detail && (
+                                <p className="truncate text-[11px] text-muted-foreground mt-0.5">{entry.detail}</p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
