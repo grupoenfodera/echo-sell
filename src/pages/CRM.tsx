@@ -31,6 +31,15 @@ import { toast } from 'sonner';
 
 /* ── Constantes ────────────────────────────────── */
 
+const TEMP_COLORS: Record<ClienteTemperatura, { border: string; bg: string; text: string; label: string }> = {
+  ativo:    { border: '#ff6b4a', bg: '#ff6b4a22', text: '#ff6b4a', label: 'Quente' },
+  morno:    { border: '#f5c842', bg: '#f5c84222', text: '#f5c842', label: 'Morno' },
+  frio:     { border: '#4a9eff', bg: '#4a9eff22', text: '#4a9eff', label: 'Frio' },
+  em_risco: { border: '#ff6b4a', bg: '#ff6b4a22', text: '#ff6b4a', label: 'Em risco' },
+};
+
+const TEMP_DEFAULT = { border: '#3a3a52', bg: '#3a3a5222', text: '#3a3a52', label: '—' };
+
 const TEMP_BADGE: Record<ClienteTemperatura, { emoji: string; label: string; cls: string }> = {
   frio:     { emoji: '🔵', label: 'Frio',     cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
   morno:    { emoji: '🟡', label: 'Morno',    cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
@@ -73,14 +82,15 @@ interface ColunaConfig {
   id: PipelineColuna;
   titulo: string;
   dotCls: string;
+  borderColor: string;
 }
 
 const COLUNAS: ColunaConfig[] = [
-  { id: 'novo_lead',         titulo: 'Novo Lead',         dotCls: 'bg-muted-foreground' },
-  { id: 'roteiro_pronto',    titulo: 'Roteiro Pronto',    dotCls: 'bg-blue-500' },
-  { id: 'proposta_enviada',  titulo: 'Proposta Enviada',  dotCls: 'bg-purple-500' },
-  { id: 'follow_up',         titulo: 'Follow-up',         dotCls: 'bg-orange-500' },
-  { id: 'fechado',           titulo: 'Fechado',           dotCls: 'bg-green-500' },
+  { id: 'novo_lead',         titulo: 'Novo Lead',         dotCls: 'bg-muted-foreground', borderColor: '#6b7280' },
+  { id: 'roteiro_pronto',    titulo: 'Roteiro Pronto',    dotCls: 'bg-blue-500',         borderColor: '#4a9eff' },
+  { id: 'proposta_enviada',  titulo: 'Proposta Enviada',  dotCls: 'bg-purple-500',       borderColor: '#7c5cfc' },
+  { id: 'follow_up',         titulo: 'Follow-up',         dotCls: 'bg-orange-500',       borderColor: '#fb923c' },
+  { id: 'fechado',           titulo: 'Fechado',           dotCls: 'bg-green-500',        borderColor: '#34d399' },
 ];
 
 function mapStatusToColuna(status: ClienteStatus | string): PipelineColuna {
