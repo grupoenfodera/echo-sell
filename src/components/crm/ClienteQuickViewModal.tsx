@@ -126,6 +126,13 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
 
   const criadoText = formatDistanceToNow(new Date(cliente.criado_em), { addSuffix: false, locale: ptBR });
 
+  const daysSince = cliente.ultimo_contato_em
+    ? Math.floor((Date.now() - new Date(cliente.ultimo_contato_em).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  const agingColor = daysSince !== null
+    ? daysSince >= 14 ? '#ff6b4a' : daysSince >= 7 ? '#f5c842' : '#4a9eff'
+    : '#4a9eff';
+
   const sessaoDate = sessao?.criado_em
     ? format(new Date(sessao.criado_em), 'dd/MM/yyyy', { locale: ptBR })
     : null;
