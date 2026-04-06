@@ -421,6 +421,12 @@ export default function CRM() {
         onFechar={() => setResultadoModal(null)}
         onRegistrado={() => { setResultadoModal(null); }}
       />
+
+      <ClienteQuickViewModal
+        cliente={clienteSelecionado}
+        onClose={() => setClienteSelecionado(null)}
+        onClienteAtualizado={carregarClientes}
+      />
     </>
   );
 }
