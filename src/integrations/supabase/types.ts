@@ -492,6 +492,7 @@ export type Database = {
           email_json: Json | null
           follow_up_gerado_em: string | null
           follow_up_json: Json | null
+          geracao_status: string | null
           id: string
           mensagens_confirmacao_geradas_em: string | null
           mensagens_confirmacao_json: Json | null
@@ -525,6 +526,7 @@ export type Database = {
           email_json?: Json | null
           follow_up_gerado_em?: string | null
           follow_up_json?: Json | null
+          geracao_status?: string | null
           id?: string
           mensagens_confirmacao_geradas_em?: string | null
           mensagens_confirmacao_json?: Json | null
@@ -558,6 +560,7 @@ export type Database = {
           email_json?: Json | null
           follow_up_gerado_em?: string | null
           follow_up_json?: Json | null
+          geracao_status?: string | null
           id?: string
           mensagens_confirmacao_geradas_em?: string | null
           mensagens_confirmacao_json?: Json | null
