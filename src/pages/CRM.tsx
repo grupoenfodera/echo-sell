@@ -457,11 +457,12 @@ export default function CRM() {
 
 /* ── PipelineCard (inside Kanban column) ──────── */
 
-function PipelineCard({ cliente, isDragging, isFechado, onClick }: {
+function PipelineCard({ cliente, isDragging, isFechado, onClick, dragHandleProps }: {
   cliente: Cliente;
   isDragging: boolean;
   isFechado: boolean;
   onClick: () => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLElement> | null;
 }) {
   const navigate = useNavigate();
   const tc = TEMP_COLORS[cliente.temperatura] ?? TEMP_DEFAULT;
