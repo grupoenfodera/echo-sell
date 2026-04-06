@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import Header from '@/components/Header';
 import { svpApi } from '@/lib/api-svp';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -21,7 +23,8 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import {
-  Search, Plus, Users, Clock, Loader2, AlertCircle,
+  Search, Plus, Users, Clock, Loader2, AlertCircle, LayoutGrid, List,
+  ChevronRight, GripVertical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -52,12 +55,6 @@ const STATUS_CLS: Record<ClienteStatus, string> = {
   perdido: 'border-red-400 text-red-700 dark:text-red-300',
 };
 
-const RESULTADO_BADGE: Record<string, { label: string; cls: string }> = {
-  converteu: { label: '✓ Converteu', cls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-  nao_converteu: { label: '✗ Não converteu', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
-  em_andamento: { label: '● Em andamento', cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
-};
-
 const COMO_OPTIONS = [
   { value: 'indicacao', label: 'Indicação' },
   { value: 'evento', label: 'Evento' },
@@ -65,6 +62,60 @@ const COMO_OPTIONS = [
   { value: 'instagram', label: 'Instagram' },
   { value: 'abordagem_fria', label: 'Abordagem fria' },
   { value: 'outros', label: 'Outros' },
+];
+
+/* ── Pipeline columns ─────────────────────────── */
+
+type PipelineColuna = 'novo_lead' | 'roteiro_pronto' | 'proposta_enviada' | 'follow_up' | 'fechado';
+
+interface ColunaConfig {
+  id: PipelineColuna;
+  titulo: string;
+  dotCls: string;
+}
+
+const COLUNAS: ColunaConfig[] = [
+  { id: 'novo_lead',         titulo: 'Novo Lead',         dotCls: 'bg-muted-foreground' },
+  { id: 'roteiro_pronto',    titulo: 'Roteiro Pronto',    dotCls: 'bg-blue-500' },
+  { id: 'proposta_enviada',  titulo: 'Proposta Enviada',  dotCls: 'bg-purple-500' },
+  { id: 'follow_up',         titulo: 'Follow-up',         dotCls: 'bg-orange-500' },
+  { id: 'fechado',           titulo: 'Fechado',           dotCls: 'bg-green-500' },
+];
+
+function mapStatusToColuna(status: ClienteStatus | string): PipelineColuna {
+  switch (status) {
+    case 'novo': return 'novo_lead';
+    case 'em_contato':
+    case 'reuniao_agendada': return 'roteiro_pronto';
+    case 'proposta_enviada': return 'proposta_enviada';
+    case 'negociacao':
+    case 'em_negociacao': return 'follow_up';
+    case 'fechado':
+    case 'ganho':
+    case 'perdido': return 'fechado';
+    default: return 'novo_lead';
+  }
+}
+
+function mapColunaToStatus(coluna: PipelineColuna): ClienteStatus {
+  switch (coluna) {
+    case 'novo_lead': return 'novo';
+    case 'roteiro_pronto': return 'em_contato';
+    case 'proposta_enviada': return 'proposta_enviada';
+    case 'follow_up': return 'negociacao';
+    case 'fechado': return 'ganho';
+  }
+}
+
+/* ── Peças config ──────────────────────────────── */
+
+type PecaTipo = 'proposta' | 'email' | 'whatsapp' | 'objecoes';
+
+const PECAS_CONFIG: { tipo: PecaTipo; label: string; emoji: string; temKey: keyof UltimaSessao }[] = [
+  { tipo: 'proposta', label: 'Proposta', emoji: '📄', temKey: 'tem_proposta' },
+  { tipo: 'email', label: 'E-mail', emoji: '📧', temKey: 'tem_email' },
+  { tipo: 'whatsapp', label: 'WhatsApp', emoji: '💬', temKey: 'tem_whatsapp' },
+  { tipo: 'objecoes', label: 'Objeções', emoji: '🛡️', temKey: 'tem_objecoes' },
 ];
 
 /* ── Página CRM ────────────────────────────────── */
@@ -80,6 +131,8 @@ export default function CRM() {
   const [filtroStatus, setFiltroStatus] = useState<ClienteStatus | 'todos'>('todos');
   const [filtroTemp, setFiltroTemp] = useState<ClienteTemperatura | 'todos'>('todos');
   const [modalAberto, setModalAberto] = useState(false);
+  const [viewMode, setViewMode] = useState<'pipeline' | 'lista'>('pipeline');
+  const [fechadoColapsado, setFechadoColapsado] = useState(false);
   const [resultadoModal, setResultadoModal] = useState<{
     sessaoId: string;
     nomeCliente: string;
@@ -91,7 +144,7 @@ export default function CRM() {
     setErro(null);
     try {
       const res = await svpApi.listarClientes(1, 200);
-      setClientes(res.clientes);
+      setClientes(res.clientes ?? []);
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro ao carregar clientes.');
     } finally {
@@ -103,7 +156,7 @@ export default function CRM() {
 
   const filtroAtivo = busca !== '' || filtroStatus !== 'todos' || filtroTemp !== 'todos';
 
-  const clientesFiltrados = clientes.filter(c => {
+  const clientesFiltrados = useMemo(() => clientes.filter(c => {
     if (busca) {
       const q = busca.toLowerCase();
       if (!c.nome.toLowerCase().includes(q) && !(c.empresa || '').toLowerCase().includes(q)) return false;
@@ -111,29 +164,87 @@ export default function CRM() {
     if (filtroStatus !== 'todos' && c.status !== filtroStatus) return false;
     if (filtroTemp !== 'todos' && c.temperatura !== filtroTemp) return false;
     return true;
-  });
+  }), [clientes, busca, filtroStatus, filtroTemp]);
 
   const limparFiltros = () => { setBusca(''); setFiltroStatus('todos'); setFiltroTemp('todos'); };
+
+  // Group clients by pipeline column
+  const colunaClientes = useMemo(() => {
+    const map: Record<PipelineColuna, Cliente[]> = {
+      novo_lead: [], roteiro_pronto: [], proposta_enviada: [], follow_up: [], fechado: [],
+    };
+    clientesFiltrados.forEach(c => {
+      const col = mapStatusToColuna(c.status);
+      map[col].push(c);
+    });
+    // Sort fechado by most recent
+    map.fechado.sort((a, b) => new Date(b.atualizado_em).getTime() - new Date(a.atualizado_em).getTime());
+    return map;
+  }, [clientesFiltrados]);
+
+  // Drag and drop handler
+  const handleDragEnd = useCallback(async (result: DropResult) => {
+    const { draggableId, destination, source } = result;
+    if (!destination || destination.droppableId === source.droppableId) return;
+
+    const novaColuna = destination.droppableId as PipelineColuna;
+    const novoStatus = mapColunaToStatus(novaColuna);
+
+    // Optimistic update
+    setClientes(prev => prev.map(c =>
+      c.id === draggableId ? { ...c, status: novoStatus } : c
+    ));
+
+    try {
+      await svpApi.atualizarCliente(draggableId, { status: novoStatus });
+      toast.success('Status atualizado');
+    } catch {
+      // Revert
+      carregarClientes();
+      toast.error('Erro ao atualizar status');
+    }
+  }, []);
 
   return (
     <>
       <Header />
       <main className="pt-[70px] pb-16 px-4 sm:px-6">
-        <div className="max-w-[1100px] mx-auto space-y-6">
+        <div className={viewMode === 'pipeline' ? 'max-w-full mx-auto space-y-4' : 'max-w-[1100px] mx-auto space-y-6'}>
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-foreground">CRM</h1>
-              <p className="text-sm text-muted-foreground">Seus clientes e oportunidades</p>
+              <p className="text-sm text-muted-foreground">Pipeline de vendas</p>
             </div>
-            <Button onClick={() => setModalAberto(true)}>
-              <Plus className="h-4 w-4 mr-1.5" /> Novo Cliente
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* View toggle */}
+              <div className="flex items-center border border-border rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setViewMode('pipeline')}
+                  className={`px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                    viewMode === 'pipeline' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" /> Pipeline
+                </button>
+                <button
+                  onClick={() => setViewMode('lista')}
+                  className={`px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                    viewMode === 'lista' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:bg-muted'
+                  }`}
+                >
+                  <List className="h-3.5 w-3.5" /> Lista
+                </button>
+              </div>
+              <Button onClick={() => setModalAberto(true)} size="sm">
+                <Plus className="h-4 w-4 mr-1" /> Novo Cliente
+              </Button>
+            </div>
           </div>
 
-          {/* Filtros */}
+          {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
+            <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nome ou empresa..."
@@ -142,17 +253,6 @@ export default function CRM() {
                 className="pl-9"
               />
             </div>
-            <Select value={filtroStatus} onValueChange={v => setFiltroStatus(v as ClienteStatus | 'todos')}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os status</SelectItem>
-                {(Object.keys(STATUS_LABEL) as ClienteStatus[]).map(s => (
-                  <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Select value={filtroTemp} onValueChange={v => setFiltroTemp(v as ClienteTemperatura | 'todos')}>
               <SelectTrigger className="w-full sm:w-[170px]">
                 <SelectValue placeholder="Temperatura" />
@@ -166,18 +266,15 @@ export default function CRM() {
             </Select>
           </div>
 
-          <p className="text-sm text-muted-foreground">
-            {clientesFiltrados.length} cliente{clientesFiltrados.length !== 1 ? 's' : ''} encontrado{clientesFiltrados.length !== 1 ? 's' : ''}
-          </p>
-
           {/* Content */}
           {carregando ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i}><CardContent className="p-5 space-y-3">
-                  <div className="flex items-center gap-3"><Skeleton className="h-10 w-10 rounded-full" /><div className="space-y-2 flex-1"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3 w-1/2" /></div></div>
-                  <Skeleton className="h-5 w-20" /><Skeleton className="h-3 w-full" />
-                </CardContent></Card>
+            <div className="flex gap-4 overflow-x-auto pb-4">
+              {COLUNAS.map(col => (
+                <div key={col.id} className="w-[280px] shrink-0 space-y-3">
+                  <Skeleton className="h-12 w-full rounded-lg" />
+                  <Skeleton className="h-28 w-full rounded-lg" />
+                  <Skeleton className="h-28 w-full rounded-lg" />
+                </div>
               ))}
             </div>
           ) : erro ? (
@@ -186,33 +283,124 @@ export default function CRM() {
               <p className="text-sm text-destructive">{erro}</p>
               <Button variant="outline" size="sm" onClick={carregarClientes}>Tentar novamente</Button>
             </div>
-          ) : clientesFiltrados.length === 0 ? (
-            filtroAtivo ? (
-              <div className="text-center py-12 space-y-2">
-                <p className="text-sm text-muted-foreground">Nenhum cliente encontra os filtros aplicados.</p>
-                <Button variant="link" size="sm" onClick={limparFiltros}>Limpar filtros</Button>
+          ) : viewMode === 'pipeline' ? (
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <div className="flex gap-3 overflow-x-auto pb-4" style={{ minHeight: 'calc(100vh - 250px)' }}>
+                {COLUNAS.map(col => {
+                  const items = colunaClientes[col.id];
+                  const isFechado = col.id === 'fechado';
+
+                  return (
+                    <div key={col.id} className="w-[280px] shrink-0 flex flex-col">
+                      {/* Column header */}
+                      <div className="rounded-t-lg bg-card border border-border px-3 py-2.5 mb-0">
+                        <div className="flex items-center gap-2">
+                          <span className={`h-2.5 w-2.5 rounded-full ${col.dotCls}`} />
+                          <span className="text-xs font-semibold text-foreground uppercase tracking-wide">{col.titulo}</span>
+                          <span className="ml-auto text-[11px] text-muted-foreground font-medium">{items.length}</span>
+                          {isFechado && items.length > 0 && (
+                            <button
+                              onClick={() => setFechadoColapsado(p => !p)}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <ChevronRight className={`h-4 w-4 transition-transform ${!fechadoColapsado ? 'rotate-90' : ''}`} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Column body */}
+                      {isFechado && fechadoColapsado ? (
+                        <div className="flex-1 rounded-b-lg bg-muted/30 border border-t-0 border-border p-3">
+                          <p className="text-xs text-muted-foreground text-center">{items.length} fechado{items.length !== 1 ? 's' : ''}</p>
+                        </div>
+                      ) : (
+                        <Droppable droppableId={col.id}>
+                          {(provided, snapshot) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.droppableProps}
+                              className={`flex-1 rounded-b-lg border border-t-0 border-border p-2 space-y-2 overflow-y-auto transition-colors ${
+                                snapshot.isDraggingOver ? 'bg-primary/5 border-primary/30' : 'bg-muted/20'
+                              }`}
+                              style={{ maxHeight: 'calc(100vh - 310px)' }}
+                            >
+                              {items.length === 0 ? (
+                                <div className="flex items-center justify-center h-24 text-center">
+                                  <p className="text-xs text-muted-foreground leading-relaxed">
+                                    Nenhum lead aqui<br />
+                                    Arraste um card ou adicione novo
+                                  </p>
+                                </div>
+                              ) : (
+                                items.map((c, idx) => (
+                                  <Draggable key={c.id} draggableId={c.id} index={idx}>
+                                    {(provided, snapshot) => (
+                                      <div
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        {...provided.dragHandleProps}
+                                        style={provided.draggableProps.style}
+                                      >
+                                        <PipelineCard
+                                          cliente={c}
+                                          isDragging={snapshot.isDragging}
+                                          isFechado={isFechado}
+                                          onClick={() => navigate(`/crm/${c.id}`)}
+                                        />
+                                      </div>
+                                    )}
+                                  </Draggable>
+                                ))
+                              )}
+                              {provided.placeholder}
+
+                              {col.id === 'novo_lead' && (
+                                <button
+                                  onClick={() => setModalAberto(true)}
+                                  className="w-full py-2 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg hover:border-primary/40 transition-colors"
+                                >
+                                  + Novo lead
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </Droppable>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            ) : (
-              <div className="text-center py-16 space-y-4">
-                <Users className="h-12 w-12 text-muted-foreground/50 mx-auto" />
-                <div>
-                  <p className="font-medium text-foreground">Nenhum cliente ainda</p>
-                  <p className="text-sm text-muted-foreground">Comece gerando um roteiro ou proposta — o cliente será criado automaticamente.</p>
+            </DragDropContext>
+          ) : (
+            /* Lista view (original grid) */
+            clientesFiltrados.length === 0 ? (
+              filtroAtivo ? (
+                <div className="text-center py-12 space-y-2">
+                  <p className="text-sm text-muted-foreground">Nenhum cliente encontra os filtros aplicados.</p>
+                  <Button variant="link" size="sm" onClick={limparFiltros}>Limpar filtros</Button>
                 </div>
-                <Button onClick={() => navigate('/')}>Gerar primeiro roteiro</Button>
+              ) : (
+                <div className="text-center py-16 space-y-4">
+                  <Users className="h-12 w-12 text-muted-foreground/50 mx-auto" />
+                  <div>
+                    <p className="font-medium text-foreground">Nenhum cliente ainda</p>
+                    <p className="text-sm text-muted-foreground">Comece gerando um roteiro ou proposta — o cliente será criado automaticamente.</p>
+                  </div>
+                  <Button onClick={() => navigate('/')}>Gerar primeiro roteiro</Button>
+                </div>
+              )
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {clientesFiltrados.map(c => (
+                  <ListClienteCard
+                    key={c.id}
+                    cliente={c}
+                    onClick={() => navigate(`/crm/${c.id}`)}
+                  />
+                ))}
               </div>
             )
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {clientesFiltrados.map(c => (
-                <ClienteCard
-                  key={c.id}
-                  cliente={c}
-                  onClick={() => navigate(`/crm/${c.id}`)}
-                  onRegistrarResultado={undefined}
-                />
-              ))}
-            </div>
           )}
         </div>
       </main>
@@ -229,37 +417,160 @@ export default function CRM() {
         nomeCliente={resultadoModal?.nomeCliente}
         produto={resultadoModal?.produto}
         onFechar={() => setResultadoModal(null)}
-        onRegistrado={() => {
-          setResultadoModal(null);
-        }}
+        onRegistrado={() => { setResultadoModal(null); }}
       />
     </>
   );
 }
 
-/* ── Peças config ──────────────────────────────── */
+/* ── PipelineCard (inside Kanban column) ──────── */
 
-type PecaTipo = 'proposta' | 'email' | 'whatsapp' | 'objecoes';
+function PipelineCard({ cliente, isDragging, isFechado, onClick }: {
+  cliente: Cliente;
+  isDragging: boolean;
+  isFechado: boolean;
+  onClick: () => void;
+}) {
+  const navigate = useNavigate();
+  const temp = TEMP_BADGE[cliente.temperatura] || TEMP_BADGE.frio;
+  const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  const sessao = cliente.ultima_sessao;
 
-const PECAS_CONFIG: { tipo: PecaTipo; label: string; emoji: string; temKey: keyof UltimaSessao }[] = [
-  { tipo: 'proposta', label: 'Proposta', emoji: '📄', temKey: 'tem_proposta' },
-  { tipo: 'email', label: 'E-mail', emoji: '📧', temKey: 'tem_email' },
-  { tipo: 'whatsapp', label: 'WhatsApp', emoji: '💬', temKey: 'tem_whatsapp' },
-  { tipo: 'objecoes', label: 'Objeções', emoji: '🛡️', temKey: 'tem_objecoes' },
-];
+  const [localTem, setLocalTem] = useState<Partial<Record<PecaTipo, boolean>>>({});
+  const [gerando, setGerando] = useState<PecaTipo | null>(null);
 
-/* ── ClienteCard ───────────────────────────────── */
+  const handleGerarPeca = useCallback(async (tipo: PecaTipo, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!sessao) return;
+    setGerando(tipo);
+    try {
+      await svpApi.gerarPeca(sessao.id, tipo);
+      setLocalTem(prev => ({ ...prev, [tipo]: true }));
+      toast.success(`${PECAS_CONFIG.find(p => p.tipo === tipo)!.label} gerada!`);
+    } catch {
+      toast.error(`Erro ao gerar ${tipo}`);
+    } finally {
+      setGerando(null);
+    }
+  }, [sessao]);
 
-function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Cliente; onClick: () => void; onRegistrarResultado?: () => void }) {
+  // Aging
+  const agingText = cliente.ultimo_contato_em
+    ? formatDistanceToNow(new Date(cliente.ultimo_contato_em), { addSuffix: false, locale: ptBR })
+    : null;
+  const daysSince = cliente.ultimo_contato_em
+    ? differenceInDays(new Date(), new Date(cliente.ultimo_contato_em))
+    : null;
+  const agingColor = daysSince !== null
+    ? daysSince > 7 ? 'text-red-500' : daysSince > 3 ? 'text-orange-500' : 'text-muted-foreground'
+    : 'text-muted-foreground';
+
+  // Contextual primary button
+  const isGerando = sessao?.geracao_status === 'gerando';
+  const temRoteiro = sessao?.tem_roteiro;
+  const totalPecas = sessao ? [sessao.tem_proposta, sessao.tem_email, sessao.tem_whatsapp, sessao.tem_objecoes].filter(Boolean).length : 0;
+  const todasGeradas = totalPecas === 4 && temRoteiro;
+
+  let primaryAction = { label: 'Gerar roteiro', action: () => navigate('/') };
+  if (sessao) {
+    if (todasGeradas) {
+      primaryAction = { label: 'Registrar contato', action: () => navigate(`/crm/${cliente.id}`) };
+    } else if (temRoteiro && totalPecas > 0 && totalPecas < 4) {
+      primaryAction = { label: 'Continuar', action: () => navigate(`/roteiro/${sessao.id}`) };
+    } else if (temRoteiro) {
+      primaryAction = { label: 'Ver roteiro', action: () => navigate(`/roteiro/${sessao.id}`) };
+    }
+  }
+
+  // Pieces dots
+  const pieceDots = sessao ? [
+    sessao.tem_roteiro,
+    localTem.proposta ?? sessao.tem_proposta,
+    localTem.email ?? sessao.tem_email,
+    localTem.whatsapp ?? sessao.tem_whatsapp,
+    localTem.objecoes ?? sessao.tem_objecoes,
+  ] : null;
+
+  // Temp border color
+  const borderColor = cliente.temperatura === 'ativo' ? 'border-l-green-500'
+    : cliente.temperatura === 'em_risco' ? 'border-l-red-500'
+    : cliente.temperatura === 'morno' ? 'border-l-yellow-500'
+    : 'border-l-blue-400';
+
+  return (
+    <div
+      onClick={onClick}
+      className={`rounded-lg bg-card border border-border border-l-[3px] ${borderColor} p-3 cursor-pointer transition-all hover:shadow-md space-y-2 ${
+        isDragging ? 'opacity-80 shadow-lg rotate-1 scale-[1.02]' : ''
+      }`}
+    >
+      {/* Name + temp */}
+      <div className="flex items-center gap-2">
+        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <span className="text-[10px] font-bold text-primary">{initials}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-foreground truncate">{cliente.nome}</p>
+          {cliente.empresa && <p className="text-[10px] text-muted-foreground truncate">{cliente.empresa}</p>}
+        </div>
+        <span className="text-xs shrink-0">{temp.emoji}</span>
+      </div>
+
+      {/* Fechado badge */}
+      {isFechado && (
+        <div>
+          {cliente.status === 'ganho' ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded">✅ Ganho</span>
+          ) : cliente.status === 'perdido' ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-600 bg-red-500/10 px-1.5 py-0.5 rounded">❌ Perdido</span>
+          ) : (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded">✅ Fechado</span>
+          )}
+        </div>
+      )}
+
+      {/* Pieces dots */}
+      {pieceDots && (
+        <div className="flex items-center gap-1">
+          {pieceDots.map((done, i) => (
+            <span
+              key={i}
+              className={`h-2 w-2 rounded-full ${done ? 'bg-green-500' : 'bg-border'}`}
+            />
+          ))}
+          {isGerando && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-1" />}
+        </div>
+      )}
+
+      {/* Aging */}
+      <div className="flex items-center justify-between gap-1">
+        <span className={`flex items-center gap-1 text-[10px] ${agingColor}`}>
+          <Clock className="h-3 w-3" />
+          {agingText ? `há ${agingText}` : 'Sem contato'}
+        </span>
+      </div>
+
+      {/* Primary action button */}
+      <button
+        onClick={e => { e.stopPropagation(); primaryAction.action(); }}
+        className="w-full text-[11px] font-medium py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center justify-center gap-1"
+      >
+        {primaryAction.label} <ChevronRight className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+/* ── ListClienteCard (grid view) ──────────────── */
+
+function ListClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () => void }) {
   const navigate = useNavigate();
   const temp = TEMP_BADGE[cliente.temperatura] || TEMP_BADGE.frio;
   const statusCls = STATUS_CLS[cliente.status] || STATUS_CLS.novo;
   const statusLabel = STATUS_LABEL[cliente.status] || cliente.status;
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-
   const sessao = cliente.ultima_sessao;
 
-  // Local overrides after generating a piece
   const [localTem, setLocalTem] = useState<Partial<Record<PecaTipo, boolean>>>({});
   const [gerando, setGerando] = useState<PecaTipo | null>(null);
   const [erroTipo, setErroTipo] = useState<PecaTipo | null>(null);
@@ -294,38 +605,25 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
   const isGerando = sessao?.geracao_status === 'gerando';
 
   return (
-    <Card
-      className="cursor-pointer hover:shadow-md transition-shadow"
-      onClick={onClick}
-    >
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
       <CardContent className="p-5 space-y-3">
-        {/* Top */}
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <span className="text-sm font-bold text-primary">{initials}</span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm text-foreground truncate">{cliente.nome}</p>
-            {cliente.empresa && (
-              <p className="text-xs text-muted-foreground truncate">{cliente.empresa}</p>
-            )}
+            {cliente.empresa && <p className="text-xs text-muted-foreground truncate">{cliente.empresa}</p>}
           </div>
           <Badge variant="secondary" className={`text-[10px] shrink-0 ${temp.cls}`}>
             {temp.emoji} {temp.label}
           </Badge>
         </div>
-
-        {/* Status */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className={`text-[10px] ${statusCls}`}>
-            {statusLabel}
-          </Badge>
+          <Badge variant="outline" className={`text-[10px] ${statusCls}`}>{statusLabel}</Badge>
         </div>
-
-        {/* Peças bar */}
         {sessao && (
           <div className="flex flex-wrap gap-1.5 pt-1">
-            {/* Roteiro badge */}
             {isGerando ? (
               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-muted text-muted-foreground border border-border">
                 <Loader2 className="h-3 w-3 animate-spin" /> Roteiro...
@@ -338,13 +636,10 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
                 ✓ 📋 Roteiro
               </button>
             ) : null}
-
-            {/* Other pieces */}
             {PECAS_CONFIG.map(peca => {
               const temPeca = localTem[peca.tipo] ?? (sessao as any)[peca.temKey];
               const isGerandoThis = gerando === peca.tipo;
               const hasError = erroTipo === peca.tipo;
-
               if (isGerandoThis) {
                 return (
                   <span key={peca.tipo} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-muted text-muted-foreground border border-border">
@@ -352,7 +647,6 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
                   </span>
                 );
               }
-
               return (
                 <button
                   key={peca.tipo}
@@ -365,14 +659,12 @@ function ClienteCard({ cliente, onClick, onRegistrarResultado }: { cliente: Clie
                         : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
                   }`}
                 >
-                  {temPeca ? '✓' : hasError ? '!' : ''} {peca.emoji} {temPeca ? peca.label : `Gerar`}
+                  {temPeca ? '✓' : hasError ? '!' : ''} {peca.emoji} {temPeca ? peca.label : 'Gerar'}
                 </button>
               );
             })}
           </div>
         )}
-
-        {/* Footer */}
         <div className="flex items-center justify-between gap-2 pt-1">
           <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <Clock className="h-3 w-3" />
@@ -464,9 +756,7 @@ function NovoClienteModal({
               </SelectContent>
             </Select>
           </div>
-          {erroModal && (
-            <p className="text-sm text-destructive">{erroModal}</p>
-          )}
+          {erroModal && <p className="text-sm text-destructive">{erroModal}</p>}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onFechar} disabled={salvando}>Cancelar</Button>
