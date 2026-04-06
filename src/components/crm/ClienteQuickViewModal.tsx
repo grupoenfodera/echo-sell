@@ -354,15 +354,17 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                            </button>
                          </div>
                       </>
-                    ) : (
-                      <div className="text-center py-6">
-                        <p className="text-xs text-muted-foreground mb-3">Nenhuma sessão registrada</p>
-                        <Button size="sm" className="text-xs" onClick={() => { onClose(); navigate('/'); }}>
-                          <Plus className="h-3 w-3 mr-1" /> Nova sessão
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+                     ) : (
+                       <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                         <p style={{ fontSize: '13px', color: '#5a5a7a' }}>Nenhuma sessão registrada</p>
+                         <button
+                           onClick={() => { onClose(); navigate('/'); }}
+                           style={{ marginTop: '12px', border: '1px solid #3a3a52', color: '#9090b0', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
+                         >
+                           + Nova sessão
+                         </button>
+                       </div>
+                     )}
 
                   {/* ATIVIDADE */}
                   <div className="flex-1 p-4 space-y-3">
