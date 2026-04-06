@@ -140,7 +140,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
   return (
     <>
       <Dialog open={!!cliente} onOpenChange={v => { if (!v) onClose(); }}>
-        <DialogContent className="sm:min-w-[720px] sm:max-w-[860px] p-0 gap-0 overflow-hidden">
+        <DialogContent className="p-0 gap-0 overflow-hidden" style={{ width: '820px', maxWidth: '95vw', maxHeight: '90vh', borderRadius: '16px', background: '#1a1a24', border: '1px solid #3a3a52' }}>
           {/* HEADER */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
             <div
