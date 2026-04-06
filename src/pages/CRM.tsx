@@ -509,8 +509,8 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
     ? differenceInDays(new Date(), new Date(cliente.ultimo_contato_em))
     : null;
   const agingColor = daysSince !== null
-    ? daysSince >= 14 ? 'hsl(var(--destructive))' : daysSince >= 7 ? '#f5c842' : 'hsl(var(--primary))'
-    : 'hsl(var(--primary))';
+    ? daysSince >= 14 ? '#ff6b4a' : daysSince >= 7 ? '#f5c842' : '#4a9eff'
+    : '#4a9eff';
 
   // Contextual primary button
   const isGerando = sessao?.geracao_status === 'gerando';
@@ -567,8 +567,8 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-foreground truncate">{cliente.nome}</p>
-              {cliente.empresa && (
-                <p className="text-[11px] text-muted-foreground truncate" style={{ marginTop: '1px' }}>{cliente.empresa}</p>
+              {(cliente.empresa) && (
+                <p className="truncate" style={{ fontSize: '11px', color: '#5a5a7a', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cliente.empresa}</p>
               )}
             </div>
             <span
@@ -612,9 +612,9 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
                   <TooltipTrigger asChild>
                     <span
                       className="h-1.5 flex-1 rounded-full transition-colors"
-                      style={done
+                     style={done
                         ? { background: '#7c5cfc' }
-                        : { background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))' }
+                        : { background: '#2a2a3a', border: '1px solid #3a3a52' }
                       }
                     />
                   </TooltipTrigger>
