@@ -22,6 +22,7 @@ export function FormularioGeracao({ onSubmit, loading, error }: FormularioGeraca
 
   // Step 1
   const [nomeCliente, setNomeCliente] = useState('');
+  const [nomeTouched, setNomeTouched] = useState(false);
   const [perfilDecisor, setPerfilDecisor] = useState('');
   const [estadoEmocional, setEstadoEmocional] = useState('');
   const [outrosDecisores, setOutrosDecisores] = useState('');
@@ -111,7 +112,8 @@ export function FormularioGeracao({ onSubmit, loading, error }: FormularioGeraca
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nome_cliente">Nome do cliente <Req /></Label>
-            <Input id="nome_cliente" placeholder="Ex: João Silva" value={nomeCliente} onChange={e => setNomeCliente(e.target.value)} required disabled={loading} />
+            <Input id="nome_cliente" placeholder="Ex: Isabella Martins" value={nomeCliente} onChange={e => setNomeCliente(e.target.value)} onBlur={() => setNomeTouched(true)} required disabled={loading} />
+            {nomeTouched && !nomeCliente.trim() && <p className="text-xs text-destructive">Informe o nome do lead para continuar</p>}
           </div>
 
           <div className="space-y-2">

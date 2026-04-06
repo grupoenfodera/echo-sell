@@ -297,7 +297,7 @@ function StepCliente({
 
       <div className="space-y-2">
         <Label htmlFor="nome_cliente">Nome do cliente <Req /></Label>
-        <Input id="nome_cliente" placeholder="Ex: João Silva" value={data.nome_cliente} onChange={e => onChange({ nome_cliente: e.target.value })} />
+        <Input id="nome_cliente" placeholder="Ex: Isabella Martins" value={data.nome_cliente} onChange={e => onChange({ nome_cliente: e.target.value })} />
         {errors.nome_cliente && <p className="text-xs text-destructive">{errors.nome_cliente}</p>}
       </div>
 
@@ -602,7 +602,7 @@ export default function GeracaoWizard({
   const validateStep = (s: number): boolean => {
     const errs: Record<string, string> = {};
     if (s === 0) {
-      if (!data.nome_cliente.trim()) errs.nome_cliente = 'Nome do cliente é obrigatório';
+      if (!data.nome_cliente.trim()) errs.nome_cliente = 'Informe o nome do lead para continuar';
       if (!data.perfil_decisor) errs.perfil_decisor = 'Selecione o perfil do decisor';
       if (!data.estado_emocional) errs.estado_emocional = 'Selecione o estado emocional';
     }

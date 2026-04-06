@@ -134,7 +134,7 @@ const Header = () => {
                 ) : (
                   <MenuLink icon={<Users className="h-3.5 w-3.5" />} label="CRM (Em Breve)" onClick={() => {}} disabled />
                 )}
-                <MenuLink icon={<ClipboardList className="h-3.5 w-3.5" />} label="Histórico" onClick={() => { setOpen(false); navigate('/perfil/historico'); }} />
+                <MenuLink icon={<ClipboardList className="h-3.5 w-3.5" />} label="CRM / Histórico" onClick={() => { setOpen(false); navigate('/crm'); }} />
               </div>
 
               <div className="border-t border-border pt-1">
