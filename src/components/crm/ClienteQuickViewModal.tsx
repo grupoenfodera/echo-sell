@@ -241,22 +241,19 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                                <span style={{ fontSize: '11px', color: '#5a5a7a' }}>{sessaoDate}</span>
                              )}
                            </div>
-                          <p className="font-bold truncate" style={{ fontSize: '13px', color: '#e8e8f0' }}>
-                            {sessao.nicho ?? 'Sem nicho'}
-                          </p>
-                          <p className="truncate" style={{ fontSize: '12px', color: '#9090b0' }}>
-                            {sessao.produto ?? 'Sem produto'}
-                          </p>
-                          {score != null && (
-                            <div>
-                              <span
-                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
-                                style={{ background: '#7c5cfc22', color: '#7c5cfc' }}
-                              >
-                                Score {score}/100
-                              </span>
-                            </div>
-                          )}
+                           <p className="truncate" style={{ fontSize: '13px', fontWeight: 700, color: '#e8e8f0' }}>
+                             {sessao.nicho ?? 'Sem nicho'}
+                           </p>
+                           <p className="truncate" style={{ fontSize: '12px', color: '#9090b0', maxHeight: '2.6em', overflow: 'hidden' }}>
+                             {sessao.produto ?? 'Sem produto'}
+                           </p>
+                           <div>
+                             <span
+                               style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: '#7c5cfc22', color: '#7c5cfc', border: '1px solid #7c5cfc44' }}
+                             >
+                               {score != null ? `Score ${score}/100` : '—'}
+                             </span>
+                           </div>
                         </div>
 
                         {/* Separador */}
