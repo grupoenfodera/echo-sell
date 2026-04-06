@@ -602,7 +602,7 @@ export default function GeracaoWizard({
   const validateStep = (s: number): boolean => {
     const errs: Record<string, string> = {};
     if (s === 0) {
-      if (!data.nome_cliente.trim()) errs.nome_cliente = 'Nome do cliente é obrigatório';
+      if (!data.nome_cliente.trim()) errs.nome_cliente = 'Informe o nome do lead para continuar';
       if (!data.perfil_decisor) errs.perfil_decisor = 'Selecione o perfil do decisor';
       if (!data.estado_emocional) errs.estado_emocional = 'Selecione o estado emocional';
     }
