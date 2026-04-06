@@ -184,19 +184,19 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Pipeline</h3>
-                <div className="flex items-center gap-2 text-xs text-foreground">
-                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>{statusLabel}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs">
-                   <Clock className="h-3.5 w-3.5" style={{ color: agingColor }} />
-                   <span style={{ color: agingColor }}>{agingText ? `há ${agingText}` : 'Sem contato'}</span>
+                <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a', marginTop: '20px' }}>Pipeline</h3>
+                 <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
+                   <MapPin style={{ width: '16px', height: '16px', color: '#5a5a7a' }} />
+                   <span style={{ color: '#e8e8f0' }}>📍 {statusLabel}</span>
                  </div>
-                <div className="flex items-center gap-2 text-xs text-foreground">
-                  <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>Criado há {criadoText}</span>
-                </div>
+                 <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
+                   <Clock style={{ width: '16px', height: '16px', color: agingColor }} />
+                   <span style={{ color: agingColor }}>⏱ {agingText ? `há ${agingText}` : 'Sem contato'}</span>
+                 </div>
+                 <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
+                   <CalendarDays style={{ width: '16px', height: '16px', color: '#5a5a7a' }} />
+                   <span style={{ color: '#9090b0' }}>📅 Criado há {criadoText}</span>
+                 </div>
               </div>
 
               <div className="space-y-2">
