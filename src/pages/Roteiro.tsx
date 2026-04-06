@@ -358,9 +358,6 @@ export default function RoteiroPage() {
     return 'pendente';
   }, [blocos, secoesEstado]);
 
-  const allApproved = useMemo(() => {
-    return blocos.every((b, i) => getFaseStatus(i) === 'aprovado');
-  }, [blocos, getFaseStatus]);
 
   const approvedPhases = useMemo(() => {
     return blocos.filter((_, i) => getFaseStatus(i) === 'aprovado').length;
