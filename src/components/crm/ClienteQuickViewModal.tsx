@@ -200,21 +200,19 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Ações rápidas</h3>
-                <Button
-                  variant="outline" size="sm"
-                  className="w-full justify-start text-xs gap-2"
-                  onClick={() => setInteracaoModal(true)}
-                >
-                  <ClipboardList className="h-3.5 w-3.5" /> Registrar contato
-                </Button>
-                <Button
-                  variant="outline" size="sm"
-                  className="w-full justify-start text-xs gap-2"
-                  onClick={() => { onClose(); navigate(`/crm/${cliente.id}`); }}
-                >
-                  <Pencil className="h-3.5 w-3.5" /> Editar
-                </Button>
+               <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a', marginTop: '20px' }}>Ações rápidas</h3>
+                 <button
+                   onClick={() => setInteracaoModal(true)}
+                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #3a3a52', color: '#9090b0', background: 'transparent', borderRadius: '8px', fontSize: '13px', textAlign: 'left', cursor: 'pointer' }}
+                 >
+                   📝 Registrar contato
+                 </button>
+                 <button
+                   onClick={() => { onClose(); navigate(`/crm/${cliente.id}`); }}
+                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #3a3a52', color: '#9090b0', background: 'transparent', borderRadius: '8px', fontSize: '13px', textAlign: 'left', cursor: 'pointer', marginTop: '6px' }}
+                 >
+                   ✏️ Editar
+                 </button>
               </div>
             </div>
 
