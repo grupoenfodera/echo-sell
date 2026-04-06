@@ -53,7 +53,7 @@ export default function Gerar() {
   const handleRejeitar = async () => {
     if (!lastPayload) return;
     const result = await rejeitarRoteiro(lastPayload);
-    if (result?.async && result.sessaoId) {
+    if (result && result.async && result.sessaoId) {
       navigate(`/loading/${result.sessaoId}`, { replace: true });
     }
   };
