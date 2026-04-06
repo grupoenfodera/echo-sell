@@ -233,14 +233,14 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                          <div
                            style={{ background: '#22222f', border: '1px solid #2e2e42', borderLeft: '3px solid #7c5cfc', borderRadius: '10px', padding: '14px' }}
                          >
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold uppercase tracking-wider" style={{ fontSize: '10px', color: '#5a5a7a' }}>
-                              Última sessão
-                            </span>
-                            {sessaoDate && (
-                              <span style={{ fontSize: '12px', color: '#9090b0' }}>{sessaoDate}</span>
-                            )}
-                          </div>
+                           <div className="flex items-center justify-between">
+                             <span style={{ fontSize: '10px', color: '#5a5a7a' }}>
+                               Última sessão
+                             </span>
+                             {sessaoDate && (
+                               <span style={{ fontSize: '11px', color: '#5a5a7a' }}>{sessaoDate}</span>
+                             )}
+                           </div>
                           <p className="font-bold truncate" style={{ fontSize: '13px', color: '#e8e8f0' }}>
                             {sessao.nicho ?? 'Sem nicho'}
                           </p>
