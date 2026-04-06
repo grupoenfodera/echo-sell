@@ -8,6 +8,17 @@ export type SessaoResultado = 'converteu' | 'nao_converteu' | 'em_andamento' | '
 
 export type DealEtapa = 'prospeccao' | 'qualificacao' | 'proposta' | 'negociacao' | 'fechado_ganho' | 'fechado_perdido';
 
+export interface UltimaSessao {
+  id: string;
+  criado_em: string;
+  geracao_status: string;
+  tem_roteiro: boolean;
+  tem_proposta: boolean;
+  tem_email: boolean;
+  tem_whatsapp: boolean;
+  tem_objecoes: boolean;
+}
+
 export interface Cliente {
   id: string;
   usuario_id: string;
@@ -26,6 +37,7 @@ export interface Cliente {
   notas?: string;
   criado_em: string;
   atualizado_em: string;
+  ultima_sessao?: UltimaSessao | null;
 }
 
 export interface RoteiroEtapa {
