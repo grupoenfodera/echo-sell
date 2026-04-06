@@ -224,15 +224,15 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                 </div>
               ) : (
                 <>
-                  {/* ÚLTIMA SESSÃO — card de metadados */}
-                  <div className="p-4 border-b border-border space-y-3">
-                    {sessao ? (
-                      <>
-                        {/* Card com borda roxa */}
-                        <div
-                          className="rounded-lg p-3 space-y-1.5"
-                          style={{ borderLeft: '3px solid #7c5cfc', background: 'hsl(var(--muted) / 0.3)' }}
-                        >
+                   {/* ÚLTIMA SESSÃO — card de metadados */}
+                   <div className="space-y-3">
+                     <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a', marginBottom: '10px' }}>Última sessão</h3>
+                     {sessao ? (
+                       <>
+                         {/* Card com borda roxa */}
+                         <div
+                           style={{ background: '#22222f', border: '1px solid #2e2e42', borderLeft: '3px solid #7c5cfc', borderRadius: '10px', padding: '14px' }}
+                         >
                           <div className="flex items-center justify-between">
                             <span className="font-semibold uppercase tracking-wider" style={{ fontSize: '10px', color: '#5a5a7a' }}>
                               Última sessão
