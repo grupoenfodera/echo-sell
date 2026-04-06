@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Pencil, Archive, Loader2, UserCircle } from 'lucide-react';
-import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -106,9 +105,8 @@ export default function Personas() {
   const patch = (updates: Partial<FormData>) => setForm(f => ({ ...f, ...updates }));
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="pt-[70px] pb-16 px-4 sm:px-6">
+    <div className="min-h-[calc(100vh-52px)] bg-background">
+      <main className="pb-16 px-4 sm:px-6 pt-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <h1 className="font-heading text-2xl font-bold text-foreground">👤 Personas</h1>
@@ -139,7 +137,7 @@ export default function Personas() {
                         </span>
                       )}
                       {p.processamento_info && (
-                        <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500">
+                        <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-blue-600/10 text-blue-500">
                           {PROC_LABELS[p.processamento_info] || p.processamento_info}
                         </span>
                       )}

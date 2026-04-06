@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
-import Header from '@/components/Header';
 import NovaInteracaoModal from '@/components/crm/NovaInteracaoModal';
 import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
 import { svpApi } from '@/lib/api-svp';
@@ -33,6 +32,48 @@ import {
   Copy, Check, Shield, Save, ClipboardList, CalendarClock, RotateCw, Send, RefreshCw,
 } from 'lucide-react';
 
+/* ── Synthetic timeline ─────────────────────────── */
+
+type TimelineRow = {
+  id: string;
+  label: string;
+  detail?: string;
+  date: Date;
+  dotCls: string;
+  synthetic: boolean;
+  canal?: InteracaoCanal;
+};
+
+function buildTimeline(sessoes: SessaoVenda[], interacoes: Interacao[]): TimelineRow[] {
+  const rows: TimelineRow[] = [];
+
+  for (const int of interacoes) {
+    rows.push({
+      id: `int-${int.id}`,
+      label: int.titulo ?? CANAL_LABEL[int.canal as InteracaoCanal] ?? int.canal,
+      detail: int.resumo_ia ?? (int.conteudo ? int.conteudo.slice(0, 80) : undefined),
+      date: new Date(int.criado_em),
+      dotCls: CANAL_DOT[int.canal as InteracaoCanal] || 'bg-gray-400',
+      synthetic: false,
+      canal: int.canal as InteracaoCanal,
+    });
+  }
+
+  for (const s of sessoes) {
+    if (s.objecoes_geradas_em) rows.push({ id: `${s.id}-objecoes`, label: 'Objeções geradas', date: new Date(s.objecoes_geradas_em), dotCls: 'bg-amber-500', synthetic: true, canal: 'proposta' });
+    if (s.whatsapp_gerado_em)  rows.push({ id: `${s.id}-whatsapp`, label: 'Mensagem WhatsApp gerada', date: new Date(s.whatsapp_gerado_em), dotCls: 'bg-green-500', synthetic: true, canal: 'whatsapp' });
+    if (s.email_gerado_em)     rows.push({ id: `${s.id}-email`, label: 'E-mail de follow-up gerado', date: new Date(s.email_gerado_em), dotCls: 'bg-blue-500', synthetic: true, canal: 'email' });
+    if (s.proposta_gerada_em)  rows.push({ id: `${s.id}-proposta`, label: 'Proposta comercial gerada', date: new Date(s.proposta_gerada_em), dotCls: 'bg-rose-500', synthetic: true, canal: 'proposta' });
+    if (s.roteiro_gerado_em)   rows.push({ id: `${s.id}-roteiro`, label: 'Roteiro gerado', detail: s.nicho ?? undefined, date: new Date(s.roteiro_gerado_em), dotCls: 'bg-blue-700', synthetic: true, canal: 'roteiro' });
+    rows.push({ id: `${s.id}-sessao`, label: 'Nova sessão criada', detail: s.nicho ?? undefined, date: new Date(s.criado_em), dotCls: 'bg-muted-foreground', synthetic: true });
+  }
+
+  const seen = new Set<string>();
+  return rows
+    .filter(r => { if (seen.has(r.id)) return false; seen.add(r.id); return true; })
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
+}
+
 /* ── Maps ──────────────────────────────────────── */
 
 const TEMP_BADGE: Record<ClienteTemperatura, { emoji: string; label: string; cls: string }> = {
@@ -50,7 +91,7 @@ const STATUS_LABEL: Record<ClienteStatus, string> = {
 const STATUS_CLS: Record<ClienteStatus, string> = {
   novo: 'border-muted-foreground/40 text-muted-foreground',
   em_contato: 'border-blue-400 text-blue-700 dark:text-blue-300',
-  proposta_enviada: 'border-purple-400 text-purple-700 dark:text-purple-300',
+  proposta_enviada: 'border-blue-500 text-blue-700 dark:text-blue-300',
   negociacao: 'border-orange-400 text-orange-700 dark:text-orange-300',
   ganho: 'border-green-400 text-green-700 dark:text-green-300',
   perdido: 'border-red-400 text-red-700 dark:text-red-300',
@@ -68,7 +109,7 @@ const CANAL_LABEL: Record<InteracaoCanal, string> = {
 
 const CANAL_DOT: Record<InteracaoCanal, string> = {
   whatsapp: 'bg-green-500', email: 'bg-blue-500', ligacao: 'bg-orange-500',
-  reuniao: 'bg-purple-500', nota: 'bg-gray-400', roteiro: 'bg-indigo-500',
+  reuniao: 'bg-blue-600', nota: 'bg-gray-400', roteiro: 'bg-blue-700',
   proposta: 'bg-rose-500', transcricao: 'bg-teal-500',
 };
 
@@ -120,7 +161,6 @@ export default function CRMCliente() {
     sessaoId: string;
     produto?: string;
   } | null>(null);
-  const [sessaoAberta, setSessaoAberta] = useState<SessaoVenda | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
 
@@ -206,15 +246,15 @@ export default function CRMCliente() {
     }
   };
 
-  const interacoesFiltradas = filtroCanal === 'todos'
-    ? interacoes
-    : interacoes.filter(i => i.canal === filtroCanal);
+  const timeline = buildTimeline(sessoes, interacoes);
+  const timelineFiltrada = filtroCanal === 'todos'
+    ? timeline
+    : timeline.filter(r => r.canal === filtroCanal);
 
   if (carregando) {
     return (
       <>
-        <Header />
-        <main className="pt-[70px] pb-16 px-4 sm:px-6">
+        <main className="pb-16 px-4 sm:px-6 pt-6">
           <div className="max-w-[1100px] mx-auto space-y-6">
             <Skeleton className="h-8 w-40" />
             <div className="flex items-center gap-4"><Skeleton className="h-14 w-14 rounded-full" /><div className="space-y-2"><Skeleton className="h-6 w-48" /><Skeleton className="h-4 w-32" /></div></div>
@@ -231,8 +271,7 @@ export default function CRMCliente() {
   if (erro || !cliente) {
     return (
       <>
-        <Header />
-        <main className="pt-[70px] pb-16 px-4 sm:px-6">
+        <main className="pb-16 px-4 sm:px-6 pt-6">
           <div className="max-w-[600px] mx-auto text-center space-y-4 py-16">
             <AlertCircle className="h-8 w-8 text-destructive mx-auto" />
             <p className="text-sm text-destructive">{erro || 'Cliente não encontrado.'}</p>
@@ -248,8 +287,7 @@ export default function CRMCliente() {
 
   return (
     <>
-      <Header />
-      <main className="pt-[70px] pb-16 px-4 sm:px-6">
+      <main className="pb-16 px-4 sm:px-6 pt-6">
         <div className="max-w-[1100px] mx-auto space-y-6">
           {/* Back */}
           <Button variant="ghost" size="sm" onClick={() => navigate('/crm')} className="gap-1.5">
@@ -323,7 +361,6 @@ export default function CRMCliente() {
                           onRegistrarResultado={() =>
                             setResultadoModal({ sessaoId: s.id, produto: s.produto })
                           }
-                          onVerRoteiro={(sess) => setSessaoAberta(sess)}
                         />
                       ))}
                       {sessoes.length > 5 && (
@@ -340,7 +377,7 @@ export default function CRMCliente() {
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm font-semibold text-foreground">Timeline</h2>
-                  <Badge variant="secondary" className="text-xs">{interacoes.length}</Badge>
+                  <Badge variant="secondary" className="text-xs">{timeline.length}</Badge>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => openInteracao('nota' as InteracaoCanal)}>
                   <Plus className="h-3 w-3 mr-1" /> Nova Nota
@@ -365,13 +402,38 @@ export default function CRMCliente() {
               </div>
 
               {/* Timeline list */}
-              {interacoesFiltradas.length === 0 ? (
+              {timelineFiltrada.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma interação encontrada.</p>
               ) : (
-                <div className="relative">
-                  {interacoesFiltradas.map((inter, idx) => (
-                    <InteracaoCard key={inter.id} interacao={inter} isLast={idx === interacoesFiltradas.length - 1} />
-                  ))}
+                <div className="relative space-y-0">
+                  {timelineFiltrada.map((row, idx) => {
+                    if (!row.synthetic) {
+                      // Real interacao — use full InteracaoCard
+                      const inter = interacoes.find(i => row.id === `int-${i.id}`);
+                      if (inter) return <InteracaoCard key={row.id} interacao={inter} isLast={idx === timelineFiltrada.length - 1} />;
+                    }
+                    // Synthetic event — lightweight row
+                    const isLast = idx === timelineFiltrada.length - 1;
+                    return (
+                      <div key={row.id} className="flex gap-3 pb-4">
+                        <div className="flex flex-col items-center">
+                          <div className={`h-2 w-2 rounded-full mt-1.5 shrink-0 ${row.dotCls} opacity-60`} />
+                          {!isLast && <div className="w-px flex-1 bg-border/50 mt-1" />}
+                        </div>
+                        <div className="flex-1 min-w-0 pb-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="text-sm text-muted-foreground">{row.label}</span>
+                            <span className="text-[10px] text-muted-foreground/60 shrink-0 mt-0.5">
+                              {formatDistanceToNow(row.date, { addSuffix: true, locale: ptBR })}
+                            </span>
+                          </div>
+                          {row.detail && (
+                            <p className="text-xs text-muted-foreground/50 truncate mt-0.5">{row.detail}</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -407,58 +469,6 @@ export default function CRMCliente() {
         }}
       />
 
-      {/* Drawer de Proposta Completa */}
-      {sessaoAberta && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-end sm:items-center justify-center" onClick={() => setSessaoAberta(null)}>
-          <div
-            onClick={e => e.stopPropagation()}
-            className="bg-card border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-200"
-          >
-            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border shrink-0">
-              <div className="min-w-0 flex-1">
-                <h2 className="text-base font-semibold text-foreground">Proposta Completa</h2>
-                <p className="text-xs text-muted-foreground">
-                  {sessaoAberta.nicho && `${sessaoAberta.nicho} · `}
-                  {sessaoAberta.criado_em ? format(new Date(sessaoAberta.criado_em), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : ''}
-                  {(sessaoAberta.roteiro_json as any)?.score && ` · Score ${(sessaoAberta.roteiro_json as any).score}/100`}
-                </p>
-                {/* Insight labels */}
-                {(() => {
-                  const rj = sessaoAberta.roteiro_json as any;
-                  if (!rj) return null;
-                  const chips = [
-                    { label: 'MAIOR MEDO', value: rj.maior_medo, cls: 'text-destructive' },
-                    { label: 'DECISÃO', value: rj.decisao_style || rj.decisao, cls: 'text-primary' },
-                    { label: 'TOM IDEAL', value: rj.tom_ideal, cls: 'text-amber-600 dark:text-amber-400' },
-                  ].filter(c => c.value);
-                  if (chips.length === 0) return null;
-                  return (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {chips.map(c => (
-                        <Badge key={c.label} variant="outline" className="text-[10px] gap-1 font-normal">
-                          <span className={`font-semibold ${c.cls}`}>{c.label}</span> {c.value}
-                        </Badge>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
-              <button onClick={() => setSessaoAberta(null)} className="text-muted-foreground hover:text-foreground p-1">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-              <CrmSessaoDrawerContent
-                sessao={sessaoAberta}
-                onSessaoUpdated={(updated) => {
-                  setSessaoAberta(updated);
-                  setSessoes(prev => prev.map(s => s.id === updated.id ? updated : s));
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Confirmação de exclusão */}
       {confirmDelete && (
@@ -576,7 +586,8 @@ function EditForm({ form, set, onCancel, onSave, salvando }: {
 
 /* ── SessaoItem ────────────────────────────────── */
 
-function SessaoItem({ sessao, onRegistrarResultado, onVerRoteiro }: { sessao: SessaoVenda; onRegistrarResultado: () => void; onVerRoteiro: (s: SessaoVenda) => void }) {
+function SessaoItem({ sessao, onRegistrarResultado }: { sessao: SessaoVenda; onRegistrarResultado: () => void; onVerRoteiro?: (s: SessaoVenda) => void }) {
+  const navigate = useNavigate();
   const statusLabel = sessao.roteiro_aprovado === true && sessao.proposta_gerada_em
     ? 'Proposta completa'
     : sessao.roteiro_aprovado === true
@@ -603,10 +614,7 @@ function SessaoItem({ sessao, onRegistrarResultado, onVerRoteiro }: { sessao: Se
   return (
     <div
       className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-      onClick={() => {
-        console.log('Sessao clicada:', sessao.id, 'roteiro_json:', !!sessao.roteiro_json, typeof sessao.roteiro_json);
-        onVerRoteiro(sessao);
-      }}
+      onClick={() => navigate(`/roteiro/${sessao.id}`)}
     >
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2">

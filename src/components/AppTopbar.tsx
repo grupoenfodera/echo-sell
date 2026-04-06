@@ -69,14 +69,14 @@ export default function AppTopbar() {
 
   /* Dark mode overrides for topbar surfaces */
   const isDark = theme === 'dark';
-  const topBg     = isDark ? '#1a1a14' : BRAND.bg;
-  const topBorder = isDark ? '#2e2e24' : BRAND.border;
-  const iconColor = isDark ? '#8B8B7A' : BRAND.mutedLg;
-  const iconHover = isDark ? '#C8C8B8' : BRAND.text;
-  const dropBg    = isDark ? '#1e1e16' : BRAND.bg;
-  const dropBorder = isDark ? '#2e2e24' : BRAND.border;
-  const dropText  = isDark ? '#E8E8D8' : BRAND.text;
-  const dropMuted = isDark ? '#8B8B7A' : BRAND.muted;
+  const topBg     = isDark ? '#0F1014' : BRAND.bg;
+  const topBorder = isDark ? '#2B2F3C' : BRAND.border;
+  const iconColor = isDark ? '#7A7F92' : BRAND.mutedLg;
+  const iconHover = isDark ? '#E8EAF0' : BRAND.text;
+  const dropBg    = isDark ? '#161820' : BRAND.bg;
+  const dropBorder = isDark ? '#2B2F3C' : BRAND.border;
+  const dropText  = isDark ? '#E8EAF0' : BRAND.text;
+  const dropMuted = isDark ? '#7A7F92' : BRAND.muted;
 
   return (
     <header
@@ -94,21 +94,21 @@ export default function AppTopbar() {
             onClick={() => navigate('/perfil/dna')}
             className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-colors"
             style={{
-              background: isDark ? '#2a2a1e' : BRAND.blueBg,
-              border: `1px solid ${isDark ? '#3a3a28' : BRAND.blue + '30'}`,
-              color: isDark ? '#A0A08A' : BRAND.muted,
+              background: isDark ? '#1E3FA818' : BRAND.blueBg,
+              border: `1px solid ${isDark ? '#2B2F3C' : BRAND.blue + '30'}`,
+              color: isDark ? '#7A7F92' : BRAND.muted,
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? '#195FA555' : BRAND.blue + '60';
-              (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#C8C8B0' : BRAND.text;
+              (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? '#1E3FA855' : BRAND.blue + '60';
+              (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#E8EAF0' : BRAND.text;
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? '#3a3a28' : BRAND.blue + '30';
-              (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#A0A08A' : BRAND.muted;
+              (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? '#2B2F3C' : BRAND.blue + '30';
+              (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#7A7F92' : BRAND.muted;
             }}
           >
             <span style={{ color: BRAND.blue, fontWeight: 700 }}>{tomLabel}</span>
-            <span style={{ color: isDark ? '#3a3a28' : BRAND.border }}>·</span>
+            <span style={{ color: isDark ? '#2B2F3C' : BRAND.border }}>·</span>
             <span>{ctxLabel}</span>
           </button>
         ) : (
@@ -139,7 +139,7 @@ export default function AppTopbar() {
           <button
             onClick={() => setOpen(!open)}
             className="flex items-center gap-1.5 px-1.5 py-1 rounded-lg transition-colors"
-            style={{ color: isDark ? '#C8C8B8' : BRAND.text }}
+            style={{ color: isDark ? '#E8EAF0' : BRAND.text }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLButtonElement).style.background = isDark ? '#ffffff08' : BRAND.hover;
             }}
@@ -156,7 +156,7 @@ export default function AppTopbar() {
             <span className="text-[13px] font-medium hidden sm:inline max-w-[90px] truncate">
               {usuario?.nome?.split(' ')[0] || 'Usuário'}
             </span>
-            <span style={{ color: isDark ? '#3a3a28' : BRAND.border, fontSize: '12px' }}>•</span>
+            <span style={{ color: isDark ? '#2B2F3C' : BRAND.border, fontSize: '12px' }}>•</span>
           </button>
 
           {open && (
@@ -207,22 +207,22 @@ function DropItem({
   danger?: boolean;
   isDark?: boolean;
 }) {
-  const normalColor = isDark ? '#A0A08A' : BRAND.muted;
-  const hoverColor  = isDark ? '#E8E8D8' : BRAND.text;
+  const normalColor = isDark ? '#7A7F92' : BRAND.muted;
+  const hoverColor  = isDark ? '#E8EAF0' : BRAND.text;
   const hoverBg     = isDark ? '#ffffff06' : BRAND.hover;
 
   return (
     <button
       onClick={onClick}
       className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] transition-colors"
-      style={{ color: danger ? '#d94f4f' : normalColor, background: 'transparent' }}
+      style={{ color: danger ? '#E03E3E' : normalColor, background: 'transparent' }}
       onMouseEnter={e => {
         (e.currentTarget as HTMLButtonElement).style.background = hoverBg;
-        (e.currentTarget as HTMLButtonElement).style.color = danger ? '#e06060' : hoverColor;
+        (e.currentTarget as HTMLButtonElement).style.color = danger ? '#E05555' : hoverColor;
       }}
       onMouseLeave={e => {
         (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-        (e.currentTarget as HTMLButtonElement).style.color = danger ? '#d94f4f' : normalColor;
+        (e.currentTarget as HTMLButtonElement).style.color = danger ? '#E03E3E' : normalColor;
       }}
     >
       <Icon className="h-3.5 w-3.5 shrink-0" />

@@ -64,7 +64,7 @@ const STATUS_LABEL: Record<ClienteStatus, string> = {
 const STATUS_CLS: Record<ClienteStatus, string> = {
   novo: 'border-muted-foreground/40 text-muted-foreground',
   em_contato: 'border-blue-400 text-blue-700 dark:text-blue-300',
-  proposta_enviada: 'border-purple-400 text-purple-700 dark:text-purple-300',
+  proposta_enviada: 'border-blue-500 text-blue-700 dark:text-blue-300',
   negociacao: 'border-orange-400 text-orange-700 dark:text-orange-300',
   ganho: 'border-green-400 text-green-700 dark:text-green-300',
   perdido: 'border-red-400 text-red-700 dark:text-red-300',
@@ -566,7 +566,7 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-foreground truncate">{cliente.nome}</p>
               {(cliente.empresa) && (
-                <p className="truncate" style={{ fontSize: '11px', color: '#5a5a7a', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cliente.empresa}</p>
+                <p className="truncate" style={{ fontSize: '11px', color: '#7A7F92', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cliente.empresa}</p>
               )}
             </div>
             <span

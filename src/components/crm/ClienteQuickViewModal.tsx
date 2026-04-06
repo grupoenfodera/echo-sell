@@ -83,7 +83,7 @@ function buildTimeline(sessoes: SessaoVenda[], interacoes: Interacao[]): Timelin
       label: int.titulo ?? CANAL_LABEL[int.canal] ?? int.canal,
       detail: int.resumo_ia ?? int.conteudo?.slice(0, 60) ?? undefined,
       date: new Date(int.criado_em),
-      color: '#9090b0',
+      color: '#7A7F92',
       synthetic: false,
     });
   }
@@ -95,7 +95,7 @@ function buildTimeline(sessoes: SessaoVenda[], interacoes: Interacao[]): Timelin
     if (s.email_gerado_em) entries.push({ id: `${s.id}-email`, icon: Mail, label: 'E-mail de follow-up gerado', date: new Date(s.email_gerado_em), color: '#60a5fa', synthetic: true });
     if (s.proposta_gerada_em) entries.push({ id: `${s.id}-proposta`, icon: FileText, label: 'Proposta comercial gerada', date: new Date(s.proposta_gerada_em), color: '#3B6FE8', synthetic: true });
     if (s.roteiro_gerado_em) entries.push({ id: `${s.id}-roteiro`, icon: ClipboardList, label: 'Roteiro gerado', detail: s.nicho ?? undefined, date: new Date(s.roteiro_gerado_em), color: '#1E3FA8', synthetic: true });
-    entries.push({ id: `${s.id}-sessao`, icon: CalendarDays, label: 'Nova sessão criada', detail: s.nicho ?? undefined, date: new Date(s.criado_em), color: '#5a5a7a', synthetic: true });
+    entries.push({ id: `${s.id}-sessao`, icon: CalendarDays, label: 'Nova sessão criada', detail: s.nicho ?? undefined, date: new Date(s.criado_em), color: '#4A4F60', synthetic: true });
   }
 
   // Sort newest first, dedupe by id
@@ -195,9 +195,9 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                <span style={{ fontSize: '18px', fontWeight: 700 }}>{initials}</span>
              </div>
              <div className="flex-1 min-w-0">
-               <h2 className="font-semibold truncate" style={{ fontSize: '18px', color: '#e8e8f0' }}>{cliente.nome}</h2>
+               <h2 className="font-semibold truncate" style={{ fontSize: '18px', color: '#E8EAF0' }}>{cliente.nome}</h2>
                {subtitleText && (
-                 <p className="truncate" style={{ color: '#9090b0', fontSize: '12px' }}>{subtitleText}</p>
+                 <p className="truncate" style={{ color: '#7A7F92', fontSize: '12px' }}>{subtitleText}</p>
                )}
              </div>
              <span
@@ -224,35 +224,35 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
              {/* LEFT SIDEBAR */}
              <div className="space-y-5" style={{ width: '240px', borderRight: '1px solid #2B2F3C', padding: '20px', overflowY: 'auto', flexShrink: 0 }}>
               <div className="space-y-2">
-                <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a' }}>Contato</h3>
+                <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4A4F60' }}>Contato</h3>
                  <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
-                   <MessageSquare style={{ width: '16px', height: '16px', color: '#5a5a7a' }} />
-                   <span style={{ color: '#9090b0' }}>{cliente.whatsapp || '—'}</span>
+                   <MessageSquare style={{ width: '16px', height: '16px', color: '#4A4F60' }} />
+                   <span style={{ color: '#7A7F92' }}>{cliente.whatsapp || '—'}</span>
                  </div>
                  <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
-                   <Mail style={{ width: '16px', height: '16px', color: '#5a5a7a' }} />
-                   <span className="truncate" style={{ color: '#9090b0' }}>{cliente.email || '—'}</span>
+                   <Mail style={{ width: '16px', height: '16px', color: '#4A4F60' }} />
+                   <span className="truncate" style={{ color: '#7A7F92' }}>{cliente.email || '—'}</span>
                  </div>
               </div>
 
               <div className="space-y-2">
-                <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a', marginTop: '20px' }}>Pipeline</h3>
+                <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4A4F60', marginTop: '20px' }}>Pipeline</h3>
                  <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
-                   <MapPin style={{ width: '16px', height: '16px', color: '#5a5a7a' }} />
-                   <span style={{ color: '#e8e8f0' }}>📍 {statusLabel}</span>
+                   <MapPin style={{ width: '16px', height: '16px', color: '#4A4F60' }} />
+                   <span style={{ color: '#E8EAF0' }}>📍 {statusLabel}</span>
                  </div>
                  <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
                    <Clock style={{ width: '16px', height: '16px', color: agingColor }} />
                    <span style={{ color: agingColor }}>⏱ {agingText ? `há ${agingText}` : 'Sem contato'}</span>
                  </div>
                  <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
-                   <CalendarDays style={{ width: '16px', height: '16px', color: '#5a5a7a' }} />
-                   <span style={{ color: '#9090b0' }}>📅 Criado há {criadoText}</span>
+                   <CalendarDays style={{ width: '16px', height: '16px', color: '#4A4F60' }} />
+                   <span style={{ color: '#7A7F92' }}>📅 Criado há {criadoText}</span>
                  </div>
               </div>
 
               <div className="space-y-2">
-               <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a', marginTop: '20px' }}>Ações rápidas</h3>
+               <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4A4F60', marginTop: '20px' }}>Ações rápidas</h3>
                  <button
                    onClick={() => setInteracaoModal(true)}
                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #2B2F3C', color: '#7A7F92', background: 'transparent', borderRadius: '8px', fontSize: '13px', textAlign: 'left', cursor: 'pointer' }}
@@ -278,7 +278,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                 <>
                    {/* ÚLTIMA SESSÃO — card de metadados */}
                    <div className="space-y-3">
-                     <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a', marginBottom: '10px' }}>Última sessão</h3>
+                     <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4A4F60', marginBottom: '10px' }}>Última sessão</h3>
                      {sessao ? (
                        <>
                          {/* Card com borda roxa */}
@@ -286,17 +286,17 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                            style={{ background: '#20232B', border: '1px solid #2B2F3C', borderLeft: '3px solid #1E3FA8', borderRadius: '10px', padding: '14px' }}
                          >
                            <div className="flex items-center justify-between">
-                             <span style={{ fontSize: '10px', color: '#5a5a7a' }}>
+                             <span style={{ fontSize: '10px', color: '#4A4F60' }}>
                                Última sessão
                              </span>
                              {sessaoDate && (
-                               <span style={{ fontSize: '11px', color: '#5a5a7a' }}>{sessaoDate}</span>
+                               <span style={{ fontSize: '11px', color: '#4A4F60' }}>{sessaoDate}</span>
                              )}
                            </div>
-                           <p className="truncate" style={{ fontSize: '13px', fontWeight: 700, color: '#e8e8f0' }}>
+                           <p className="truncate" style={{ fontSize: '13px', fontWeight: 700, color: '#E8EAF0' }}>
                              {sessao.nicho ?? 'Sem nicho'}
                            </p>
-                           <p className="truncate" style={{ fontSize: '12px', color: '#9090b0', maxHeight: '2.6em', overflow: 'hidden' }}>
+                           <p className="truncate" style={{ fontSize: '12px', color: '#7A7F92', maxHeight: '2.6em', overflow: 'hidden' }}>
                              {sessao.produto ?? 'Sem produto'}
                            </p>
                            <div>
@@ -408,7 +408,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                       </>
                      ) : (
                        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                         <p style={{ fontSize: '13px', color: '#5a5a7a' }}>Nenhuma sessão registrada</p>
+                         <p style={{ fontSize: '13px', color: '#4A4F60' }}>Nenhuma sessão registrada</p>
                          <button
                            onClick={() => { onClose(); navigate('/'); }}
                            style={{ marginTop: '12px', border: '1px solid #2B2F3C', color: '#7A7F92', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
@@ -422,7 +422,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                    {/* ATIVIDADE */}
                    <div style={{ marginTop: '28px' }}>
                      <div className="flex items-center justify-between" style={{ marginBottom: '14px' }}>
-                       <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a' }}>Atividade</h3>
+                       <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#4A4F60' }}>Atividade</h3>
                        <button
                          onClick={() => setInteracaoModal(true)}
                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: '#8AB4FF', cursor: 'pointer', background: '#1E3FA815', border: '1px solid #1E3FA833', borderRadius: '6px', padding: '3px 8px' }}
@@ -433,7 +433,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
 
                      {timeline.length === 0 ? (
                        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                         <p style={{ fontSize: '13px', color: '#5a5a7a', fontStyle: 'italic' }}>Nenhuma atividade registrada</p>
+                         <p style={{ fontSize: '13px', color: '#4A4F60', fontStyle: 'italic' }}>Nenhuma atividade registrada</p>
                          <button
                            onClick={() => setInteracaoModal(true)}
                            style={{ marginTop: '8px', fontSize: '12px', color: '#8AB4FF', background: 'none', border: 'none', cursor: 'pointer' }}
@@ -474,14 +474,14 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                                    <div className="flex items-start justify-between gap-2">
                                      <p
                                        className="truncate"
-                                       style={{ fontSize: '13px', color: entry.synthetic ? '#c0c0d8' : '#e8e8f0', fontWeight: entry.synthetic ? 400 : 500, lineHeight: 1.3 }}
+                                       style={{ fontSize: '13px', color: entry.synthetic ? '#9BA4B5' : '#E8EAF0', fontWeight: entry.synthetic ? 400 : 500, lineHeight: 1.3 }}
                                      >
                                        {entry.label}
                                      </p>
-                                     <span style={{ fontSize: '10px', color: '#4a4a6a', flexShrink: 0, paddingTop: '1px' }}>há {ago}</span>
+                                     <span style={{ fontSize: '10px', color: '#3D4252', flexShrink: 0, paddingTop: '1px' }}>há {ago}</span>
                                    </div>
                                    {entry.detail && (
-                                     <p className="truncate" style={{ fontSize: '11px', color: '#5a5a7a', marginTop: '1px' }}>{entry.detail}</p>
+                                     <p className="truncate" style={{ fontSize: '11px', color: '#4A4F60', marginTop: '1px' }}>{entry.detail}</p>
                                    )}
                                  </div>
                                </div>

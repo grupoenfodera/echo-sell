@@ -224,7 +224,7 @@ const SCORE_LABELS_OLD: { key: string; label: string; max: number }[] = [
 ];
 
 const TIPO_BADGE: Record<string, { label: string; className: string }> = {
-  script:   { label: 'Script',    className: 'bg-purple-500/10 text-purple-500 border-purple-500/30' },
+  script:   { label: 'Script',    className: 'bg-blue-600/10 text-blue-500 border-blue-500/30' },
   instrucao:{ label: 'Instrução', className: 'bg-amber-500/10 text-amber-500 border-amber-500/30' },
   objecao:  { label: 'Objeção',   className: 'bg-red-500/10 text-red-500 border-red-500/30' },
   insight:  { label: 'Insight',   className: 'bg-blue-500/10 text-blue-500 border-blue-500/30' },
