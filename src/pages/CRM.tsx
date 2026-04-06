@@ -398,7 +398,7 @@ export default function CRM() {
                   <ListClienteCard
                     key={c.id}
                     cliente={c}
-                    onClick={() => navigate(`/crm/${c.id}`)}
+                    onClick={() => setClienteSelecionado(c)}
                   />
                 ))}
               </div>
