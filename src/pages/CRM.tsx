@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { formatDistanceToNow, differenceInDays } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Header from '@/components/Header';
 import { svpApi } from '@/lib/api-svp';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Cliente, ClienteStatus, ClienteTemperatura, SessaoResultado } from '@/types/crm';
+import type { Cliente, ClienteStatus, ClienteTemperatura, UltimaSessao } from '@/types/crm';
 import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
