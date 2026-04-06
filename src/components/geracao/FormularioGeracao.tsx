@@ -112,8 +112,8 @@ export function FormularioGeracao({ onSubmit, loading, error }: FormularioGeraca
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nome_cliente">Nome do cliente <Req /></Label>
-            <Input id="nome_cliente" placeholder="Ex: Isabella Martins" value={nomeCliente} onChange={e => setNomeCliente(e.target.value)} required disabled={loading} />
-            {!nomeCliente.trim() && <p className="text-xs text-destructive">Informe o nome do lead para continuar</p>}
+            <Input id="nome_cliente" placeholder="Ex: Isabella Martins" value={nomeCliente} onChange={e => setNomeCliente(e.target.value)} onBlur={() => setNomeTouched(true)} required disabled={loading} />
+            {nomeTouched && !nomeCliente.trim() && <p className="text-xs text-destructive">Informe o nome do lead para continuar</p>}
           </div>
 
           <div className="space-y-2">
