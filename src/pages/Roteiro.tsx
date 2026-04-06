@@ -431,17 +431,6 @@ export default function RoteiroPage() {
     toast.success('Roteiro copiado!');
   }, [blocos, secoesEstado]);
 
-  const handleGerarProposta = useCallback(async () => {
-    if (!sessao_id) return;
-    setGerandoProposta(true);
-    try {
-      await svpApi.aprovarRoteiro({ sessao_id, aprovado: true });
-      navigate(`/gerar?sessao_id=${sessao_id}&proposta=true`);
-    } catch {
-      toast.error('Erro ao aprovar roteiro');
-      setGerandoProposta(false);
-    }
-  }, [sessao_id, navigate]);
 
   // ── Render ──────────────────────────────────────
   if (loading) {
