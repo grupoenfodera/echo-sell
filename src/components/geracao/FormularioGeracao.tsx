@@ -22,6 +22,7 @@ export function FormularioGeracao({ onSubmit, loading, error }: FormularioGeraca
 
   // Step 1
   const [nomeCliente, setNomeCliente] = useState('');
+  const [nomeTouched, setNomeTouched] = useState(false);
   const [perfilDecisor, setPerfilDecisor] = useState('');
   const [estadoEmocional, setEstadoEmocional] = useState('');
   const [outrosDecisores, setOutrosDecisores] = useState('');
