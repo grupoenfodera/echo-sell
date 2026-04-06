@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ScriptRenderer from '@/components/geracao/ScriptRenderer';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, ArrowRight, Check, Copy, Loader2,
   ChevronDown, ChevronUp, Eye, Pencil, RotateCcw, AlertCircle,
+  FileText, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { svpApi } from '@/lib/api-svp';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,9 +18,60 @@ import type {
   SessaoVenda, BlocoRoteiro, SecaoRoteiro, SecaoEstado, RoteiroJSON, RoteiroBloco,
 } from '@/types/crm';
 
-
+/* ─────────────────────────────────────────────────
+   Constants
+───────────────────────────────────────────────── */
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+
+const LEGACY_ORDER = ['abertura', 'descoberta', 'apresentacao_solucao', 'tratamento_objecoes', 'fechamento'];
+const LEGACY_NAMES: Record<string, string> = {
+  abertura: 'Abertura',
+  descoberta: 'Diagnóstico',
+  apresentacao_solucao: 'Solução',
+  tratamento_objecoes: 'Objeções',
+  fechamento: 'Fechamento',
+};
+
+const FASE_COLORS: Record<string, string> = {
+  abertura:             '#4a9eff',
+  descoberta:           '#7c5cfc',
+  diagnostico:          '#7c5cfc',
+  apresentacao_solucao: '#7c5cfc',
+  solucao:              '#a855f7',
+  oferta:               '#f5a623',
+  tratamento_objecoes:  '#ff6b4a',
+  objecoes:             '#ff6b4a',
+  fechamento:           '#4caf50',
+};
+const INDEX_COLORS = ['#4a9eff', '#7c5cfc', '#a855f7', '#f5a623', '#ff6b4a', '#4caf50'];
+
+function getFaseColor(bloco: string, index: number): string {
+  return FASE_COLORS[bloco.toLowerCase()] ?? INDEX_COLORS[index % INDEX_COLORS.length];
+}
+
+const SCORE_LABELS: Record<string, string> = {
+  clareza:           'Clareza',
+  objecoes_cobertas: 'Objeções Cobertas',
+  adequacao_nicho:   'Adequação ao Nicho',
+  personalizacao:    'Personalização',
+  urgencia:          'Urgência',
+  tom:               'Tom',
+};
+
+/** Max value per score axis — used to compute percentage for color coding */
+const SCORE_AXIS_MAX: Record<string, number> = {
+  personalizacao:    30,
+  clareza:           25,
+  urgencia:          20,
+  tom:               25,
+  objecoes_cobertas: 20,
+  adequacao_nicho:   20,
+};
+
+/* ─────────────────────────────────────────────────
+   API helper
+───────────────────────────────────────────────── */
 
 async function callFn<T>(name: string, body?: Record<string, unknown>): Promise<T> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -41,113 +92,329 @@ async function callFn<T>(name: string, body?: Record<string, unknown>): Promise<
   return res.json();
 }
 
-// ── Normalize old roteiro format to BlocoRoteiro[] ──
+/* ─────────────────────────────────────────────────
+   normalizeBlocos
+───────────────────────────────────────────────── */
+
 function normalizeBlocos(roteiro: RoteiroJSON): BlocoRoteiro[] {
   const rr = roteiro.roteiro_reuniao;
+
   if (Array.isArray(rr)) {
-    // Could be new BlocoRoteiro[] with secoes, or old RoteiroBloco[] without
-    if (rr.length > 0 && 'secoes' in rr[0]) {
-      return rr as unknown as BlocoRoteiro[];
-    }
-    // Old format: RoteiroBloco[] — convert each to BlocoRoteiro with single section
-    return (rr as unknown as RoteiroBloco[]).map((b, i) => ({
-      numero: b.numero ?? i + 1,
-      bloco: b.bloco,
-      titulo: b.titulo,
-      tempo: b.tempo,
-      secoes: [{
-        id: `bloco-${b.numero ?? i + 1}-script`,
-        tipo: 'script' as const,
-        label: b.titulo,
-        conteudo: b.script || '',
-        raciocinio: b.nota_tecnica || undefined,
-      }],
-    }));
+    if (rr.length > 0 && 'secoes' in rr[0]) return rr as unknown as BlocoRoteiro[];
+
+    // New 6-block PASTOR format — extract all rich fields per block
+    return (rr as unknown as RoteiroBloco[]).map((b, i) => {
+      const sections: SecaoRoteiro[] = [];
+      const bloco = (b.bloco || '').toLowerCase();
+      const num   = b.numero ?? i + 1;
+
+      // ── Generic script (abertura / diagnostico / solucao) ──
+      if (b.script) {
+        sections.push({ id: `${bloco}-script`, tipo: 'script', label: 'Script', conteudo: b.script });
+      }
+
+      // ── Perguntas-chave (diagnostico) ──
+      if (Array.isArray(b.perguntas) && b.perguntas.length > 0) {
+        sections.push({
+          id: `${bloco}-perguntas`, tipo: 'instrucao', label: 'Perguntas-chave',
+          conteudo: (b.perguntas as string[]).map(p => `• ${p}`).join('\n'),
+        });
+      }
+
+      // ── Fases da solução (solucao) ──
+      if (Array.isArray(b.fases) && b.fases.length > 0) {
+        (b.fases as { nome: string; descricao: string; ganho_cliente: string; micro_sin: string }[]).forEach((fase, j) => {
+          const parts = [
+            fase.descricao,
+            fase.ganho_cliente ? `\n→ Cliente ganha: ${fase.ganho_cliente}` : '',
+            fase.micro_sin     ? `\n→ Micro-sin: "${fase.micro_sin}"`        : '',
+          ].filter(Boolean);
+          sections.push({ id: `${bloco}-fase-${j}`, tipo: 'instrucao', label: fase.nome, conteudo: parts.join('') });
+        });
+      }
+
+      // ── Oferta: 4 partes distintas ──
+      if (b.script_entregaveis) {
+        sections.push({ id: `${bloco}-entregaveis`, tipo: 'script',   label: 'Script: Entregáveis',              conteudo: b.script_entregaveis });
+      }
+      if (b.script_proximos_passos) {
+        sections.push({ id: `${bloco}-proxpassos`,  tipo: 'instrucao', label: 'Próximos Passos (antes do preço)', conteudo: b.script_proximos_passos });
+      }
+      if (b.script_preco) {
+        sections.push({ id: `${bloco}-preco`,        tipo: 'script',   label: 'Script: Preço + Âncora',           conteudo: b.script_preco });
+      }
+      if (b.script_avanco) {
+        sections.push({ id: `${bloco}-avanco`,        tipo: 'instrucao', label: 'Técnica de Avanço',               conteudo: b.script_avanco });
+      }
+
+      // ── Objeções (objecoes) ──
+      if (Array.isArray(b.objecoes) && b.objecoes.length > 0) {
+        (b.objecoes as { situacao: string; resposta: string; instrucao?: string }[]).forEach((obj, j) => {
+          const conteudo = [
+            obj.resposta,
+            obj.instrucao ? `\n\n📋 ${obj.instrucao}` : '',
+          ].filter(Boolean).join('');
+          sections.push({ id: `${bloco}-objecao-${j}`, tipo: 'objecao', label: obj.situacao, conteudo });
+        });
+      }
+
+      // ── Fechamento: script se fechou / se não fechou ──
+      if (b.script_fechou) {
+        sections.push({ id: `${bloco}-fechou`,    tipo: 'script',   label: 'Se Fechou',    conteudo: b.script_fechou });
+      }
+      if (b.script_nao_fechou) {
+        sections.push({ id: `${bloco}-naofechou`, tipo: 'script', label: 'Se Não Fechou', conteudo: b.script_nao_fechou });
+      }
+
+      // ── Instruções de conduta + adaptações (colapsadas por padrão) ──
+      if (b.instrucoes_conduta) {
+        sections.push({ id: `${bloco}-instrucoes`, tipo: 'instrucao', label: 'Instruções de Conduta', conteudo: b.instrucoes_conduta, collapsedByDefault: true });
+      }
+      if (b.adaptacoes) {
+        sections.push({ id: `${bloco}-adaptacoes`, tipo: 'instrucao', label: 'Adaptações', conteudo: b.adaptacoes, collapsedByDefault: true });
+      }
+
+      // ── Fallback ──
+      if (sections.length === 0) {
+        sections.push({ id: `${bloco}-${num}`, tipo: 'script', label: b.titulo, conteudo: b.nota_tecnica ?? b.tecnica ?? '' });
+      }
+
+      // ── Insight card (nota_tecnica / tecnica) no topo da fase ──
+      const insight = b.nota_tecnica ?? (sections.length > 0 ? b.tecnica : undefined);
+      if (insight && sections.length > 0) {
+        sections.unshift({ id: `${bloco}-insight`, tipo: 'insight', label: b.titulo, conteudo: insight });
+      }
+
+      return { numero: num, bloco: b.bloco, titulo: b.titulo, tempo: b.tempo, secoes: sections };
+    });
   }
-  // Legacy object format
-  const legacy = rr as Record<string, { duracao_min?: number; objetivo?: string; script?: string }>;
-  const LEGACY_NAMES: Record<string, string> = {
-    abertura: 'Abertura',
-    descoberta: 'Diagnóstico',
-    apresentacao_solucao: 'Solução',
-    tratamento_objecoes: 'Objeções',
-    fechamento: 'Fechamento',
-  };
-  return Object.entries(legacy).map(([key, val], i) => ({
-    numero: i + 1,
-    bloco: key,
-    titulo: LEGACY_NAMES[key] || key,
-    tempo: val.duracao_min ? `${val.duracao_min} min` : '—',
-    secoes: [{
-      id: `${key}-script`,
-      tipo: 'script' as const,
-      label: LEGACY_NAMES[key] || key,
-      conteudo: val.script || val.objetivo || '',
-    }],
-  }));
+
+  const legacy = rr as Record<string, Record<string, unknown>>;
+  const orderedKeys = [
+    ...LEGACY_ORDER.filter(k => k in legacy),
+    ...Object.keys(legacy).filter(k => !LEGACY_ORDER.includes(k)),
+  ];
+
+  let cum = 0;
+  return orderedKeys.map((key, i) => {
+    const val = legacy[key];
+    const dur = (val.duracao_min as number) ?? 0;
+    const timeLabel = dur ? `${cum}–${cum + dur} min` : '—';
+    cum += dur;
+
+    const sections: SecaoRoteiro[] = [];
+    const hasScript = Boolean(val.script);
+
+    // Script first — primary actionable content during meeting
+    if (val.script) {
+      sections.push({ id: `${key}-script`, tipo: 'script', label: 'Script', conteudo: val.script as string });
+    }
+    // Objetivo after script — context card, collapsed by default when script is present
+    if (val.objetivo) {
+      sections.push({ id: `${key}-objetivo`, tipo: 'instrucao', label: 'Objetivo da fase', conteudo: val.objetivo as string, collapsedByDefault: hasScript });
+    }
+    if (Array.isArray(val.dicas) && val.dicas.length > 0) {
+      sections.push({ id: `${key}-dicas`, tipo: 'instrucao', label: 'Dicas da fase', conteudo: (val.dicas as string[]).map(d => `• ${d}`).join('\n') });
+    }
+    if (Array.isArray(val.perguntas) && val.perguntas.length > 0) {
+      sections.push({ id: `${key}-perguntas`, tipo: 'instrucao', label: 'Perguntas-chave', conteudo: (val.perguntas as string[]).map(p => `• ${p}`).join('\n') });
+    }
+    if (Array.isArray(val.pontos_chave) && val.pontos_chave.length > 0) {
+      sections.push({ id: `${key}-pontos`, tipo: 'instrucao', label: 'Pontos-chave', conteudo: (val.pontos_chave as string[]).map(p => `• ${p}`).join('\n') });
+    }
+    if (Array.isArray(val.tecnicas) && val.tecnicas.length > 0) {
+      sections.push({ id: `${key}-tecnicas`, tipo: 'instrucao', label: 'Técnicas', conteudo: (val.tecnicas as string[]).map(t => `• ${t}`).join('\n') });
+    }
+    if (Array.isArray(val.objecoes_previstas) && val.objecoes_previstas.length > 0) {
+      (val.objecoes_previstas as { objecao: string; resposta: string }[]).forEach((obj, j) => {
+        sections.push({ id: `${key}-objecao-${j}`, tipo: 'objecao', label: obj.objecao, conteudo: obj.resposta });
+      });
+    }
+    if (sections.length === 0) {
+      sections.push({ id: `${key}-script`, tipo: 'script', label: LEGACY_NAMES[key] || key, conteudo: (val.objetivo as string) || '' });
+    }
+
+    return { numero: i + 1, bloco: key, titulo: LEGACY_NAMES[key] || key, tempo: timeLabel, secoes: sections };
+  });
 }
 
-function getScoreColor(score: number) {
-  if (score < 60) return 'text-red-500';
-  if (score < 80) return 'text-amber-500';
-  return 'text-green-500';
+/* ─────────────────────────────────────────────────
+   Score helpers
+───────────────────────────────────────────────── */
+
+function getScoreColor(s: number) {
+  return s < 60 ? 'text-red-500' : s < 80 ? 'text-amber-500' : 'text-green-400';
 }
-function getScoreBg(score: number) {
-  if (score < 60) return 'bg-red-500/10 border-red-500/30';
-  if (score < 80) return 'bg-amber-500/10 border-amber-500/30';
-  return 'bg-green-500/10 border-green-500/30';
+function getScoreBg(s: number) {
+  return s < 60 ? 'bg-red-500/10 border-red-500/30' : s < 80 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-green-500/10 border-green-500/30';
 }
 
-// ── Section Card ──────────────────────────────────
-function SecaoCard({
-  secao,
-  estado,
-  isFocused,
-  onFocus,
-  onAprovar,
-  onSalvarEdicao,
-  onRegenerar,
-  isObjecao,
+/* ─────────────────────────────────────────────────
+   SecaoInsight — card colorido com accentColor (nota_tecnica)
+───────────────────────────────────────────────── */
+
+function SecaoInsight({ secao, accentColor = '#7c5cfc' }: { secao: SecaoRoteiro; accentColor?: string }) {
+  return (
+    <div
+      className="rounded-xl flex items-start gap-3 px-4 py-3"
+      style={{ background: `${accentColor}12`, border: `1px solid ${accentColor}30` }}
+    >
+      <div
+        className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold"
+        style={{ background: accentColor, color: 'white' }}
+      >
+        ✦
+      </div>
+      <div className="space-y-0.5">
+        <p className="text-sm font-semibold leading-snug" style={{ color: accentColor }}>
+          {secao.label}
+        </p>
+        <p className="text-[13px] text-muted-foreground leading-relaxed">
+          {secao.conteudo}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────
+   SecaoInstrucao — read-only, amber-tinted, compact
+───────────────────────────────────────────────── */
+
+function SecaoInstrucao({ secao, accentColor }: { secao: SecaoRoteiro; accentColor?: string }) {
+  const [collapsed, setCollapsed] = useState(secao.collapsedByDefault ?? false);
+
+  if (secao.collapsedByDefault !== undefined) {
+    const ac = accentColor ?? '#8B8B88';
+    return (
+      <div
+        className="rounded-lg border"
+        style={{ borderColor: `${ac}28`, background: `${ac}08` }}
+      >
+        <button
+          className="w-full flex items-center justify-between px-4 py-2.5 text-left"
+          onClick={() => setCollapsed(c => !c)}
+        >
+          <p
+            className="text-[10px] font-semibold uppercase tracking-wider"
+            style={{ color: ac }}
+          >
+            {secao.label}
+          </p>
+          {collapsed
+            ? <ChevronDown className="h-3 w-3 shrink-0" style={{ color: `${ac}80` }} />
+            : <ChevronUp   className="h-3 w-3 shrink-0" style={{ color: `${ac}80` }} />}
+        </button>
+        <AnimatePresence initial={false}>
+          {!collapsed && (
+            <motion.div
+              key="body"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 pb-3 pt-2" style={{ borderTop: `1px solid ${ac}18` }}>
+                <ScriptRenderer content={secao.conteudo} accentColor={accentColor} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  /* Versão aberta: usa ScriptRenderer para formatar → bullets, section labels, etc. */
+  return (
+    <div className="rounded-lg border border-border/60 bg-card px-4 py-3">
+      <p className="text-[10px] font-semibold uppercase tracking-wider mb-2"
+        style={{ color: accentColor ?? 'hsl(var(--muted-foreground))' }}>
+        {secao.label}
+      </p>
+      <ScriptRenderer content={secao.conteudo} accentColor={accentColor} />
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────
+   SecaoObjecao — accordion, click anywhere to expand
+───────────────────────────────────────────────── */
+
+function SecaoObjecao({ secao }: { secao: SecaoRoteiro }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="rounded-xl border border-border bg-card cursor-pointer select-none transition-colors hover:bg-muted/20"
+      onClick={() => setOpen(o => !o)}
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="h-1.5 w-1.5 rounded-full bg-red-400 shrink-0" />
+          <span className="text-sm text-foreground truncate">{secao.label}</span>
+        </div>
+        {open
+          ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+          : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
+      </div>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 pt-3 border-t border-border">
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                {secao.conteudo}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────
+   SecaoScript — full card with Aprovar/Editar/Regenerar
+───────────────────────────────────────────────── */
+
+function SecaoScript({
+  secao, estado, isFocused, onFocus, onAprovar, onSalvarEdicao, onRegenerar, accentColor,
 }: {
   secao: SecaoRoteiro;
   estado?: SecaoEstado;
   isFocused: boolean;
   onFocus: () => void;
+  accentColor?: string;
   onAprovar: () => void;
   onSalvarEdicao: (texto: string) => void;
   onRegenerar: (feedback?: string) => void;
-  isObjecao?: boolean;
 }) {
-  const [editando, setEditando] = useState(false);
-  const [textoEdit, setTextoEdit] = useState('');
+  const [editando, setEditando]             = useState(false);
+  const [textoEdit, setTextoEdit]           = useState('');
   const [showRaciocinio, setShowRaciocinio] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [feedback, setFeedback] = useState('');
-  const [regenerando, setRegenerando] = useState(false);
-  const [collapsed, setCollapsed] = useState(isObjecao ?? false);
+  const [showFeedback, setShowFeedback]     = useState(false);
+  const [feedback, setFeedback]             = useState('');
+  const [regenerando, setRegenerando]       = useState(false);
 
   const aprovada = estado?.aprovada ?? false;
-  const editada = estado?.editada ?? false;
-  const conteudoExibido = editada && estado?.texto_editado ? estado.texto_editado : secao.conteudo;
+  const editada  = estado?.editada  ?? false;
+  const conteudo = editada && estado?.texto_editado ? estado.texto_editado : secao.conteudo;
 
-  const tipoBadge = {
-    script: { label: 'Script', className: 'bg-purple-500/10 text-purple-500 border-purple-500/30' },
-    instrucao: { label: 'Instrução', className: 'bg-amber-500/10 text-amber-500 border-amber-500/30' },
-    objecao: { label: 'Objeção', className: 'bg-red-500/10 text-red-500 border-red-500/30' },
-  }[secao.tipo];
-
-  const borderColor = aprovada ? 'border-green-500/50' : editada ? 'border-blue-500/50' : 'border-border';
-  const bgColor = aprovada ? 'bg-green-500/5' : editada ? 'bg-blue-500/5' : 'bg-card';
-
-  const handleStartEdit = () => {
-    setTextoEdit(conteudoExibido);
-    setEditando(true);
-  };
-
-  const handleSaveEdit = () => {
-    onSalvarEdicao(textoEdit);
-    setEditando(false);
-  };
+  const borderCls = aprovada
+    ? 'border-green-500/40 bg-green-500/5'
+    : editada
+    ? 'border-blue-500/40 bg-blue-500/5'
+    : isFocused
+    ? 'border-primary/40 bg-card'
+    : 'border-border bg-card';
 
   const handleRegenerar = async () => {
     setRegenerando(true);
@@ -157,273 +424,267 @@ function SecaoCard({
     setFeedback('');
   };
 
-  const cardContent = (
+  return (
     <div
-      className={`rounded-xl border-2 ${borderColor} ${bgColor} transition-all duration-200 ${isFocused ? 'ring-2 ring-primary/30' : ''}`}
+      className={`rounded-xl border-2 ${borderCls} transition-all duration-200 ${isFocused ? 'ring-2 ring-primary/15' : ''}`}
       onClick={onFocus}
       tabIndex={0}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-        <div className="flex items-center gap-2">
-          {isObjecao && (
-            <button onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }} className="text-muted-foreground hover:text-foreground">
-              {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-            </button>
-          )}
-          <span className="font-medium text-sm text-foreground">{secao.label}</span>
-          <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border ${tipoBadge.className}`}>
-            {tipoBadge.label}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          {aprovada && <Badge variant="outline" className="text-green-500 border-green-500/30 text-[10px]">✓ Aprovado</Badge>}
-          {editada && !aprovada && <Badge variant="outline" className="text-blue-500 border-blue-500/30 text-[10px]">✏️ Editado</Badge>}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
+        <span className="font-semibold text-sm text-foreground">{secao.label}</span>
+        <div className="flex items-center gap-1.5 text-[10px]">
+          {aprovada && <span className="flex items-center gap-1 text-green-500 font-medium"><Check className="h-3 w-3" /> Aprovado</span>}
+          {editada && !aprovada && <span className="flex items-center gap-1 text-blue-400 font-medium"><Pencil className="h-3 w-3" /> Editado</span>}
         </div>
       </div>
 
       {/* Body */}
-      {!collapsed && (
-        <div className="p-4 space-y-3">
-          {editando ? (
-            <div className="space-y-2">
-              <Textarea
-                value={textoEdit}
-                onChange={e => setTextoEdit(e.target.value)}
-                rows={8}
-                className="text-sm font-mono"
-              />
+      <div className="p-4 space-y-3">
+        {editando ? (
+          <div className="space-y-2">
+            <Textarea
+              value={textoEdit}
+              onChange={e => setTextoEdit(e.target.value)}
+              rows={8}
+              className="text-sm font-mono resize-none"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">{textoEdit.length} caracteres</span>
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveEdit}>Salvar edição</Button>
+                <Button size="sm" onClick={() => { onSalvarEdicao(textoEdit); setEditando(false); }}>Salvar</Button>
                 <Button size="sm" variant="ghost" onClick={() => setEditando(false)}>Cancelar</Button>
               </div>
             </div>
-          ) : (
-            <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-              {conteudoExibido}
-            </div>
-          )}
+          </div>
+        ) : (
+          <ScriptRenderer content={conteudo} accentColor={accentColor} />
+        )}
 
-          {/* Raciocínio */}
-          {secao.raciocinio && !editando && (
-            <div>
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowRaciocinio(!showRaciocinio); }}
-                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-              >
-                <Eye className="h-3 w-3" />
-                {showRaciocinio ? 'Ocultar raciocínio ↑' : 'Ver raciocínio ↓'}
-              </button>
-              <AnimatePresence>
-                {showRaciocinio && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-2 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground whitespace-pre-wrap">
-                      {secao.raciocinio}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
+        {/* Raciocínio */}
+        {secao.raciocinio && !editando && (
+          <div>
+            <button
+              onClick={e => { e.stopPropagation(); setShowRaciocinio(!showRaciocinio); }}
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+            >
+              <Eye className="h-3 w-3" />
+              {showRaciocinio ? 'Ocultar raciocínio ↑' : 'Ver raciocínio ↓'}
+            </button>
+            <AnimatePresence>
+              {showRaciocinio && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                  <div className="mt-2 p-3 rounded-lg bg-muted/40 text-xs text-muted-foreground whitespace-pre-wrap">{secao.raciocinio}</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
 
-          {/* Feedback for regeneration */}
-          {showFeedback && (
-            <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-border">
-              <Input
-                placeholder="Feedback opcional para regeneração..."
-                value={feedback}
-                onChange={e => setFeedback(e.target.value)}
-                className="text-sm"
-              />
-              <div className="flex gap-2">
-                <Button size="sm" onClick={handleRegenerar} disabled={regenerando}>
-                  {regenerando ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Regenerando...</> : 'Regenerar'}
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => { setShowFeedback(false); setFeedback(''); }}>Cancelar</Button>
-              </div>
+        {/* Feedback input for regeneration */}
+        {showFeedback && (
+          <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-amber-500/20">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-500/90 leading-snug">
+                O script atual será substituído — não há como desfazer.
+              </p>
             </div>
-          )}
+            <p className="text-xs text-muted-foreground">O que precisa mudar? <span className="text-muted-foreground/60">(opcional)</span></p>
+            <Input
+              placeholder="Ex: mais direto, usar o vocabulário dele..."
+              value={feedback}
+              onChange={e => setFeedback(e.target.value)}
+              className="text-sm"
+              onKeyDown={e => e.key === 'Enter' && handleRegenerar()}
+            />
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleRegenerar} disabled={regenerando} className="bg-amber-600 hover:bg-amber-500 text-white">
+                {regenerando ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Regenerando...</> : 'Confirmar →'}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => { setShowFeedback(false); setFeedback(''); }}>Cancelar</Button>
+            </div>
+          </div>
+        )}
 
-          {/* Action buttons */}
-          {!editando && !showFeedback && (
-            <div className="flex items-center gap-2 pt-1">
-              <Button size="sm" variant={aprovada ? 'outline' : 'default'} onClick={(e) => { e.stopPropagation(); onAprovar(); }} className="text-xs h-7">
-                <Check className="mr-1 h-3 w-3" /> {aprovada ? 'Aprovado' : 'Aprovar'}
-              </Button>
-              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleStartEdit(); }} className="text-xs h-7">
-                <Pencil className="mr-1 h-3 w-3" /> Editar
-              </Button>
-              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setShowFeedback(true); }} className="text-xs h-7">
-                <RotateCcw className="mr-1 h-3 w-3" /> Regenerar
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+        {/* Actions — only on Script, never on instrucao/objecao */}
+        {!editando && !showFeedback && (
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              size="sm"
+              variant={aprovada ? 'outline' : 'default'}
+              onClick={e => { e.stopPropagation(); onAprovar(); }}
+              className={`text-xs h-7 ${aprovada ? 'text-green-500 border-green-500/40 hover:bg-green-500/10' : ''}`}
+            >
+              <Check className="mr-1 h-3 w-3" />{aprovada ? 'Aprovado' : 'Aprovar'}
+            </Button>
+            <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setTextoEdit(conteudo); setEditando(true); }} className="text-xs h-7">
+              <Pencil className="mr-1 h-3 w-3" /> Editar
+            </Button>
+            <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setShowFeedback(true); }} className="text-xs h-7">
+              <RotateCcw className="mr-1 h-3 w-3" /> Regenerar
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
-
-  return cardContent;
 }
 
-// ── Main Page ─────────────────────────────────────
+/* ─────────────────────────────────────────────────
+   SecaoCard — router to correct sub-component
+───────────────────────────────────────────────── */
+
+function SecaoCard(props: {
+  secao: SecaoRoteiro;
+  estado?: SecaoEstado;
+  isFocused: boolean;
+  onFocus: () => void;
+  onAprovar: () => void;
+  onSalvarEdicao: (texto: string) => void;
+  onRegenerar: (feedback?: string) => void;
+  accentColor?: string;
+}) {
+  if (props.secao.tipo === 'insight')   return <SecaoInsight   secao={props.secao} accentColor={props.accentColor} />;
+  if (props.secao.tipo === 'instrucao') return <SecaoInstrucao secao={props.secao} accentColor={props.accentColor} />;
+  if (props.secao.tipo === 'objecao')   return <SecaoObjecao   secao={props.secao} />;
+  return <SecaoScript {...props} />;
+}
+
+/* ─────────────────────────────────────────────────
+   Main Page
+───────────────────────────────────────────────── */
+
 export default function RoteiroPage() {
   const { sessao_id } = useParams<{ sessao_id: string }>();
-  const navigate = useNavigate();
+  const navigate      = useNavigate();
 
-  const [sessao, setSessao] = useState<SessaoVenda | null>(null);
-  const [blocos, setBlocos] = useState<BlocoRoteiro[]>([]);
+  const [sessao, setSessao]             = useState<SessaoVenda | null>(null);
+  const [blocos, setBlocos]             = useState<BlocoRoteiro[]>([]);
   const [secoesEstado, setSecoesEstado] = useState<Record<string, SecaoEstado>>({});
-  const [faseAtiva, setFaseAtiva] = useState(0);
+  const [faseAtiva, setFaseAtiva]       = useState(0);
   const [focusedSecao, setFocusedSecao] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState<string | null>(null);
+  const [pecasOpen, setPecasOpen]       = useState(false);
+  const mainRef                         = useRef<HTMLElement>(null);
 
-  // Load session data
+  /* Scroll content area to top whenever the active phase changes */
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [faseAtiva]);
+
+  /* Load session */
   useEffect(() => {
     if (!sessao_id) return;
     setLoading(true);
     svpApi.buscarSessao(sessao_id)
       .then(res => {
         const s = res.sessoes?.[0];
-        if (!s) {
-          setError('Sessão não encontrada.');
-          setLoading(false);
-          return;
-        }
-        if (!s.roteiro_json) {
-          navigate(`/loading/${sessao_id}`, { replace: true });
-          return;
-        }
+        if (!s) { setError('Sessão não encontrada.'); setLoading(false); return; }
+        if (!s.roteiro_json) { navigate(`/loading/${sessao_id}`, { replace: true }); return; }
         setSessao(s);
-        const normalized = normalizeBlocos(s.roteiro_json);
-        setBlocos(normalized);
+        setBlocos(normalizeBlocos(s.roteiro_json));
         setSecoesEstado((s as any).secoes_estado ?? {});
         setLoading(false);
       })
-      .catch(err => {
-        setError(err.message || 'Erro ao carregar sessão.');
-        setLoading(false);
-      });
+      .catch(err => { setError(err.message || 'Erro ao carregar sessão.'); setLoading(false); });
   }, [sessao_id]);
 
-  // Keyboard shortcuts
+  /* Keyboard shortcuts */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        setFaseAtiva(f => Math.min(f + 1, blocos.length - 1));
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setFaseAtiva(f => Math.max(f - 1, 0));
-      } else if (e.key === 'a' || e.key === 'A') {
-        if (focusedSecao) handleAprovar(focusedSecao);
-      } else if (e.key === 'e' || e.key === 'E') {
-        // E shortcut handled inside SecaoCard
-      }
+      if (e.key === 'ArrowRight') { e.preventDefault(); setFaseAtiva(f => Math.min(f + 1, blocos.length - 1)); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); setFaseAtiva(f => Math.max(f - 1, 0)); }
+      else if ((e.key === 'a' || e.key === 'A') && focusedSecao) handleAprovar(focusedSecao);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [blocos.length, focusedSecao]);
 
-  const roteiro = sessao?.roteiro_json;
-  const score = roteiro?.score ?? 0;
-  const scoreBreakdown = roteiro?.score_breakdown;
-  const nomeCliente = (sessao?.dados_formulario as any)?.nome_cliente || 'Lead';
-  const nicho = sessao?.nicho || '';
-  const dataSessao = sessao?.criado_em ? new Date(sessao.criado_em).toLocaleDateString('pt-BR') : '';
+  /* Derived values */
+  const roteiro      = sessao?.roteiro_json;
+  const score        = roteiro?.score ?? 0;
+  const scoreBreak   = roteiro?.score_breakdown;
+  const dadosForm    = sessao?.dados_formulario as Record<string, string> | undefined;
+  const nomeCliente  = dadosForm?.nome_cliente  || 'Lead';
+  const nicho        = sessao?.nicho || '';
+  const estadoEmoc   = dadosForm?.estado_emocional || null;
+  const perfilDec    = dadosForm?.perfil_decisor    || null;
+  const dataSessao   = sessao?.criado_em ? new Date(sessao.criado_em).toLocaleDateString('pt-BR') : '';
 
-  // Phase status
-  const getFaseStatus = useCallback((blocoIdx: number): 'pendente' | 'aprovado' | 'editando' => {
-    const bloco = blocos[blocoIdx];
-    if (!bloco) return 'pendente';
-    const allApproved = bloco.secoes.every(s => secoesEstado[s.id]?.aprovada);
-    const anyEdited = bloco.secoes.some(s => secoesEstado[s.id]?.editada && !secoesEstado[s.id]?.aprovada);
-    if (allApproved) return 'aprovado';
-    if (anyEdited) return 'editando';
+  const getFaseStatus = useCallback((idx: number): 'pendente' | 'aprovado' | 'editando' => {
+    const b = blocos[idx];
+    if (!b) return 'pendente';
+    // Only script sections count toward approval
+    const scripts = b.secoes.filter(s => s.tipo === 'script');
+    if (scripts.length === 0) return 'pendente';
+    if (scripts.every(s => secoesEstado[s.id]?.aprovada)) return 'aprovado';
+    if (scripts.some(s => secoesEstado[s.id]?.editada && !secoesEstado[s.id]?.aprovada)) return 'editando';
     return 'pendente';
   }, [blocos, secoesEstado]);
 
+  const hasAnyPeca = sessao && (sessao.proposta_json || sessao.email_json || sessao.whatsapp_json || sessao.objecoes_json);
 
-  const approvedPhases = useMemo(() => {
-    return blocos.filter((_, i) => getFaseStatus(i) === 'aprovado').length;
-  }, [blocos, getFaseStatus]);
-
-  // Actions
+  /* Actions */
   const handleAprovar = useCallback(async (secaoId: string) => {
-    const current = secoesEstado[secaoId];
-    const newAprovada = !current?.aprovada;
-    setSecoesEstado(prev => ({
-      ...prev,
-      [secaoId]: { ...prev[secaoId], aprovada: newAprovada, editada: prev[secaoId]?.editada ?? false, atualizado_em: new Date().toISOString() },
-    }));
+    const cur = secoesEstado[secaoId];
+    const next = !cur?.aprovada;
+    setSecoesEstado(prev => ({ ...prev, [secaoId]: { ...prev[secaoId], aprovada: next, editada: prev[secaoId]?.editada ?? false, atualizado_em: new Date().toISOString() } }));
     try {
-      await callFn('roteiro-aprovar-secao', { sessao_id, secao_id: secaoId, aprovada: newAprovada });
+      await callFn('roteiro-aprovar-secao', { sessao_id, secao_id: secaoId, aprovada: next });
     } catch {
-      // Revert on error
-      setSecoesEstado(prev => ({
-        ...prev,
-        [secaoId]: { ...prev[secaoId], aprovada: !newAprovada },
-      }));
+      setSecoesEstado(prev => ({ ...prev, [secaoId]: { ...prev[secaoId], aprovada: !next } }));
       toast.error('Erro ao aprovar seção');
     }
   }, [secoesEstado, sessao_id]);
 
   const handleSalvarEdicao = useCallback(async (secaoId: string, texto: string) => {
-    setSecoesEstado(prev => ({
-      ...prev,
-      [secaoId]: { ...prev[secaoId], editada: true, texto_editado: texto, aprovada: prev[secaoId]?.aprovada ?? false, atualizado_em: new Date().toISOString() },
-    }));
+    setSecoesEstado(prev => ({ ...prev, [secaoId]: { ...prev[secaoId], editada: true, texto_editado: texto, aprovada: prev[secaoId]?.aprovada ?? false, atualizado_em: new Date().toISOString() } }));
     try {
       await callFn('roteiro-editar-secao', { sessao_id, secao_id: secaoId, texto_editado: texto });
       toast.success('Edição salva');
-    } catch {
-      toast.error('Erro ao salvar edição');
-    }
+    } catch { toast.error('Erro ao salvar edição'); }
   }, [sessao_id]);
 
   const handleRegenerar = useCallback(async (secaoId: string, feedback?: string) => {
     try {
       const res = await callFn<{ conteudo: string }>('roteiro-regenerar-secao', { sessao_id, secao_id: secaoId, feedback });
-      // Update the section content in blocos
-      setBlocos(prev => prev.map(b => ({
-        ...b,
-        secoes: b.secoes.map(s => s.id === secaoId ? { ...s, conteudo: res.conteudo, conteudo_anterior: s.conteudo } : s),
-      })));
-      setSecoesEstado(prev => ({
-        ...prev,
-        [secaoId]: { aprovada: false, editada: false, atualizado_em: new Date().toISOString() },
-      }));
+      setBlocos(prev => prev.map(b => ({ ...b, secoes: b.secoes.map(s => s.id === secaoId ? { ...s, conteudo: res.conteudo } : s) })));
+      setSecoesEstado(prev => ({ ...prev, [secaoId]: { aprovada: false, editada: false, atualizado_em: new Date().toISOString() } }));
       toast.success('Seção regenerada');
-    } catch {
-      toast.error('Erro ao regenerar seção');
-    }
+    } catch { toast.error('Erro ao regenerar seção'); }
   }, [sessao_id]);
 
   const handleCopiarRoteiro = useCallback(() => {
     const text = blocos.map(b => {
-      const header = `━━━ FASE ${b.numero}: ${b.titulo} (${b.tempo}) ━━━`;
-      const secoes = b.secoes.map(s => {
-        const estado = secoesEstado[s.id];
-        const conteudo = estado?.editada && estado?.texto_editado ? estado.texto_editado : s.conteudo;
-        return `[${s.tipo.toUpperCase()}] ${s.label}\n${conteudo}`;
+      const lines = b.secoes.map(s => {
+        const est = secoesEstado[s.id];
+        const c = est?.editada && est.texto_editado ? est.texto_editado : s.conteudo;
+        return `[${s.tipo.toUpperCase()}] ${s.label}\n${c}`;
       }).join('\n\n');
-      return `${header}\n\n${secoes}`;
+      return `━━━ FASE ${b.numero}: ${b.titulo} (${b.tempo}) ━━━\n\n${lines}`;
     }).join('\n\n\n');
     navigator.clipboard.writeText(text);
     toast.success('Roteiro copiado!');
   }, [blocos, secoesEstado]);
 
+  /** Copy only the Script section(s) of the active phase */
+  const handleCopiarFase = useCallback(() => {
+    const b = blocos[faseAtiva];
+    if (!b) return;
+    const scripts = b.secoes.filter(s => s.tipo === 'script');
+    if (scripts.length === 0) { toast.error('Nenhum script nesta fase'); return; }
+    const text = scripts.map(s => {
+      const est = secoesEstado[s.id];
+      return est?.editada && est.texto_editado ? est.texto_editado : s.conteudo;
+    }).join('\n\n');
+    navigator.clipboard.writeText(text);
+    toast.success(`Script "${b.titulo}" copiado!`);
+  }, [blocos, faseAtiva, secoesEstado]);
 
-  // ── Render ──────────────────────────────────────
+  /* ── Loading / Error ── */
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
@@ -434,161 +695,276 @@ export default function RoteiroPage() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3 text-center px-4">
           <AlertCircle className="h-8 w-8 text-destructive" />
           <p className="text-sm text-destructive">{error}</p>
-          <Button variant="outline" onClick={() => navigate(-1)}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
-          </Button>
+          <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
         </div>
       </div>
     );
   }
 
-  const blocoAtivo = blocos[faseAtiva];
+  const blocoAtivo  = blocos[faseAtiva];
+  const faseColor   = blocoAtivo ? getFaseColor(blocoAtivo.bloco, faseAtiva) : '#7c5cfc';
+  const isLastPhase = faseAtiva === blocos.length - 1;
 
+  /* ── Render ── */
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden" ref={containerRef}>
-      {/* ── HEADER ── */}
-      <header className="h-16 border-b border-border bg-card flex items-center px-4 gap-4 shrink-0 z-20">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="shrink-0">
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+
+      {/* ═══ HEADER ═══ */}
+      <header className="h-14 border-b border-border bg-card flex items-center px-4 gap-3 shrink-0 z-20">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="shrink-0 gap-1 text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Voltar
         </Button>
-
         <div className="h-5 w-px bg-border" />
-
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <span className="font-semibold text-sm text-foreground truncate">{nomeCliente}</span>
-          {nicho && <span className="text-xs text-muted-foreground hidden sm:inline">• {nicho}</span>}
-          {dataSessao && <span className="text-xs text-muted-foreground hidden sm:inline">• {dataSessao}</span>}
+        {/* Lead identity — primary context */}
+        <div className="flex flex-col justify-center min-w-0 flex-1">
+          <span className="font-semibold text-[14px] text-foreground leading-tight truncate">{nomeCliente}</span>
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            {nicho && <span className="hidden sm:inline truncate">{nicho}</span>}
+            {nicho && dataSessao && <span className="hidden md:inline">·</span>}
+            {dataSessao && <span className="hidden md:inline">{dataSessao}</span>}
+          </div>
         </div>
-
-        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm font-bold ${getScoreBg(score)} ${getScoreColor(score)}`}>
+        {/* Score badge */}
+        <div className={`inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-bold shrink-0 ${getScoreBg(score)} ${getScoreColor(score)}`}>
           {score}/100
         </div>
-
-        <Button variant="outline" size="sm" onClick={handleCopiarRoteiro} className="shrink-0">
-          <Copy className="h-3.5 w-3.5 mr-1.5" /> <span className="hidden sm:inline">Copiar roteiro</span>
-        </Button>
+        {/* Action buttons — grouped, consistent */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setPecasOpen(true)} className="gap-1.5 relative">
+            <FileText className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Materiais</span>
+            {hasAnyPeca && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500" />}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleCopiarRoteiro} className="gap-1.5">
+            <Copy className="h-3.5 w-3.5" />
+            <span className="hidden md:inline">Copiar roteiro</span>
+          </Button>
+        </div>
       </header>
 
-      {/* ── BODY ── */}
+      {/* ═══ BODY ═══ */}
       <div className="flex flex-1 overflow-hidden">
+
         {/* ── SIDEBAR ── */}
-        <aside className="w-[220px] border-r border-border bg-card overflow-y-auto shrink-0 hidden md:flex flex-col">
-          <div className="p-3 space-y-1 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 mb-2">Fases</p>
+        <aside className="w-[220px] border-r border-border bg-card shrink-0 hidden md:flex flex-col overflow-y-auto">
+
+          {/* Client context */}
+          <div className="p-4 border-b border-border">
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">Roteiro SVP</p>
+            <p className="text-sm font-semibold text-foreground leading-tight">{nomeCliente}</p>
+            {nicho && <p className="text-xs text-muted-foreground mt-0.5 truncate">{nicho}</p>}
+            {sessao?.preco && (
+              <p className="text-xs text-muted-foreground mt-0.5">R${Number(sessao.preco).toLocaleString('pt-BR')}/mês</p>
+            )}
+            {/* Emotional / decision profile — critical context during meeting */}
+            {(estadoEmoc || perfilDec) && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {estadoEmoc && (
+                  <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 font-medium">
+                    {estadoEmoc}
+                  </span>
+                )}
+                {perfilDec && (
+                  <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
+                    {perfilDec}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Phase list */}
+          <div className="p-2 space-y-0.5 flex-1">
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground px-2 py-2">Fases</p>
             {blocos.map((bloco, i) => {
-              const status = getFaseStatus(i);
+              const status   = getFaseStatus(i);
               const isActive = i === faseAtiva;
+              const color    = getFaseColor(bloco.bloco, i);
               return (
                 <button
                   key={bloco.bloco}
                   onClick={() => setFaseAtiva(i)}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all ${
-                    isActive
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  }`}
+                  className="w-full text-left py-2.5 rounded-lg transition-all hover:bg-muted/30"
+                  style={isActive
+                    ? { paddingLeft: '6px', paddingRight: '8px', borderLeft: `3px solid ${color}`, background: 'hsl(var(--background))' }
+                    : { paddingLeft: '9px', paddingRight: '8px' }
+                  }
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono">{bloco.numero}</span>
-                      <span className="truncate">{bloco.titulo}</span>
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="h-6 w-6 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold transition-all"
+                      style={{
+                        background: `${color}20`,
+                        color,
+                        border: `1.5px solid ${color}${status === 'aprovado' ? 'cc' : '50'}`,
+                      }}
+                    >
+                      {status === 'aprovado' ? <Check className="h-3 w-3" /> : bloco.numero}
                     </div>
-                    <span className="text-xs">
-                      {status === 'aprovado' ? '✓' : status === 'editando' ? '✏️' : '○'}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-medium leading-tight line-clamp-2 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {bloco.titulo}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{bloco.tempo}</p>
+                    </div>
                   </div>
-                  <span className="text-[10px] text-muted-foreground ml-5">{bloco.tempo}</span>
                 </button>
               );
             })}
           </div>
 
           {/* Insights */}
-          <div className="p-3 border-t border-border space-y-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 mb-1">Insights</p>
-            {roteiro?.maior_medo && (
-              <div className="px-2 py-1.5 rounded-md bg-red-500/5 text-xs">
-                <span className="text-muted-foreground">😰 Maior medo</span>
-                <p className="text-foreground mt-0.5">{roteiro.maior_medo}</p>
-              </div>
-            )}
-            {roteiro?.decisao_style && (
-              <div className="px-2 py-1.5 rounded-md bg-blue-500/5 text-xs">
-                <span className="text-muted-foreground">🧠 Decisão</span>
-                <p className="text-foreground mt-0.5">{roteiro.decisao_style}</p>
-              </div>
-            )}
-            {roteiro?.tom_ideal && (
-              <div className="px-2 py-1.5 rounded-md bg-green-500/5 text-xs">
-                <span className="text-muted-foreground">🎯 Tom ideal</span>
-                <p className="text-foreground mt-0.5">{roteiro.tom_ideal}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Score breakdown */}
-          {scoreBreakdown && (
+          {(roteiro?.maior_medo || roteiro?.decisao_style || roteiro?.tom_ideal) && (
             <div className="p-3 border-t border-border space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2 mb-1">Score</p>
-              {Object.entries(scoreBreakdown).map(([key, val]) => (
-                <div key={key} className="flex items-center justify-between px-2 text-xs">
-                  <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}</span>
-                  <span className="font-mono text-foreground">{val as number}</span>
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground px-1 mb-2">Insights</p>
+              {roteiro.maior_medo && (
+                <div className="px-2.5 py-2 rounded-lg bg-red-500/5 border border-red-500/15 text-xs">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-red-400/70 mb-1">Maior medo</p>
+                  <p className="text-foreground/90 leading-snug text-[12px]">{roteiro.maior_medo}</p>
                 </div>
-              ))}
+              )}
+              {roteiro.decisao_style && (
+                <div className="px-2.5 py-2 rounded-lg bg-blue-500/5 border border-blue-500/15 text-xs">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-blue-400/70 mb-1">Estilo de decisão</p>
+                  <p className="text-foreground/90 leading-snug text-[12px]">{roteiro.decisao_style}</p>
+                </div>
+              )}
+              {roteiro.tom_ideal && (
+                <div className="px-2.5 py-2 rounded-lg bg-green-500/5 border border-green-500/15 text-xs">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-green-400/70 mb-1">Tom ideal</p>
+                  <p className="text-foreground/90 leading-snug text-[12px]">{roteiro.tom_ideal}</p>
+                </div>
+              )}
             </div>
           )}
+
+          {/* Score breakdown */}
+          {scoreBreak && (
+            <div className="p-3 border-t border-border space-y-2">
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground px-1 mb-2">Score</p>
+              {Object.entries(scoreBreak).map(([key, val]) => {
+                const max = SCORE_AXIS_MAX[key] ?? 25;
+                const pct = Math.round(((val as number) / max) * 100);
+                return (
+                  <div key={key} className="px-1 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">{SCORE_LABELS[key] ?? key.replace(/_/g, ' ')}</span>
+                      <span className={`font-mono font-semibold tabular-nums text-[11px] ${getScoreColor(pct)}`}>
+                        {val as number}/{max}
+                      </span>
+                    </div>
+                    <div className="h-1 rounded-full bg-border overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(pct, 100)}%`,
+                          background: pct >= 80 ? '#4caf50' : pct >= 60 ? '#f5a623' : '#ef4444',
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Phase progress — navigation-based, not approval-based */}
+          <div className="p-3 border-t border-border">
+            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+              <span>Fase atual</span>
+              <span className="font-mono text-foreground font-semibold">{faseAtiva + 1}/{blocos.length}</span>
+            </div>
+            <div className="flex gap-1">
+              {blocos.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setFaseAtiva(i)}
+                  className="flex-1 h-1.5 rounded-full transition-all"
+                  style={{
+                    background: i === faseAtiva
+                      ? getFaseColor(blocos[i].bloco, i)
+                      : getFaseStatus(i) === 'aprovado'
+                      ? `${getFaseColor(blocos[i].bloco, i)}60`
+                      : 'hsl(var(--border))',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         </aside>
 
-        {/* ── CONTENT ── */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        {/* ── MAIN CONTENT ── */}
+        <main ref={mainRef} className="flex-1 overflow-y-auto">
           {blocoAtivo && (
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                  {blocoAtivo.numero}
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">{blocoAtivo.titulo}</h2>
-                  <p className="text-xs text-muted-foreground">{blocoAtivo.tempo}</p>
-                </div>
-              </div>
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
 
-              {/* Mobile phase selector */}
+              {/* Mobile phase chips */}
               <div className="flex gap-1.5 overflow-x-auto pb-3 md:hidden mb-4">
                 {blocos.map((b, i) => {
-                  const status = getFaseStatus(i);
+                  const color = getFaseColor(b.bloco, i);
                   return (
                     <button
                       key={b.bloco}
                       onClick={() => setFaseAtiva(i)}
-                      className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                        i === faseAtiva
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'bg-card text-muted-foreground border-border hover:border-muted-foreground/40'
-                      }`}
+                      className="shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
+                      style={i === faseAtiva
+                        ? { background: `${color}20`, color, borderColor: `${color}60` }
+                        : { background: 'transparent', color: 'hsl(var(--muted-foreground))', borderColor: 'hsl(var(--border))' }}
                     >
-                      {status === 'aprovado' ? '✓' : b.numero} {b.titulo}
+                      {getFaseStatus(i) === 'aprovado' ? '✓ ' : ''}{b.titulo}
                     </button>
                   );
                 })}
               </div>
 
+              {/* Phase header */}
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="flex items-start gap-4">
+                  <div
+                    className="h-11 w-11 rounded-full shrink-0 flex items-center justify-center text-base font-bold"
+                    style={{ background: `${faseColor}20`, color: faseColor, border: `2px solid ${faseColor}50` }}
+                  >
+                    {blocoAtivo.numero}
+                  </div>
+                  <div className="pt-0.5">
+                    <div className="flex items-center flex-wrap gap-2">
+                      <h2 className="text-xl font-bold text-foreground leading-none">{blocoAtivo.titulo}</h2>
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full font-medium"
+                        style={{ background: `${faseColor}15`, color: faseColor }}
+                      >
+                        {blocoAtivo.tempo}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Copy this phase's script */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopiarFase}
+                  className="shrink-0 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copiar fase
+                </Button>
+              </div>
+
+              {/* Section cards */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={faseAtiva}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.2 }}
-                  className="space-y-4"
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.18 }}
+                  className="space-y-3"
                 >
                   {blocoAtivo.secoes.map(secao => (
                     <SecaoCard
@@ -598,9 +974,9 @@ export default function RoteiroPage() {
                       isFocused={focusedSecao === secao.id}
                       onFocus={() => setFocusedSecao(secao.id)}
                       onAprovar={() => handleAprovar(secao.id)}
-                      onSalvarEdicao={(texto) => handleSalvarEdicao(secao.id, texto)}
-                      onRegenerar={(fb) => handleRegenerar(secao.id, fb)}
-                      isObjecao={secao.tipo === 'objecao'}
+                      onSalvarEdicao={texto => handleSalvarEdicao(secao.id, texto)}
+                      onRegenerar={fb => handleRegenerar(secao.id, fb)}
+                      accentColor={faseColor}
                     />
                   ))}
                 </motion.div>
@@ -610,41 +986,59 @@ export default function RoteiroPage() {
         </main>
       </div>
 
-      {/* ── PECAS PANEL ── */}
-      {sessao && (
-        <PecasPanel
-          sessao={sessao}
-          onSessaoUpdate={(updates) => setSessao(prev => prev ? { ...prev, ...updates } : prev)}
-        />
-      )}
-
-      {/* ── FOOTER ── */}
+      {/* ═══ FOOTER ═══ */}
       <footer className="h-14 border-t border-border bg-card flex items-center px-4 gap-4 shrink-0 z-20">
-        <div className="flex items-center gap-3 flex-1">
-          <Progress value={(approvedPhases / Math.max(blocos.length, 1)) * 100} className="h-2 flex-1 max-w-[200px]" />
-          <span className="text-xs text-muted-foreground whitespace-nowrap">{approvedPhases}/{blocos.length} fases</span>
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <span className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{faseAtiva + 1}</span>
+            {' '}de{' '}
+            <span className="font-semibold text-foreground">{blocos.length}</span>
+          </span>
+          {isLastPhase && (
+            <span className="text-xs text-green-500 font-medium flex items-center gap-1">
+              <Check className="h-3 w-3" /> Roteiro completo
+            </span>
+          )}
         </div>
-
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={faseAtiva === 0}
-            onClick={() => setFaseAtiva(f => f - 1)}
-          >
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Anterior
+          <Button variant="outline" size="sm" disabled={faseAtiva === 0} onClick={() => setFaseAtiva(f => f - 1)}>
+            <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Fase anterior
           </Button>
-
-          {faseAtiva < blocos.length - 1 && (
-            <Button
-              size="sm"
-              onClick={() => setFaseAtiva(f => f + 1)}
-            >
-              Próxima <ArrowRight className="h-3.5 w-3.5 ml-1" />
+          {!isLastPhase ? (
+            <Button size="sm" onClick={() => setFaseAtiva(f => f + 1)}>
+              Próxima fase <ArrowRight className="h-3.5 w-3.5 ml-1" />
+            </Button>
+          ) : (
+            <Button size="sm" onClick={() => setPecasOpen(true)} className="gap-1.5" style={{ background: faseColor }}>
+              <FileText className="h-3.5 w-3.5" /> Gerar materiais
             </Button>
           )}
         </div>
       </footer>
+
+      {/* ═══ MATERIAIS DRAWER ═══ */}
+      {pecasOpen && sessao && (
+        <div className="fixed inset-0 z-50 flex">
+          <div className="flex-1 bg-black/50" onClick={() => setPecasOpen(false)} />
+          <div className="w-full max-w-2xl bg-background border-l border-border flex flex-col shadow-2xl">
+            <div className="h-14 px-4 border-b border-border flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Materiais de venda</h3>
+                <p className="text-xs text-muted-foreground">Proposta · E-mail · WhatsApp · Objeções</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setPecasOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <PecasPanel
+                sessao={sessao}
+                onSessaoUpdate={updates => setSessao(prev => prev ? { ...prev, ...updates } : prev)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
