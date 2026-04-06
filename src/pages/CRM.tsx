@@ -139,6 +139,7 @@ export default function CRM() {
     nomeCliente: string;
     produto?: string;
   } | null>(null);
+  const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null);
 
   const carregarClientes = async () => {
     setCarregando(true);
