@@ -142,13 +142,13 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
       <Dialog open={!!cliente} onOpenChange={v => { if (!v) onClose(); }}>
         <DialogContent className="p-0 gap-0 overflow-hidden" style={{ width: '820px', maxWidth: '95vw', maxHeight: '90vh', borderRadius: '16px', background: '#1a1a24', border: '1px solid #3a3a52' }}>
           {/* HEADER */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-            <div
-              className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
-              style={{ background: avatarColor.bg, color: avatarColor.color }}
-            >
-              <span className="text-sm font-bold">{initials}</span>
-            </div>
+          <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid #2e2e42' }}>
+             <div
+               className="rounded-full flex items-center justify-center shrink-0"
+               style={{ height: '44px', width: '44px', background: avatarColor.bg, color: avatarColor.color }}
+             >
+               <span style={{ fontSize: '18px', fontWeight: 700 }}>{initials}</span>
+             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-base font-semibold text-foreground truncate">{cliente.nome}</h2>
               {subtitleText && (
