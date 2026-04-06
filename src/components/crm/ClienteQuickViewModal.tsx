@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/popover';
 import {
   MessageSquare, Mail, MapPin, Clock, CalendarDays, ClipboardList,
-  Pencil, ChevronRight, Plus, Loader2, Phone, FileText, Shield, Send,
+  Pencil, ChevronRight, Plus, Loader2, Phone, FileText, Shield, Send, Maximize2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -162,9 +162,16 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                  background: avatarColor.bg, color: avatarColor.color,
                  border: `1px solid ${avatarColor.color}44`,
                }}
-             >
-               {temp.label.toUpperCase()}
-             </span>
+              >
+                {temp.label.toUpperCase()}
+              </span>
+              <button
+                onClick={() => { onClose(); navigate(`/crm/${cliente.id}`); }}
+                title="Abrir tela cheia"
+                style={{ padding: '6px', borderRadius: '6px', background: 'transparent', border: '1px solid #3a3a52', color: '#9090b0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+              >
+                <Maximize2 style={{ width: '14px', height: '14px' }} />
+              </button>
           </div>
 
           {/* BODY */}
