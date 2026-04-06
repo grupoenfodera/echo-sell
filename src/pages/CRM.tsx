@@ -340,10 +340,16 @@ export default function CRM() {
                             <div
                               ref={provided.innerRef}
                               {...provided.droppableProps}
-                              className={`flex-1 rounded-b-lg border border-t-0 border-border p-2 space-y-2 overflow-y-auto transition-colors ${
-                                snapshot.isDraggingOver ? 'bg-primary/5 border-primary/30' : 'bg-muted/20'
+                              className={`flex-1 rounded-b-lg p-2 space-y-2 overflow-y-auto transition-colors ${
+                                snapshot.isDraggingOver ? 'bg-primary/5' : 'bg-muted/20'
                               }`}
-                              style={{ maxHeight: 'calc(100vh - 310px)' }}
+                              style={{
+                                maxHeight: 'calc(100vh - 310px)',
+                                borderTop: `3px solid ${col.borderColor}`,
+                                border: `1px solid ${snapshot.isDraggingOver ? 'hsl(var(--primary) / 0.3)' : '#2e2e42'}`,
+                                borderTopWidth: '3px',
+                                borderTopColor: col.borderColor,
+                              }}
                             >
                               {items.length === 0 ? (
                                 <div className="flex items-center justify-center h-24 text-center">
