@@ -53,7 +53,7 @@ export default function PecasPanel({ sessao, onSessaoUpdate }: Props) {
         updates.proposta_gerada_em = new Date().toISOString();
       } else if (tipo === 'email' && res.email) {
         updates.email_json = res.email as unknown as EmailJSON;
-        updates.email_gerada_em = new Date().toISOString();
+        updates.email_gerado_em = new Date().toISOString();
       } else if (tipo === 'whatsapp' && res.whatsapp) {
         updates.whatsapp_json = res.whatsapp as unknown as WhatsAppJSON;
         updates.whatsapp_gerado_em = new Date().toISOString();
