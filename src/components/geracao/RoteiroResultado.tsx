@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { RoteiroJSON, RoteiroEtapa, BlocoRoteiro, SecaoRoteiro } from '@/types/crm';
 import { svpApi } from '@/lib/api-svp';
+import ScriptRenderer from '@/components/geracao/ScriptRenderer';
 
 interface RoteiroResultadoProps {
   roteiro: RoteiroJSON;
@@ -55,17 +56,31 @@ const BLOCO_ICONS: Record<string, typeof Handshake> = {
 };
 
 const BLOCO_COLORS: Record<string, string> = {
-  abertura: 'border-l-blue-400',
-  diagnostico: 'border-l-purple-400',
-  descoberta: 'border-l-purple-400',
-  solucao: 'border-l-green-400',
-  solucao_transformacao: 'border-l-green-400',
-  apresentacao_solucao: 'border-l-green-400',
-  oferta: 'border-l-cyan-400',
-  objecoes: 'border-l-orange-400',
-  tratamento_objecoes: 'border-l-orange-400',
-  fechamento: 'border-l-rose-400',
-  fechamento_agendamento: 'border-l-rose-400',
+  abertura:              'border-l-blue-700',
+  diagnostico:           'border-l-blue-500',
+  descoberta:            'border-l-blue-500',
+  solucao:               'border-l-blue-400',
+  solucao_transformacao: 'border-l-blue-400',
+  apresentacao_solucao:  'border-l-blue-400',
+  oferta:                'border-l-amber-400',
+  objecoes:              'border-l-red-500',
+  tratamento_objecoes:   'border-l-red-500',
+  fechamento:            'border-l-emerald-500',
+  fechamento_agendamento:'border-l-emerald-500',
+};
+
+const BLOCO_HEX: Record<string, string> = {
+  abertura:              '#1E3FA8',
+  diagnostico:           '#254DC7',
+  descoberta:            '#254DC7',
+  solucao:               '#3B6FE8',
+  solucao_transformacao: '#3B6FE8',
+  apresentacao_solucao:  '#3B6FE8',
+  oferta:                '#E8A020',
+  objecoes:              '#E03E3E',
+  tratamento_objecoes:   '#E03E3E',
+  fechamento:            '#1D9E6F',
+  fechamento_agendamento:'#1D9E6F',
 };
 
 interface NormalizedBloco {
@@ -97,20 +112,60 @@ function normalizeRoteiro(roteiro: RoteiroJSON): NormalizedBloco[] {
         })),
       }));
     }
-    // Old array format (RoteiroBloco[] without secoes)
-    return (rr as any[]).map((b, i) => ({
-      key: b.bloco || `bloco-${i}`,
-      label: b.titulo || `Fase ${i + 1}`,
-      icon: BLOCO_ICONS[b.bloco] || Lightbulb,
-      borderColor: BLOCO_COLORS[b.bloco] || 'border-l-gray-400',
-      tempo: b.tempo || '—',
-      secoes: [{
+    // New 6-block PASTOR format (RoteiroBloco[] without secoes) — extract all rich fields
+    return (rr as any[]).map((b, i) => {
+      const bloco = (b.bloco || '').toLowerCase();
+      const secoes: { label: string; tipo: string; conteudo: string; raciocinio?: string }[] = [];
+
+      // Generic script (abertura / diagnostico / solucao)
+      if (b.script) secoes.push({ label: 'Script', tipo: 'script', conteudo: b.script });
+
+      // Perguntas-chave (diagnostico)
+      if (Array.isArray(b.perguntas) && b.perguntas.length > 0) {
+        secoes.push({ label: 'Perguntas-chave', tipo: 'instrucao', conteudo: b.perguntas.map((p: string) => `• ${p}`).join('\n') });
+      }
+
+      // Fases da solução (solucao)
+      if (Array.isArray(b.fases) && b.fases.length > 0) {
+        b.fases.forEach((fase: { nome: string; descricao: string; ganho_cliente: string; micro_sin: string }) => {
+          const parts = [fase.descricao, fase.ganho_cliente ? `\n→ Cliente ganha: ${fase.ganho_cliente}` : '', fase.micro_sin ? `\n→ Micro-sin: "${fase.micro_sin}"` : ''].filter(Boolean);
+          secoes.push({ label: fase.nome, tipo: 'instrucao', conteudo: parts.join('') });
+        });
+      }
+
+      // Oferta: 4 partes
+      if (b.script_entregaveis)     secoes.push({ label: 'Script: Entregáveis',              tipo: 'script',    conteudo: b.script_entregaveis });
+      if (b.script_proximos_passos) secoes.push({ label: 'Próximos Passos (antes do preço)', tipo: 'instrucao', conteudo: b.script_proximos_passos });
+      if (b.script_preco)           secoes.push({ label: 'Script: Preço + Âncora',           tipo: 'script',    conteudo: b.script_preco });
+      if (b.script_avanco)          secoes.push({ label: 'Técnica de Avanço',                tipo: 'instrucao', conteudo: b.script_avanco });
+
+      // Objeções (objecoes)
+      if (Array.isArray(b.objecoes) && b.objecoes.length > 0) {
+        b.objecoes.forEach((obj: { situacao: string; resposta: string; instrucao?: string }) => {
+          const conteudo = [obj.resposta, obj.instrucao ? `\n\n📋 ${obj.instrucao}` : ''].filter(Boolean).join('');
+          secoes.push({ label: obj.situacao, tipo: 'objecao', conteudo });
+        });
+      }
+
+      // Fechamento
+      if (b.script_fechou)     secoes.push({ label: 'Se Fechou',    tipo: 'script',    conteudo: b.script_fechou });
+      if (b.script_nao_fechou) secoes.push({ label: 'Se Não Fechou', tipo: 'instrucao', conteudo: b.script_nao_fechou });
+
+      // Instruções de conduta
+      if (b.instrucoes_conduta) secoes.push({ label: 'Instruções de Conduta', tipo: 'instrucao', conteudo: b.instrucoes_conduta });
+
+      // Fallback
+      if (secoes.length === 0) secoes.push({ label: b.titulo || `Fase ${i + 1}`, tipo: 'script', conteudo: b.nota_tecnica ?? b.tecnica ?? '' });
+
+      return {
+        key: b.bloco || `bloco-${i}`,
         label: b.titulo || `Fase ${i + 1}`,
-        tipo: 'script',
-        conteudo: b.script || '',
-        raciocinio: b.nota_tecnica,
-      }],
-    }));
+        icon: BLOCO_ICONS[bloco] || Lightbulb,
+        borderColor: BLOCO_COLORS[bloco] || 'border-l-gray-400',
+        tempo: b.tempo || '—',
+        secoes,
+      };
+    });
   }
 
   // Legacy object format
@@ -155,16 +210,24 @@ function scoreBadgeColor(value: number, max: number) {
   return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30';
 }
 
-const SCORE_LABELS: { key: keyof NonNullable<RoteiroJSON['score_breakdown']>; label: string; max: number }[] = [
-  { key: 'clareza', label: 'Clareza', max: 40 },
-  { key: 'objecoes_cobertas', label: 'Objeções', max: 30 },
-  { key: 'adequacao_nicho', label: 'Adequação', max: 30 },
+// Supports both old (clareza/objecoes_cobertas/adequacao_nicho) and new (personalizacao/clareza/urgencia/tom) formats
+const SCORE_LABELS_NEW: { key: string; label: string; max: number }[] = [
+  { key: 'personalizacao', label: 'Personalização', max: 30 },
+  { key: 'clareza',        label: 'Clareza',        max: 25 },
+  { key: 'urgencia',       label: 'Urgência',       max: 20 },
+  { key: 'tom',            label: 'Tom',            max: 25 },
+];
+const SCORE_LABELS_OLD: { key: string; label: string; max: number }[] = [
+  { key: 'clareza',           label: 'Clareza',    max: 40 },
+  { key: 'objecoes_cobertas', label: 'Objeções',   max: 30 },
+  { key: 'adequacao_nicho',   label: 'Adequação',  max: 30 },
 ];
 
 const TIPO_BADGE: Record<string, { label: string; className: string }> = {
-  script: { label: 'Script', className: 'bg-purple-500/10 text-purple-500 border-purple-500/30' },
-  instrucao: { label: 'Instrução', className: 'bg-amber-500/10 text-amber-500 border-amber-500/30' },
-  objecao: { label: 'Objeção', className: 'bg-red-500/10 text-red-500 border-red-500/30' },
+  script:   { label: 'Script',    className: 'bg-purple-500/10 text-purple-500 border-purple-500/30' },
+  instrucao:{ label: 'Instrução', className: 'bg-amber-500/10 text-amber-500 border-amber-500/30' },
+  objecao:  { label: 'Objeção',   className: 'bg-red-500/10 text-red-500 border-red-500/30' },
+  insight:  { label: 'Insight',   className: 'bg-blue-500/10 text-blue-500 border-blue-500/30' },
 };
 
 export default function RoteiroResultado({
@@ -279,14 +342,19 @@ export default function RoteiroResultado({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {roteiro.score_breakdown && SCORE_LABELS.map(({ key, label, max }) => (
-            <span
-              key={key}
-              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${scoreBadgeColor(roteiro.score_breakdown![key] ?? 0, max)}`}
-            >
-              {label}: {roteiro.score_breakdown![key] ?? 0}/{max}
-            </span>
-          ))}
+          {roteiro.score_breakdown && (() => {
+            const sb = roteiro.score_breakdown!;
+            const isNewFormat = 'personalizacao' in sb || 'urgencia' in sb || 'tom' in sb;
+            const labels = isNewFormat ? SCORE_LABELS_NEW : SCORE_LABELS_OLD;
+            return labels.map(({ key, label, max }) => (
+              <span
+                key={key}
+                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${scoreBadgeColor((sb as any)[key] ?? 0, max)}`}
+              >
+                {label}: {(sb as any)[key] ?? 0}/{max}
+              </span>
+            ));
+          })()}
           <Badge variant="secondary" className="gap-1">
             <Clock className="h-3 w-3" />
             Duração estimada: {tempoTotal} minutos
@@ -298,6 +366,7 @@ export default function RoteiroResultado({
       <div className="space-y-4">
         {blocos.map((bloco, i) => {
           const Icon = bloco.icon;
+          const c = BLOCO_HEX[bloco.key] ?? '#1E3FA8';
           return (
             <motion.div
               key={bloco.key}
@@ -320,6 +389,25 @@ export default function RoteiroResultado({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {bloco.secoes.map((secao, j) => {
+                    /* Insight card — colorido, no topo da fase */
+                    if (secao.tipo === 'insight') {
+                      return (
+                        <div key={j}
+                          className="rounded-xl flex items-start gap-3 px-4 py-3"
+                          style={{ background: `${c}12`, border: `1px solid ${c}30` }}
+                        >
+                          <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold"
+                            style={{ background: c, color: 'white' }}>
+                            ✦
+                          </div>
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-semibold leading-snug" style={{ color: c }}>{secao.label}</p>
+                            <p className="text-[13px] text-muted-foreground leading-relaxed">{secao.conteudo}</p>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     const badge = TIPO_BADGE[secao.tipo] || TIPO_BADGE.script;
                     return (
                       <div key={j} className="space-y-1.5">
@@ -329,9 +417,7 @@ export default function RoteiroResultado({
                             {badge.label}
                           </span>
                         </div>
-                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                          {secao.conteudo}
-                        </p>
+                        <ScriptRenderer content={secao.conteudo} accentColor={c} />
                         {secao.raciocinio && (
                           <p className="text-xs text-muted-foreground italic mt-1">
                             💡 {secao.raciocinio}

@@ -75,53 +75,66 @@
   }
 
   .dark {
-    /* Deep warm-dark toned with brand blue primary */
-    --background:           45 5% 9%;
-    --card:                 45 5% 12%;
-    --card-foreground:      60 7% 92%;
-    --popover:              45 5% 12%;
-    --popover-foreground:   60 7% 92%;
-    --foreground:           60 7% 92%;
+    /* SVP Design System — cool-dark com azul royal #1E3FA8
+       Hue 220° alinhada ao azul da marca em todos os neutrals */
 
-    --primary:              210 74% 52%;   /* lighter blue for dark */
+    /* Neutrals — Notion-style: quase preto com leve matiz azul */
+    --background:           220 15% 8%;   /* #0F1014 */
+    --card:                 220 12% 11%;  /* #161820 */
+    --card-foreground:      220 15% 93%;  /* #E8EAF0 */
+    --popover:              220 12% 11%;
+    --popover-foreground:   220 15% 93%;
+    --foreground:           220 15% 93%;  /* #E8EAF0 */
+
+    /* Brand primary — Azul SVP royal */
+    --primary:              224 72% 42%;  /* #1E3FA8 */
     --primary-foreground:   0 0% 100%;
-    --primary-hover:        210 74% 60%;
-    --ring:                 210 74% 52%;
+    --primary-hover:        224 72% 50%;  /* #254DC7 */
+    --ring:                 224 72% 50%;
 
-    --secondary:            45 4% 17%;
-    --secondary-foreground: 60 7% 90%;
-    --muted:                45 4% 15%;
-    --muted-foreground:     60 2% 56%;
+    /* Secondary / muted */
+    --secondary:            220 10% 14%;
+    --secondary-foreground: 220 10% 78%;
+    --muted:                220 10% 13%;  /* #1C1E25 */
+    --muted-foreground:     220 10% 52%;  /* #7A7F92 */
 
-    --accent:               210 30% 18%;
-    --accent-foreground:    210 74% 70%;
+    /* Accent — azul SVP sutil */
+    --accent:               224 40% 16%;
+    --accent-foreground:    218 100% 78%; /* #8AB4FF */
 
-    --border:               45 5% 20%;
-    --input:                45 5% 18%;
+    /* Borders & inputs */
+    --border:               220 12% 20%;  /* #2B2F3C */
+    --input:                220 10% 17%;  /* #24272F */
 
-    --destructive:          0 84% 60%;
-    --destructive-foreground: 0 0% 95%;
+    /* Destructive */
+    --destructive:          4 82% 56%;
+    --destructive-foreground: 0 0% 96%;
 
-    --bg-elevated:  45 5% 12%;
-    --bg-section:   45 4% 15%;
-    --primary-hover: 210 74% 60%;
-    --ok:   142 63% 45%;
-    --warn: 33 92% 55%;
-    --err:  0 84% 60%;
-    --info: 210 74% 52%;
-    --phase-voss:    210 74% 52%;
-    --phase-belfort: 38 92% 50%;
-    --phase-hybrid:  142 63% 45%;
-    --phase-close:   0 84% 60%;
+    /* Elevated surfaces */
+    --bg-elevated:          220 10% 15%;  /* #20232B */
+    --bg-section:           220 10% 13%;  /* #1C1E25 */
 
-    --sidebar-background:           45 5% 10%;
-    --sidebar-foreground:           60 7% 88%;
-    --sidebar-primary:              210 74% 52%;
-    --sidebar-primary-foreground:   0 0% 100%;
-    --sidebar-accent:               45 4% 15%;
-    --sidebar-accent-foreground:    60 7% 88%;
-    --sidebar-border:               45 5% 18%;
-    --sidebar-ring:                 210 74% 52%;
+    /* Semantic feedback */
+    --ok:   160 65% 38%;   /* verde-azulado */
+    --warn: 38 90% 52%;    /* âmbar */
+    --err:  4 82% 56%;     /* vermelho */
+    --info: 224 72% 42%;   /* azul SVP */
+
+    /* Pipeline phases */
+    --phase-voss:    224 72% 42%;  /* Abertura — azul SVP profundo */
+    --phase-belfort: 38 90% 52%;   /* Roteiro — âmbar */
+    --phase-hybrid:  160 65% 38%;  /* Fechado ganho — verde */
+    --phase-close:   4 82% 56%;    /* Fechado perda — vermelho */
+
+    /* Sidebar — levemente mais escura que o fundo */
+    --sidebar-background:          220 15% 7%;   /* #0C0E12 */
+    --sidebar-foreground:          220 15% 88%;  /* #D8DBEA */
+    --sidebar-primary:             224 72% 42%;
+    --sidebar-primary-foreground:  0 0% 100%;
+    --sidebar-accent:              220 15% 12%;
+    --sidebar-accent-foreground:   218 100% 78%;
+    --sidebar-border:              220 12% 17%;
+    --sidebar-ring:                224 72% 50%;
   }
 }
 

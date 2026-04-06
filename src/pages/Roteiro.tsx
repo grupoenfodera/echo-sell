@@ -34,17 +34,17 @@ const LEGACY_NAMES: Record<string, string> = {
 };
 
 const FASE_COLORS: Record<string, string> = {
-  abertura:             '#4a9eff',
-  descoberta:           '#7c5cfc',
-  diagnostico:          '#7c5cfc',
-  apresentacao_solucao: '#7c5cfc',
-  solucao:              '#a855f7',
-  oferta:               '#f5a623',
-  tratamento_objecoes:  '#ff6b4a',
-  objecoes:             '#ff6b4a',
-  fechamento:           '#4caf50',
+  abertura:             '#1E3FA8',  // azul SVP profundo
+  descoberta:           '#254DC7',  // azul SVP médio
+  diagnostico:          '#254DC7',
+  apresentacao_solucao: '#254DC7',
+  solucao:              '#3B6FE8',  // azul SVP brilhante
+  oferta:               '#E8A020',  // âmbar
+  tratamento_objecoes:  '#E03E3E',  // vermelho
+  objecoes:             '#E03E3E',
+  fechamento:           '#1D9E6F',  // verde-azulado
 };
-const INDEX_COLORS = ['#4a9eff', '#7c5cfc', '#a855f7', '#f5a623', '#ff6b4a', '#4caf50'];
+const INDEX_COLORS = ['#1E3FA8', '#254DC7', '#3B6FE8', '#E8A020', '#E03E3E', '#1D9E6F'];
 
 function getFaseColor(bloco: string, index: number): string {
   return FASE_COLORS[bloco.toLowerCase()] ?? INDEX_COLORS[index % INDEX_COLORS.length];
@@ -253,7 +253,7 @@ function getScoreBg(s: number) {
    SecaoInsight — card colorido com accentColor (nota_tecnica)
 ───────────────────────────────────────────────── */
 
-function SecaoInsight({ secao, accentColor = '#7c5cfc' }: { secao: SecaoRoteiro; accentColor?: string }) {
+function SecaoInsight({ secao, accentColor = '#1E3FA8' }: { secao: SecaoRoteiro; accentColor?: string }) {
   return (
     <div
       className="rounded-xl flex items-start gap-3 px-4 py-3"
@@ -708,7 +708,7 @@ export default function RoteiroPage() {
   }
 
   const blocoAtivo  = blocos[faseAtiva];
-  const faseColor   = blocoAtivo ? getFaseColor(blocoAtivo.bloco, faseAtiva) : '#7c5cfc';
+  const faseColor   = blocoAtivo ? getFaseColor(blocoAtivo.bloco, faseAtiva) : '#1E3FA8';
   const isLastPhase = faseAtiva === blocos.length - 1;
 
   /* ── Render ── */

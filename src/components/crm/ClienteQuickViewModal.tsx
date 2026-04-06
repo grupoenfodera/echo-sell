@@ -26,12 +26,12 @@ const TEMP_BADGE: Record<ClienteTemperatura, { emoji: string; label: string; cls
 };
 
 const AVATAR_COLORS: Record<string, { bg: string; color: string }> = {
-  ativo:    { bg: '#ff6b4a22', color: '#ff6b4a' },
-  morno:    { bg: '#f5c84222', color: '#f5c842' },
-  frio:     { bg: '#4a9eff22', color: '#4a9eff' },
-  em_risco: { bg: '#ff6b4a22', color: '#ff6b4a' },
+  ativo:    { bg: '#E03E3E22', color: '#E03E3E' },
+  morno:    { bg: '#E8A02022', color: '#E8A020' },
+  frio:     { bg: '#3B6FE822', color: '#3B6FE8' },
+  em_risco: { bg: '#E03E3E22', color: '#E03E3E' },
 };
-const AVATAR_DEFAULT = { bg: '#3a3a5222', color: '#9090b0' };
+const AVATAR_DEFAULT = { bg: '#2B2F3C44', color: '#7A7F92' };
 
 const STATUS_LABELS: Record<string, string> = {
   novo: 'Novo Lead',
@@ -61,6 +61,49 @@ const CANAL_LABEL: Record<string, string> = {
   whatsapp: 'Mensagem WhatsApp', objecoes: 'Objeções geradas', ligacao: 'Ligação',
   reuniao: 'Reunião', nota: 'Nota', transcricao: 'Transcrição',
 };
+
+type TimelineEntry = {
+  id: string;
+  icon: React.ElementType;
+  label: string;
+  detail?: string;
+  date: Date;
+  color: string;
+  synthetic: boolean;
+};
+
+function buildTimeline(sessoes: SessaoVenda[], interacoes: Interacao[]): TimelineEntry[] {
+  const entries: TimelineEntry[] = [];
+
+  // Real interacoes
+  for (const int of interacoes) {
+    entries.push({
+      id: `int-${int.id}`,
+      icon: CANAL_ICON[int.canal] ?? ClipboardList,
+      label: int.titulo ?? CANAL_LABEL[int.canal] ?? int.canal,
+      detail: int.resumo_ia ?? int.conteudo?.slice(0, 60) ?? undefined,
+      date: new Date(int.criado_em),
+      color: '#9090b0',
+      synthetic: false,
+    });
+  }
+
+  // Synthetic events from sessions
+  for (const s of sessoes) {
+    if (s.objecoes_geradas_em) entries.push({ id: `${s.id}-objecoes`, icon: Shield, label: 'Objeções geradas', date: new Date(s.objecoes_geradas_em), color: '#f59e0b', synthetic: true });
+    if (s.whatsapp_gerado_em) entries.push({ id: `${s.id}-whatsapp`, icon: Send, label: 'Mensagem WhatsApp gerada', date: new Date(s.whatsapp_gerado_em), color: '#34d399', synthetic: true });
+    if (s.email_gerado_em) entries.push({ id: `${s.id}-email`, icon: Mail, label: 'E-mail de follow-up gerado', date: new Date(s.email_gerado_em), color: '#60a5fa', synthetic: true });
+    if (s.proposta_gerada_em) entries.push({ id: `${s.id}-proposta`, icon: FileText, label: 'Proposta comercial gerada', date: new Date(s.proposta_gerada_em), color: '#3B6FE8', synthetic: true });
+    if (s.roteiro_gerado_em) entries.push({ id: `${s.id}-roteiro`, icon: ClipboardList, label: 'Roteiro gerado', detail: s.nicho ?? undefined, date: new Date(s.roteiro_gerado_em), color: '#1E3FA8', synthetic: true });
+    entries.push({ id: `${s.id}-sessao`, icon: CalendarDays, label: 'Nova sessão criada', detail: s.nicho ?? undefined, date: new Date(s.criado_em), color: '#5a5a7a', synthetic: true });
+  }
+
+  // Sort newest first, dedupe by id
+  const seen = new Set<string>();
+  return entries
+    .filter(e => { if (seen.has(e.id)) return false; seen.add(e.id); return true; })
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
+}
 
 interface Props {
   cliente: Cliente | null;
@@ -130,19 +173,21 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
     ? Math.floor((Date.now() - new Date(cliente.ultimo_contato_em).getTime()) / (1000 * 60 * 60 * 24))
     : null;
   const agingColor = daysSince !== null
-    ? daysSince >= 14 ? '#ff6b4a' : daysSince >= 7 ? '#f5c842' : '#4a9eff'
-    : '#4a9eff';
+    ? daysSince >= 14 ? '#E03E3E' : daysSince >= 7 ? '#E8A020' : '#3B6FE8'
+    : '#3B6FE8';
 
   const sessaoDate = sessao?.criado_em
     ? format(new Date(sessao.criado_em), 'dd/MM/yyyy', { locale: ptBR })
     : null;
 
+  const timeline = buildTimeline(sessoes, interacoes);
+
   return (
     <>
       <Dialog open={!!cliente} onOpenChange={v => { if (!v) onClose(); }}>
-        <DialogContent className="p-0 gap-0 overflow-hidden" style={{ width: '820px', maxWidth: '95vw', maxHeight: '90vh', borderRadius: '16px', background: '#1a1a24', border: '1px solid #3a3a52' }}>
+        <DialogContent className="p-0 gap-0 [&>button:first-of-type]:hidden" style={{ width: '820px', maxWidth: '95vw', height: '88vh', display: 'flex', flexDirection: 'column', borderRadius: '16px', background: '#161820', border: '1px solid #2B2F3C', overflow: 'hidden' }}>
           {/* HEADER */}
-          <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid #2e2e42' }}>
+          <div className="flex items-center gap-3" style={{ padding: '20px 24px', borderBottom: '1px solid #2B2F3C' }}>
              <div
                className="rounded-full flex items-center justify-center shrink-0"
                style={{ height: '44px', width: '44px', background: avatarColor.bg, color: avatarColor.color }}
@@ -168,16 +213,16 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
               <button
                 onClick={() => { onClose(); navigate(`/crm/${cliente.id}`); }}
                 title="Abrir tela cheia"
-                style={{ padding: '6px', borderRadius: '6px', background: 'transparent', border: '1px solid #3a3a52', color: '#9090b0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                style={{ padding: '6px', borderRadius: '6px', background: 'transparent', border: '1px solid #2B2F3C', color: '#7A7F92', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
               >
                 <Maximize2 style={{ width: '14px', height: '14px' }} />
               </button>
           </div>
 
           {/* BODY */}
-          <div className="flex" style={{ flex: 1, overflow: 'hidden' }}>
+          <div className="flex" style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
              {/* LEFT SIDEBAR */}
-             <div className="space-y-5" style={{ width: '240px', borderRight: '1px solid #2e2e42', padding: '20px', overflowY: 'auto', flexShrink: 0 }}>
+             <div className="space-y-5" style={{ width: '240px', borderRight: '1px solid #2B2F3C', padding: '20px', overflowY: 'auto', flexShrink: 0 }}>
               <div className="space-y-2">
                 <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a' }}>Contato</h3>
                  <div className="flex items-center gap-2" style={{ fontSize: '13px' }}>
@@ -210,13 +255,13 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a', marginTop: '20px' }}>Ações rápidas</h3>
                  <button
                    onClick={() => setInteracaoModal(true)}
-                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #3a3a52', color: '#9090b0', background: 'transparent', borderRadius: '8px', fontSize: '13px', textAlign: 'left', cursor: 'pointer' }}
+                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #2B2F3C', color: '#7A7F92', background: 'transparent', borderRadius: '8px', fontSize: '13px', textAlign: 'left', cursor: 'pointer' }}
                  >
                    📝 Registrar contato
                  </button>
                  <button
                    onClick={() => { onClose(); navigate(`/crm/${cliente.id}`); }}
-                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #3a3a52', color: '#9090b0', background: 'transparent', borderRadius: '8px', fontSize: '13px', textAlign: 'left', cursor: 'pointer', marginTop: '6px' }}
+                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #2B2F3C', color: '#7A7F92', background: 'transparent', borderRadius: '8px', fontSize: '13px', textAlign: 'left', cursor: 'pointer', marginTop: '6px' }}
                  >
                    ✏️ Editar
                  </button>
@@ -238,7 +283,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                        <>
                          {/* Card com borda roxa */}
                          <div
-                           style={{ background: '#22222f', border: '1px solid #2e2e42', borderLeft: '3px solid #7c5cfc', borderRadius: '10px', padding: '14px' }}
+                           style={{ background: '#20232B', border: '1px solid #2B2F3C', borderLeft: '3px solid #1E3FA8', borderRadius: '10px', padding: '14px' }}
                          >
                            <div className="flex items-center justify-between">
                              <span style={{ fontSize: '10px', color: '#5a5a7a' }}>
@@ -256,7 +301,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                            </p>
                            <div>
                              <span
-                               style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: '#7c5cfc22', color: '#7c5cfc', border: '1px solid #7c5cfc44' }}
+                               style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: '#1E3FA822', color: '#8AB4FF', border: '1px solid #1E3FA844' }}
                              >
                                {score != null ? `Score ${score}/100` : '—'}
                              </span>
@@ -264,7 +309,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                         </div>
 
                          {/* Separador */}
-                         <div style={{ borderTop: '1px solid #2e2e42', margin: '12px 0' }} />
+                         <div style={{ borderTop: '1px solid #2B2F3C', margin: '12px 0' }} />
 
                         {/* Chips de peças */}
                         <div className="flex flex-wrap" style={{ gap: '6px' }}>
@@ -277,7 +322,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                              </button>
                            ) : (
                              <span
-                               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52' }}
+                               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: '#20232B', color: '#4A4F60', border: '1px solid #2B2F3C' }}
                              >
                                📋 Roteiro
                              </span>
@@ -297,7 +342,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                                  <span
                                    key={peca.tipo}
                                    className="animate-pulse"
-                                   style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52', minWidth: '70px' }}
+                                   style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: '#20232B', color: '#4A4F60', border: '1px solid #2B2F3C', minWidth: '70px' }}
                                  >
                                    <Loader2 className="h-3 w-3 animate-spin" /> Gerando...
                                  </span>
@@ -322,9 +367,9 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                                  <PopoverTrigger asChild>
                                    <button
                                      className="transition-colors"
-                                     style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52' }}
-                                     onMouseEnter={e => { e.currentTarget.style.background = '#7c5cfc22'; e.currentTarget.style.color = '#7c5cfc'; e.currentTarget.style.borderColor = '#7c5cfc55'; }}
-                                     onMouseLeave={e => { e.currentTarget.style.background = '#2a2a3a'; e.currentTarget.style.color = '#5a5a7a'; e.currentTarget.style.borderColor = '#3a3a52'; }}
+                                     style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#20232B', color: '#4A4F60', border: '1px solid #2B2F3C' }}
+                                     onMouseEnter={e => { e.currentTarget.style.background = '#1E3FA822'; e.currentTarget.style.color = '#8AB4FF'; e.currentTarget.style.borderColor = '#1E3FA855'; }}
+                                     onMouseLeave={e => { e.currentTarget.style.background = '#20232B'; e.currentTarget.style.color = '#4A4F60'; e.currentTarget.style.borderColor = '#2B2F3C'; }}
                                    >
                                      + {emoji} {peca.label}
                                    </button>
@@ -348,14 +393,14 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                            {sessao.roteiro_json && (
                              <button
                                onClick={() => navigate(`/roteiro/${sessao.id}`)}
-                               style={{ border: '1px solid #7c5cfc', color: '#7c5cfc', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
+                               style={{ border: '1px solid #1E3FA8', color: '#8AB4FF', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
                              >
                                Ver roteiro →
                              </button>
                            )}
                            <button
                              onClick={() => { onClose(); navigate('/'); }}
-                             style={{ border: '1px solid #3a3a52', color: '#9090b0', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
+                             style={{ border: '1px solid #2B2F3C', color: '#7A7F92', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
                            >
                              + Nova sessão
                            </button>
@@ -366,7 +411,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                          <p style={{ fontSize: '13px', color: '#5a5a7a' }}>Nenhuma sessão registrada</p>
                          <button
                            onClick={() => { onClose(); navigate('/'); }}
-                           style={{ marginTop: '12px', border: '1px solid #3a3a52', color: '#9090b0', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
+                           style={{ marginTop: '12px', border: '1px solid #2B2F3C', color: '#7A7F92', background: 'transparent', padding: '7px 14px', borderRadius: '8px', fontSize: '13px', cursor: 'pointer' }}
                          >
                            + Nova sessão
                          </button>
@@ -375,37 +420,69 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                    </div>
 
                    {/* ATIVIDADE */}
-                   <div className="space-y-3" style={{ marginTop: '24px' }}>
-                     <div className="flex items-center justify-between">
+                   <div style={{ marginTop: '28px' }}>
+                     <div className="flex items-center justify-between" style={{ marginBottom: '14px' }}>
                        <h3 style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#5a5a7a' }}>Atividade</h3>
                        <button
                          onClick={() => setInteracaoModal(true)}
-                         style={{ fontSize: '11px', color: '#7c5cfc', cursor: 'pointer', background: 'none', border: 'none' }}
+                         style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: '#8AB4FF', cursor: 'pointer', background: '#1E3FA815', border: '1px solid #1E3FA833', borderRadius: '6px', padding: '3px 8px' }}
                        >
-                         ↑ Registrar
+                         <Plus style={{ width: '10px', height: '10px' }} /> Registrar
                        </button>
                      </div>
 
-                     {interacoes.length === 0 ? (
-                       <p style={{ fontSize: '13px', color: '#5a5a7a', fontStyle: 'italic' }}>Nenhuma atividade registrada</p>
+                     {timeline.length === 0 ? (
+                       <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                         <p style={{ fontSize: '13px', color: '#5a5a7a', fontStyle: 'italic' }}>Nenhuma atividade registrada</p>
+                         <button
+                           onClick={() => setInteracaoModal(true)}
+                           style={{ marginTop: '8px', fontSize: '12px', color: '#8AB4FF', background: 'none', border: 'none', cursor: 'pointer' }}
+                         >
+                           + Registrar primeiro contato
+                         </button>
+                       </div>
                      ) : (
-                       <ScrollArea className="max-h-[180px]">
-                         <div className="space-y-0">
-                           {interacoes.slice(0, 8).map((int, idx) => {
-                             const Icon = CANAL_ICON[int.canal] ?? ClipboardList;
-                             const label = int.titulo ?? CANAL_LABEL[int.canal] ?? int.canal;
-                             const ago = formatDistanceToNow(new Date(int.criado_em), { addSuffix: false, locale: ptBR });
+                       <ScrollArea>
+                         <div style={{ position: 'relative', paddingLeft: '14px' }}>
+                           {/* Vertical connecting line */}
+                           <div style={{ position: 'absolute', left: '13px', top: '14px', bottom: '14px', width: '1px', background: '#2B2F3C' }} />
+
+                           {timeline.slice(0, 10).map((entry, idx) => {
+                             const Icon = entry.icon;
+                             const ago = formatDistanceToNow(entry.date, { addSuffix: false, locale: ptBR });
+                             const isLast = idx === Math.min(timeline.length, 10) - 1;
                              return (
-                               <div key={int.id} className="flex items-start gap-2.5" style={{ padding: '8px 0', borderBottom: idx < interacoes.length - 1 ? '1px solid #2e2e42' : 'none' }}>
+                               <div
+                                 key={entry.id}
+                                 className="flex items-start gap-2.5"
+                                 style={{ paddingBottom: isLast ? 0 : '14px' }}
+                               >
+                                 {/* Dot icon */}
                                  <div
                                    className="flex items-center justify-center shrink-0"
-                                   style={{ marginTop: '2px', height: '28px', width: '28px', borderRadius: '50%', background: '#22222f', border: '1px solid #2e2e42' }}
+                                   style={{
+                                     position: 'relative', zIndex: 1,
+                                     height: '26px', width: '26px', borderRadius: '50%',
+                                     background: `${entry.color}18`,
+                                     border: `1px solid ${entry.color}44`,
+                                   }}
                                  >
-                                   <Icon style={{ width: '12px', height: '12px', color: '#5a5a7a' }} />
+                                   <Icon style={{ width: '11px', height: '11px', color: entry.color }} />
                                  </div>
-                                 <div className="flex-1 min-w-0">
-                                   <p style={{ fontSize: '13px', color: '#e8e8f0' }} className="truncate">{label}</p>
-                                   <p style={{ fontSize: '11px', color: '#5a5a7a' }}>há {ago}</p>
+                                 {/* Content */}
+                                 <div className="flex-1 min-w-0" style={{ paddingTop: '3px' }}>
+                                   <div className="flex items-start justify-between gap-2">
+                                     <p
+                                       className="truncate"
+                                       style={{ fontSize: '13px', color: entry.synthetic ? '#c0c0d8' : '#e8e8f0', fontWeight: entry.synthetic ? 400 : 500, lineHeight: 1.3 }}
+                                     >
+                                       {entry.label}
+                                     </p>
+                                     <span style={{ fontSize: '10px', color: '#4a4a6a', flexShrink: 0, paddingTop: '1px' }}>há {ago}</span>
+                                   </div>
+                                   {entry.detail && (
+                                     <p className="truncate" style={{ fontSize: '11px', color: '#5a5a7a', marginTop: '1px' }}>{entry.detail}</p>
+                                   )}
                                  </div>
                                </div>
                              );

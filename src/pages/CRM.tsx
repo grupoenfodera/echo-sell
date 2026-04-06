@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
-import Header from '@/components/Header';
 import { svpApi } from '@/lib/api-svp';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,19 +37,19 @@ import { toast } from 'sonner';
 /* ── Constantes ────────────────────────────────── */
 
 const TEMP_COLORS: Record<ClienteTemperatura, { border: string; bg: string; text: string; label: string }> = {
-  ativo:    { border: '#ff6b4a', bg: '#ff6b4a22', text: '#ff6b4a', label: 'Quente' },
-  morno:    { border: '#f5c842', bg: '#f5c84222', text: '#f5c842', label: 'Morno' },
-  frio:     { border: '#4a9eff', bg: '#4a9eff22', text: '#4a9eff', label: 'Frio' },
-  em_risco: { border: '#ff6b4a', bg: '#ff6b4a22', text: '#ff6b4a', label: 'Em risco' },
+  ativo:    { border: '#E03E3E', bg: '#E03E3E22', text: '#E03E3E', label: 'Quente' },
+  morno:    { border: '#E8A020', bg: '#E8A02022', text: '#E8A020', label: 'Morno' },
+  frio:     { border: '#3B6FE8', bg: '#3B6FE822', text: '#3B6FE8', label: 'Frio' },
+  em_risco: { border: '#E03E3E', bg: '#E03E3E22', text: '#E03E3E', label: 'Em risco' },
 };
 
-const TEMP_DEFAULT = { border: '#3a3a52', bg: '#3a3a5222', text: '#3a3a52', label: '—' };
+const TEMP_DEFAULT = { border: '#2B2F3C', bg: '#2B2F3C22', text: '#7A7F92', label: '—' };
 
-const TEMP_BADGE: Record<ClienteTemperatura, { emoji: string; label: string; cls: string }> = {
-  frio:     { emoji: '🔵', label: 'Frio',     cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-  morno:    { emoji: '🟡', label: 'Morno',    cls: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
-  ativo:    { emoji: '🟢', label: 'Ativo',    cls: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-  em_risco: { emoji: '🔴', label: 'Em risco', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+const TEMP_BADGE: Record<ClienteTemperatura, { label: string }> = {
+  frio:     { label: 'Frio' },
+  morno:    { label: 'Morno' },
+  ativo:    { label: 'Quente' },
+  em_risco: { label: 'Em risco' },
 };
 
 const STATUS_LABEL: Record<ClienteStatus, string> = {
@@ -92,11 +91,11 @@ interface ColunaConfig {
 }
 
 const COLUNAS: ColunaConfig[] = [
-  { id: 'novo_lead',         titulo: 'Novo Lead',         dotCls: 'bg-muted-foreground', borderColor: '#6b7280' },
-  { id: 'roteiro_pronto',    titulo: 'Roteiro Pronto',    dotCls: 'bg-blue-500',         borderColor: '#4a9eff' },
-  { id: 'proposta_enviada',  titulo: 'Proposta Enviada',  dotCls: 'bg-purple-500',       borderColor: '#7c5cfc' },
-  { id: 'follow_up',         titulo: 'Follow-up',         dotCls: 'bg-orange-500',       borderColor: '#fb923c' },
-  { id: 'fechado',           titulo: 'Fechado',           dotCls: 'bg-green-500',        borderColor: '#34d399' },
+  { id: 'novo_lead',        titulo: 'Novo Lead',        dotCls: 'bg-muted-foreground', borderColor: '#7A7F92' },
+  { id: 'roteiro_pronto',   titulo: 'Roteiro Pronto',   dotCls: 'bg-blue-600',         borderColor: '#1E3FA8' },
+  { id: 'proposta_enviada', titulo: 'Proposta Enviada', dotCls: 'bg-blue-500',         borderColor: '#254DC7' },
+  { id: 'follow_up',        titulo: 'Follow-up',        dotCls: 'bg-amber-500',        borderColor: '#E8A020' },
+  { id: 'fechado',          titulo: 'Fechado',          dotCls: 'bg-emerald-500',      borderColor: '#1D9E6F' },
 ];
 
 function mapStatusToColuna(status: ClienteStatus | string): PipelineColuna {
@@ -231,8 +230,7 @@ export default function CRM() {
 
   return (
     <>
-      <Header />
-      <main className="pt-[70px] pb-16 px-4 sm:px-6">
+      <main className="pb-16 px-4 sm:px-6 pt-6">
         <div className={viewMode === 'pipeline' ? 'max-w-full mx-auto space-y-4' : 'max-w-[1100px] mx-auto space-y-6'}>
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
@@ -284,7 +282,7 @@ export default function CRM() {
               <SelectContent>
                 <SelectItem value="todos">Todas temperaturas</SelectItem>
                 {(Object.keys(TEMP_BADGE) as ClienteTemperatura[]).map(t => (
-                  <SelectItem key={t} value={t}>{TEMP_BADGE[t].emoji} {TEMP_BADGE[t].label}</SelectItem>
+                  <SelectItem key={t} value={t}>{TEMP_BADGE[t].label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -320,9 +318,9 @@ export default function CRM() {
                       <div
                         className="px-3 py-2.5 mb-0"
                         style={{
-                          background: '#22222f',
+                          background: '#20232B',
                           borderRadius: '10px 10px 0 0',
-                          border: '1px solid #2e2e42',
+                          border: '1px solid #2B2F3C',
                           borderBottom: 'none',
                         }}
                       >
@@ -358,7 +356,7 @@ export default function CRM() {
                               style={{
                                 maxHeight: 'calc(100vh - 310px)',
                                 borderTop: `3px solid ${col.borderColor}`,
-                                border: `1px solid ${snapshot.isDraggingOver ? 'hsl(var(--primary) / 0.3)' : '#2e2e42'}`,
+                                border: `1px solid ${snapshot.isDraggingOver ? 'hsl(var(--primary) / 0.3)' : '#2B2F3C'}`,
                                 borderTopWidth: '3px',
                                 borderTopColor: col.borderColor,
                               }}
@@ -509,8 +507,8 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
     ? differenceInDays(new Date(), new Date(cliente.ultimo_contato_em))
     : null;
   const agingColor = daysSince !== null
-    ? daysSince >= 14 ? '#ff6b4a' : daysSince >= 7 ? '#f5c842' : '#4a9eff'
-    : '#4a9eff';
+    ? daysSince >= 14 ? '#E03E3E' : daysSince >= 7 ? '#E8A020' : '#3B6FE8'
+    : '#3B6FE8';
 
   // Contextual primary button
   const isGerando = sessao?.geracao_status === 'gerando';
@@ -544,7 +542,7 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
     <TooltipProvider delayDuration={200}>
       <div
         onClick={onClick}
-        className={`rounded-lg bg-card border border-border cursor-pointer transition-all hover:shadow-md ${
+        className={`rounded-lg bg-card border border-border cursor-pointer transition-all hover:shadow-md hover:-translate-y-px ${
           isDragging ? 'opacity-80 shadow-lg rotate-1 scale-[1.02]' : ''
         } ${isSaving ? 'ring-2 ring-primary/40 animate-pulse' : ''}`}
         style={{ borderLeft: `3px solid ${tc.border}` }}
@@ -613,8 +611,8 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
                     <span
                       className="h-1.5 flex-1 rounded-full transition-colors"
                      style={done
-                        ? { background: '#7c5cfc' }
-                        : { background: '#2a2a3a', border: '1px solid #3a3a52' }
+                        ? { background: '#1E3FA8' }
+                        : { background: '#20232B', border: '1px solid #2B2F3C' }
                       }
                     />
                   </TooltipTrigger>
@@ -656,6 +654,7 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
 function ListClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () => void }) {
   const navigate = useNavigate();
   const temp = TEMP_BADGE[cliente.temperatura] || TEMP_BADGE.frio;
+  const tempColor = TEMP_COLORS[cliente.temperatura] || TEMP_DEFAULT;
   const statusCls = STATUS_CLS[cliente.status] || STATUS_CLS.novo;
   const statusLabel = STATUS_LABEL[cliente.status] || cliente.status;
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
@@ -695,7 +694,7 @@ function ListClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () =
   const isGerando = sessao?.geracao_status === 'gerando';
 
   return (
-    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+    <Card className="cursor-pointer transition-all hover:shadow-md hover:-translate-y-px" onClick={onClick}>
       <CardContent className="p-5 space-y-3">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -705,9 +704,12 @@ function ListClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () =
             <p className="font-semibold text-sm text-foreground truncate">{cliente.nome}</p>
             {cliente.empresa && <p className="text-xs text-muted-foreground truncate">{cliente.empresa}</p>}
           </div>
-          <Badge variant="secondary" className={`text-[10px] shrink-0 ${temp.cls}`}>
-            {temp.emoji} {temp.label}
-          </Badge>
+          <span
+            className="text-[10px] font-medium shrink-0 px-2 py-0.5 rounded-full"
+            style={{ background: tempColor.bg, color: tempColor.text, border: `1px solid ${tempColor.border}40` }}
+          >
+            {temp.label}
+          </span>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className={`text-[10px] ${statusCls}`}>{statusLabel}</Badge>
