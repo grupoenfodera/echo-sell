@@ -261,22 +261,20 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
 
                         {/* Chips de peças */}
                         <div className="flex flex-wrap" style={{ gap: '6px' }}>
-                          {sessao.roteiro_json ? (
-                            <button
-                              onClick={() => navigate(`/roteiro/${sessao.id}`)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-colors"
-                              style={{ background: '#34d39922', color: '#34d399', border: '1px solid #34d39944' }}
-                            >
-                              ✓ 📋 Roteiro
-                            </button>
-                          ) : (
-                            <span
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium"
-                              style={{ background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52' }}
-                            >
-                              📋 Roteiro
-                            </span>
-                          )}
+                           {sessao.roteiro_json ? (
+                             <button
+                               onClick={() => navigate(`/roteiro/${sessao.id}`)}
+                               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: '#34d39922', color: '#34d399', border: '1px solid #34d39944' }}
+                             >
+                               ✓ 📋 Roteiro
+                             </button>
+                           ) : (
+                             <span
+                               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52' }}
+                             >
+                               📋 Roteiro
+                             </span>
+                           )}
 
                           {PECAS.map(peca => {
                             const s = localSessao ?? sessao;
