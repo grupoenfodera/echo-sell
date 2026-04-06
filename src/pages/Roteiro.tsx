@@ -17,16 +17,8 @@ import PecasPanel from '@/components/roteiro/PecasPanel';
 import type {
   SessaoVenda, BlocoRoteiro, SecaoRoteiro, SecaoEstado, RoteiroJSON, RoteiroBloco,
 } from '@/types/crm';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { svpApi } from '@/lib/api-svp';
-import { supabase } from '@/integrations/supabase/client';
-import type {
-  SessaoVenda, BlocoRoteiro, SecaoRoteiro, SecaoEstado, RoteiroJSON, RoteiroBloco,
-} from '@/types/crm';
+
+
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
