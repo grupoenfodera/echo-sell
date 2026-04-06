@@ -464,7 +464,7 @@ function PipelineCard({ cliente, isDragging, isFechado, onClick }: {
   onClick: () => void;
 }) {
   const navigate = useNavigate();
-  const temp = TEMP_BADGE[cliente.temperatura] || TEMP_BADGE.frio;
+  const tc = TEMP_COLORS[cliente.temperatura] ?? TEMP_DEFAULT;
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const sessao = cliente.ultima_sessao;
 
@@ -494,8 +494,8 @@ function PipelineCard({ cliente, isDragging, isFechado, onClick }: {
     ? differenceInDays(new Date(), new Date(cliente.ultimo_contato_em))
     : null;
   const agingColor = daysSince !== null
-    ? daysSince > 7 ? 'text-red-500' : daysSince > 3 ? 'text-orange-500' : 'text-muted-foreground'
-    : 'text-muted-foreground';
+    ? daysSince >= 14 ? '#ff6b4a' : daysSince >= 7 ? '#f5c842' : '#4a9eff'
+    : '#4a9eff';
 
   // Contextual primary button
   const isGerando = sessao?.geracao_status === 'gerando';
@@ -523,29 +523,42 @@ function PipelineCard({ cliente, isDragging, isFechado, onClick }: {
     localTem.objecoes ?? sessao.tem_objecoes,
   ] : null;
 
-  // Temp border color
-  const borderColor = cliente.temperatura === 'ativo' ? 'border-l-green-500'
-    : cliente.temperatura === 'em_risco' ? 'border-l-red-500'
-    : cliente.temperatura === 'morno' ? 'border-l-yellow-500'
-    : 'border-l-blue-400';
-
   return (
     <div
       onClick={onClick}
-      className={`rounded-lg bg-card border border-border border-l-[3px] ${borderColor} p-3 cursor-pointer transition-all hover:shadow-md space-y-2 ${
+      className={`rounded-lg bg-card border border-border p-3 cursor-pointer transition-all hover:shadow-md space-y-2 ${
         isDragging ? 'opacity-80 shadow-lg rotate-1 scale-[1.02]' : ''
       }`}
+      style={{ borderLeft: `3px solid ${tc.border}` }}
     >
-      {/* Name + temp */}
+      {/* Name + temp badge */}
       <div className="flex items-center gap-2">
-        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-          <span className="text-[10px] font-bold text-primary">{initials}</span>
+        <div
+          className="h-7 w-7 rounded-full flex items-center justify-center shrink-0"
+          style={{ background: tc.bg, color: tc.text }}
+        >
+          <span className="text-[10px] font-bold">{initials}</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground truncate">{cliente.nome}</p>
-          {cliente.empresa && <p className="text-[10px] text-muted-foreground truncate">{cliente.empresa}</p>}
+          {cliente.empresa && (
+            <p className="truncate" style={{ fontSize: '11px', color: '#5a5a7a', marginTop: '1px' }}>{cliente.empresa}</p>
+          )}
         </div>
-        <span className="text-xs shrink-0">{temp.emoji}</span>
+        {/* Temperature pill badge */}
+        <span
+          className="shrink-0 font-bold"
+          style={{
+            fontSize: '10px',
+            padding: '2px 8px',
+            borderRadius: '20px',
+            background: tc.bg,
+            color: tc.text,
+            border: `1px solid ${tc.border}44`,
+          }}
+        >
+          {tc.label}
+        </span>
       </div>
 
       {/* Fechado badge */}
@@ -561,13 +574,17 @@ function PipelineCard({ cliente, isDragging, isFechado, onClick }: {
         </div>
       )}
 
-      {/* Pieces dots */}
+      {/* Pieces dots — SVP purple */}
       {pieceDots && (
         <div className="flex items-center gap-1">
           {pieceDots.map((done, i) => (
             <span
               key={i}
-              className={`h-2 w-2 rounded-full ${done ? 'bg-green-500' : 'bg-border'}`}
+              className="h-2 w-2 rounded-full"
+              style={done
+                ? { background: '#7c5cfc' }
+                : { background: '#2a2a3a', border: '1px solid #3a3a52' }
+              }
             />
           ))}
           {isGerando && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-1" />}
@@ -576,7 +593,7 @@ function PipelineCard({ cliente, isDragging, isFechado, onClick }: {
 
       {/* Aging */}
       <div className="flex items-center justify-between gap-1">
-        <span className={`flex items-center gap-1 text-[10px] ${agingColor}`}>
+        <span className="flex items-center gap-1 text-[10px]" style={{ color: agingColor }}>
           <Clock className="h-3 w-3" />
           {agingText ? `há ${agingText}` : 'Sem contato'}
         </span>
