@@ -365,7 +365,6 @@ export default function CRM() {
                                       <div
                                         ref={provided.innerRef}
                                         {...provided.draggableProps}
-                                        {...provided.dragHandleProps}
                                         style={provided.draggableProps.style}
                                       >
                                         <PipelineCard
@@ -373,6 +372,7 @@ export default function CRM() {
                                           isDragging={snapshot.isDragging}
                                           isFechado={isFechado}
                                           onClick={() => setClienteSelecionado(c)}
+                                          dragHandleProps={provided.dragHandleProps}
                                         />
                                       </div>
                                     )}
