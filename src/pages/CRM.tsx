@@ -509,8 +509,8 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
     ? differenceInDays(new Date(), new Date(cliente.ultimo_contato_em))
     : null;
   const agingColor = daysSince !== null
-    ? daysSince >= 14 ? 'hsl(var(--destructive))' : daysSince >= 7 ? '#f5c842' : 'hsl(var(--primary))'
-    : 'hsl(var(--primary))';
+    ? daysSince >= 14 ? '#ff6b4a' : daysSince >= 7 ? '#f5c842' : '#4a9eff'
+    : '#4a9eff';
 
   // Contextual primary button
   const isGerando = sessao?.geracao_status === 'gerando';
