@@ -10,6 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
+import {
   MessageSquare, Mail, MapPin, Clock, CalendarDays, ClipboardList,
   Pencil, ChevronRight, Plus, Loader2, Phone, FileText, Shield, Send,
 } from 'lucide-react';
