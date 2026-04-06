@@ -18,6 +18,7 @@ import CRM from "./pages/CRM";
 import CRMCliente from "./pages/CRMCliente";
 import Gerar from "./pages/Gerar";
 import Roteiro from "./pages/Roteiro";
+import RoteiroLoading from "./pages/RoteiroLoading";
 import Produtos from "./pages/Produtos";
 import Personas from "./pages/Personas";
 import NotFound from "./pages/NotFound";
