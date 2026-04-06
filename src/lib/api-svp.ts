@@ -20,11 +20,31 @@ async function callFunction<T>(name: string, options: RequestInit = {}): Promise
       ...(options.headers ?? {}),
     },
   });
-  if (!res.ok) {
+  if (!res.ok && res.status !== 202) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error ?? `HTTP ${res.status}`);
   }
   return res.json();
+}
+
+async function callFunctionWithStatus<T>(name: string, options: RequestInit = {}): Promise<{ data: T; httpStatus: number }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  const res = await fetch(`${FUNCTIONS_URL}/${name}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers ?? {}),
+    },
+  });
+  if (!res.ok && res.status !== 202) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error ?? `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return { data, httpStatus: res.status };
 }
 
 export const svpApi = {
@@ -33,6 +53,17 @@ export const svpApi = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  /** Like gerarRoteiro but returns HTTP status to detect 202 async */
+  gerarRoteiroAsync: (payload: GerarRoteiroPayload) =>
+    callFunctionWithStatus<GerarRoteiroResponse & { status?: string }>('gerar-roteiro', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  /** Poll roteiro generation status */
+  roteiroStatus: (sessaoId: string) =>
+    callFunction<{ sessao_id: string; status: 'gerando' | 'pronto' | 'erro'; pronto: boolean; erro?: string }>(`roteiro-status?sessao_id=${sessaoId}`),
 
   aprovarRoteiro: (payload: AprovarRoteiroPayload) =>
     callFunction<AprovarRoteiroResponse>('aprovar-roteiro', {

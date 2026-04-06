@@ -42,13 +42,20 @@ export default function Gerar() {
     }
   }, [state.etapa, state.sessaoId, navigate]);
 
-  const handleFormSubmit = (payload: GerarRoteiroPayload) => {
+  const handleFormSubmit = async (payload: GerarRoteiroPayload) => {
     setLastPayload(payload);
-    gerarRoteiro(payload);
+    const result = await gerarRoteiro(payload);
+    if (result && result.async && result.sessaoId) {
+      navigate(`/loading/${result.sessaoId}`, { replace: true });
+    }
   };
 
-  const handleRejeitar = () => {
-    if (lastPayload) rejeitarRoteiro(lastPayload);
+  const handleRejeitar = async () => {
+    if (!lastPayload) return;
+    const result = await rejeitarRoteiro(lastPayload);
+    if (result && result.async && result.sessaoId) {
+      navigate(`/loading/${result.sessaoId}`, { replace: true });
+    }
   };
 
   const handleAprovar = async () => {

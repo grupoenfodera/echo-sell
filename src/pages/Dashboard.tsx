@@ -92,7 +92,15 @@ const Dashboard = () => {
       await new Promise(r => setTimeout(r, 600));
       setFaseLoading(1);
 
-      const roteiroRes = await svpApi.gerarRoteiro(payload);
+      const { data: roteiroRes, httpStatus } = await svpApi.gerarRoteiroAsync(payload);
+
+      // Async flow: 202 means generation is in background
+      if (httpStatus === 202 && roteiroRes.sessao_id) {
+        navigate(`/loading/${roteiroRes.sessao_id}`);
+        return;
+      }
+
+      // Sync flow: 200 means roteiro is ready immediately
       setSessaoAtual(roteiroRes.sessao_id);
       setClienteAtual(roteiroRes.cliente_id);
       setDadosRoteiro(roteiroRes.roteiro);

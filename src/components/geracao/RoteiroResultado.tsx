@@ -225,7 +225,7 @@ export default function RoteiroResultado({
         return;
       }
 
-      // 3. Call gerar-roteiro with same data
+      // 3. Call gerar-roteiro with same data (handle async 202)
       const payload = {
         nicho: form.nicho || sessaoData?.nicho,
         produto: form.produto || sessaoData?.produto,
@@ -236,10 +236,13 @@ export default function RoteiroResultado({
         dados_extras: form.dados_extras,
       };
 
-      const novoRoteiro = await svpApi.gerarRoteiro(payload);
+      const { data: novoRoteiro, httpStatus } = await svpApi.gerarRoteiroAsync(payload);
 
-      // 4. Navigate to the new session
-      if (novoRoteiro.sessao_id) {
+      if (httpStatus === 202 && novoRoteiro.sessao_id) {
+        // Async: navigate to loading page
+        navigate(`/loading/${novoRoteiro.sessao_id}`, { replace: true });
+      } else if (novoRoteiro.sessao_id) {
+        // Sync: navigate directly to roteiro
         navigate(`/roteiro/${novoRoteiro.sessao_id}`, { replace: true });
       }
       toast.success('Roteiro regenerado com sucesso!');
