@@ -365,7 +365,6 @@ export default function CRM() {
                                       <div
                                         ref={provided.innerRef}
                                         {...provided.draggableProps}
-                                        {...provided.dragHandleProps}
                                         style={provided.draggableProps.style}
                                       >
                                         <PipelineCard
@@ -373,6 +372,7 @@ export default function CRM() {
                                           isDragging={snapshot.isDragging}
                                           isFechado={isFechado}
                                           onClick={() => setClienteSelecionado(c)}
+                                          dragHandleProps={provided.dragHandleProps}
                                         />
                                       </div>
                                     )}
@@ -457,11 +457,12 @@ export default function CRM() {
 
 /* ── PipelineCard (inside Kanban column) ──────── */
 
-function PipelineCard({ cliente, isDragging, isFechado, onClick }: {
+function PipelineCard({ cliente, isDragging, isFechado, onClick, dragHandleProps }: {
   cliente: Cliente;
   isDragging: boolean;
   isFechado: boolean;
   onClick: () => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLElement> | null;
 }) {
   const navigate = useNavigate();
   const tc = TEMP_COLORS[cliente.temperatura] ?? TEMP_DEFAULT;
@@ -534,7 +535,8 @@ function PipelineCard({ cliente, isDragging, isFechado, onClick }: {
       {/* Name + temp badge */}
       <div className="flex items-center gap-2">
         <div
-          className="h-7 w-7 rounded-full flex items-center justify-center shrink-0"
+          {...dragHandleProps}
+          className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing"
           style={{ background: tc.bg, color: tc.text }}
         >
           <span className="text-[10px] font-bold">{initials}</span>
