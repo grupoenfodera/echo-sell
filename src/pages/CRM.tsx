@@ -383,6 +383,7 @@ export default function CRM() {
                                           cliente={c}
                                           isDragging={snapshot.isDragging}
                                           isFechado={isFechado}
+                                          isSaving={savingDragId === c.id}
                                           onClick={() => setClienteSelecionado(c)}
                                           dragHandleProps={provided.dragHandleProps}
                                         />
