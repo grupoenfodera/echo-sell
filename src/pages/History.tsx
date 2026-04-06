@@ -278,15 +278,47 @@ const History = () => {
                       )}
                     </div>
 
-                    {/* Action */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-lg gap-1.5 shrink-0 self-start sm:self-center"
-                      onClick={() => setSelectedGen(g)}
-                    >
-                      <Eye className="h-3.5 w-3.5" /> Ver proposta completa
-                    </Button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg gap-1.5"
+                        onClick={() => setSelectedGen(g)}
+                      >
+                        <Eye className="h-3.5 w-3.5" /> Ver proposta completa
+                      </Button>
+                      {confirmDeleteId === g.id ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="rounded-lg text-xs"
+                            disabled={deletingId === g.id}
+                            onClick={() => handleDelete(g)}
+                          >
+                            {deletingId === g.id ? 'Excluindo...' : 'Confirmar'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="rounded-lg text-xs"
+                            onClick={() => setConfirmDeleteId(null)}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => setConfirmDeleteId(g.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
