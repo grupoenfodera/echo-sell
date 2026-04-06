@@ -25,8 +25,14 @@ import {
 import { Label } from '@/components/ui/label';
 import {
   Search, Plus, Users, Clock, Loader2, AlertCircle, LayoutGrid, List,
-  ChevronRight, GripVertical,
+  ChevronRight, GripVertical, Check,
 } from 'lucide-react';
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
 import { toast } from 'sonner';
 
 /* ── Constantes ────────────────────────────────── */
