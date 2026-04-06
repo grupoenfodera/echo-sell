@@ -196,6 +196,8 @@ export default function CRM() {
     return map;
   }, [clientesFiltrados]);
 
+  const [savingDragId, setSavingDragId] = useState<string | null>(null);
+
   // Drag and drop handler
   const handleDragEnd = useCallback(async (result: DropResult) => {
     const { draggableId, destination, source } = result;
@@ -208,14 +210,16 @@ export default function CRM() {
     setClientes(prev => prev.map(c =>
       c.id === draggableId ? { ...c, status: novoStatus } : c
     ));
+    setSavingDragId(draggableId);
 
     try {
       await svpApi.atualizarCliente(draggableId, { status: novoStatus });
       toast.success('Status atualizado');
     } catch {
-      // Revert
       carregarClientes();
       toast.error('Erro ao atualizar status');
+    } finally {
+      setSavingDragId(null);
     }
   }, []);
 
