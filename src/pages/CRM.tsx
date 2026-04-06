@@ -129,6 +129,8 @@ const PECAS_CONFIG: { tipo: PecaTipo; label: string; emoji: string; temKey: keyo
   { tipo: 'objecoes', label: 'Objeções', emoji: '🛡️', temKey: 'tem_objecoes' },
 ];
 
+const PIECE_LABELS = ['Roteiro', 'Proposta', 'E-mail', 'WhatsApp', 'Objeções'];
+
 /* ── Página CRM ────────────────────────────────── */
 
 export default function CRM() {
