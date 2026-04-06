@@ -256,8 +256,8 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                            </div>
                         </div>
 
-                        {/* Separador */}
-                        <div className="border-t border-border" />
+                         {/* Separador */}
+                         <div style={{ borderTop: '1px solid #2e2e42', margin: '12px 0' }} />
 
                         {/* Chips de peças */}
                         <div className="flex flex-wrap gap-1.5">
