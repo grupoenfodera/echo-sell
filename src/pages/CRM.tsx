@@ -470,10 +470,11 @@ export default function CRM() {
 
 /* ── PipelineCard (inside Kanban column) ──────── */
 
-function PipelineCard({ cliente, isDragging, isFechado, onClick, dragHandleProps }: {
+function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragHandleProps }: {
   cliente: Cliente;
   isDragging: boolean;
   isFechado: boolean;
+  isSaving?: boolean;
   onClick: () => void;
   dragHandleProps?: React.HTMLAttributes<HTMLElement> | null;
 }) {
@@ -508,8 +509,8 @@ function PipelineCard({ cliente, isDragging, isFechado, onClick, dragHandleProps
     ? differenceInDays(new Date(), new Date(cliente.ultimo_contato_em))
     : null;
   const agingColor = daysSince !== null
-    ? daysSince >= 14 ? '#ff6b4a' : daysSince >= 7 ? '#f5c842' : '#4a9eff'
-    : '#4a9eff';
+    ? daysSince >= 14 ? 'hsl(var(--destructive))' : daysSince >= 7 ? '#f5c842' : 'hsl(var(--primary))'
+    : 'hsl(var(--primary))';
 
   // Contextual primary button
   const isGerando = sessao?.geracao_status === 'gerando';
@@ -528,8 +529,8 @@ function PipelineCard({ cliente, isDragging, isFechado, onClick, dragHandleProps
     }
   }
 
-  // Pieces dots
-  const pieceDots = sessao ? [
+  // Segmented progress bar
+  const pieceStates = sessao ? [
     sessao.tem_roteiro,
     localTem.proposta ?? sessao.tem_proposta,
     localTem.email ?? sessao.tem_email,
@@ -537,91 +538,116 @@ function PipelineCard({ cliente, isDragging, isFechado, onClick, dragHandleProps
     localTem.objecoes ?? sessao.tem_objecoes,
   ] : null;
 
+  const doneCount = pieceStates?.filter(Boolean).length ?? 0;
+
   return (
-    <div
-      onClick={onClick}
-      className={`rounded-lg bg-card border border-border p-3 cursor-pointer transition-all hover:shadow-md space-y-2 ${
-        isDragging ? 'opacity-80 shadow-lg rotate-1 scale-[1.02]' : ''
-      }`}
-      style={{ borderLeft: `3px solid ${tc.border}` }}
-    >
-      {/* Name + temp badge */}
-      <div className="flex items-center gap-2">
-        <div
-          {...dragHandleProps}
-          className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing"
-          style={{ background: tc.bg, color: tc.text }}
-        >
-          <span className="text-[10px] font-bold">{initials}</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-foreground truncate">{cliente.nome}</p>
-          {cliente.empresa && (
-            <p className="truncate" style={{ fontSize: '11px', color: '#5a5a7a', marginTop: '1px' }}>{cliente.empresa}</p>
-          )}
-        </div>
-        {/* Temperature pill badge */}
-        <span
-          className="shrink-0 font-bold"
-          style={{
-            fontSize: '10px',
-            padding: '2px 8px',
-            borderRadius: '20px',
-            background: tc.bg,
-            color: tc.text,
-            border: `1px solid ${tc.border}44`,
-          }}
-        >
-          {tc.label}
-        </span>
-      </div>
-
-      {/* Fechado badge */}
-      {isFechado && (
-        <div>
-          {cliente.status === 'ganho' ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded">✅ Ganho</span>
-          ) : cliente.status === 'perdido' ? (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-600 bg-red-500/10 px-1.5 py-0.5 rounded">❌ Perdido</span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded">✅ Fechado</span>
-          )}
-        </div>
-      )}
-
-      {/* Pieces dots — SVP purple */}
-      {pieceDots && (
-        <div className="flex items-center gap-1">
-          {pieceDots.map((done, i) => (
-            <span
-              key={i}
-              className="h-2 w-2 rounded-full"
-              style={done
-                ? { background: '#7c5cfc' }
-                : { background: '#2a2a3a', border: '1px solid #3a3a52' }
-              }
-            />
-          ))}
-          {isGerando && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-1" />}
-        </div>
-      )}
-
-      {/* Aging */}
-      <div className="flex items-center justify-between gap-1">
-        <span className="flex items-center gap-1 text-[10px]" style={{ color: agingColor }}>
-          <Clock className="h-3 w-3" />
-          {agingText ? `há ${agingText}` : 'Sem contato'}
-        </span>
-      </div>
-
-      {/* Primary action button */}
-      <button
-        onClick={e => { e.stopPropagation(); primaryAction.action(); }}
-        className="w-full text-[11px] font-medium py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center justify-center gap-1"
+    <TooltipProvider delayDuration={200}>
+      <div
+        onClick={onClick}
+        className={`rounded-lg bg-card border border-border cursor-pointer transition-all hover:shadow-md ${
+          isDragging ? 'opacity-80 shadow-lg rotate-1 scale-[1.02]' : ''
+        } ${isSaving ? 'ring-2 ring-primary/40 animate-pulse' : ''}`}
+        style={{ borderLeft: `3px solid ${tc.border}` }}
       >
-        {primaryAction.label} <ChevronRight className="h-3 w-3" />
-      </button>
-    </div>
+        {/* Card body */}
+        <div className="p-3 space-y-2">
+          {/* Name + grip + temp badge */}
+          <div className="flex items-center gap-1.5">
+            <div
+              {...dragHandleProps}
+              className="flex items-center gap-1 cursor-grab active:cursor-grabbing shrink-0"
+            >
+              <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50" />
+              <div
+                className="h-7 w-7 rounded-full flex items-center justify-center"
+                style={{ background: tc.bg, color: tc.text }}
+              >
+                <span className="text-[10px] font-bold">{initials}</span>
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-foreground truncate">{cliente.nome}</p>
+              {cliente.empresa && (
+                <p className="text-[11px] text-muted-foreground truncate" style={{ marginTop: '1px' }}>{cliente.empresa}</p>
+              )}
+            </div>
+            <span
+              className="shrink-0 font-bold"
+              style={{
+                fontSize: '10px',
+                padding: '2px 8px',
+                borderRadius: '20px',
+                background: tc.bg,
+                color: tc.text,
+                border: `1px solid ${tc.border}44`,
+              }}
+            >
+              {tc.label}
+            </span>
+          </div>
+
+          {/* Fechado badge — with visual tint */}
+          {isFechado && (
+            <div
+              className="rounded-md px-2 py-1"
+              style={{
+                background: cliente.status === 'perdido' ? 'hsl(var(--destructive) / 0.08)' : 'hsl(142 71% 45% / 0.08)',
+              }}
+            >
+              {cliente.status === 'ganho' ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: '#34d399' }}>✅ Ganho</span>
+              ) : cliente.status === 'perdido' ? (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-destructive">❌ Perdido</span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: '#34d399' }}>✅ Fechado</span>
+              )}
+            </div>
+          )}
+
+          {/* Segmented progress bar with tooltips */}
+          {pieceStates && (
+            <div className="flex items-center gap-0.5">
+              {pieceStates.map((done, i) => (
+                <Tooltip key={i}>
+                  <TooltipTrigger asChild>
+                    <span
+                      className="h-1.5 flex-1 rounded-full transition-colors"
+                      style={done
+                        ? { background: '#7c5cfc' }
+                        : { background: 'hsl(var(--muted))', border: '1px solid hsl(var(--border))' }
+                      }
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-[10px] px-2 py-1">
+                    {PIECE_LABELS[i]} {done ? '✓' : '— pendente'}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+              {isGerando && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground ml-1" />}
+              <span className="text-[9px] text-muted-foreground ml-1">{doneCount}/5</span>
+            </div>
+          )}
+
+          {/* Aging */}
+          <div className="flex items-center justify-between gap-1">
+            <span className="flex items-center gap-1 text-[10px]" style={{ color: agingColor }}>
+              <Clock className="h-3 w-3" />
+              {agingText ? `há ${agingText}` : 'Sem contato'}
+            </span>
+          </div>
+        </div>
+
+        {/* Separator + Primary action button */}
+        <div className="border-t border-border">
+          <button
+            onClick={e => { e.stopPropagation(); primaryAction.action(); }}
+            className="w-full text-[11px] font-medium py-2 rounded-b-lg bg-primary/5 text-primary hover:bg-primary/15 transition-colors flex items-center justify-center gap-1"
+          >
+            {primaryAction.label} <ChevronRight className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
+    </TooltipProvider>
   );
 }
 
