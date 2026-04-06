@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/popover';
 import {
   MessageSquare, Mail, MapPin, Clock, CalendarDays, ClipboardList,
-  Pencil, ChevronRight, Plus, Loader2, Phone, FileText, Shield, Send,
+  Pencil, ChevronRight, Plus, Loader2, Phone, FileText, Shield, Send, Maximize2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
