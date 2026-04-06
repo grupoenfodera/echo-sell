@@ -79,8 +79,8 @@ const App = () => (
               <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/perfil/dna" element={<ProtectedRoute><DnaProfile /></ProtectedRoute>} />
               <Route path="/dna-comercial" element={<ProtectedRoute><DnaProfile /></ProtectedRoute>} />
-              <Route path="/perfil/historico" element={<ProtectedRoute><History /></ProtectedRoute>} />
-              <Route path="/historico" element={<ProtectedRoute><History /></ProtectedRoute>} />
+              <Route path="/perfil/historico" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
+              <Route path="/historico" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
               <Route path="/crm" element={<ProtectedRoute><CRM /></ProtectedRoute>} />
               <Route path="/crm/:clienteId" element={<ProtectedRoute><CRMCliente /></ProtectedRoute>} />
               <Route path="/gerar" element={<ProtectedRoute><Gerar /></ProtectedRoute>} />

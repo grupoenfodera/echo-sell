@@ -297,7 +297,7 @@ function StepCliente({
 
       <div className="space-y-2">
         <Label htmlFor="nome_cliente">Nome do cliente <Req /></Label>
-        <Input id="nome_cliente" placeholder="Ex: João Silva" value={data.nome_cliente} onChange={e => onChange({ nome_cliente: e.target.value })} />
+        <Input id="nome_cliente" placeholder="Ex: Isabella Martins" value={data.nome_cliente} onChange={e => onChange({ nome_cliente: e.target.value })} />
         {errors.nome_cliente && <p className="text-xs text-destructive">{errors.nome_cliente}</p>}
       </div>
 
