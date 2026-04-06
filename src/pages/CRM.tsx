@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Cliente, ClienteStatus, ClienteTemperatura, UltimaSessao } from '@/types/crm';
 import RegistrarResultadoModal from '@/components/crm/RegistrarResultadoModal';
+import ClienteQuickViewModal from '@/components/crm/ClienteQuickViewModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
