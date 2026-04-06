@@ -77,6 +77,12 @@ export const svpApi = {
       body: JSON.stringify({ sessao_id }),
     }),
 
+  gerarPeca: (sessao_id: string, tipo: 'proposta' | 'email' | 'whatsapp' | 'objecoes') =>
+    callFunction<{ ok: boolean; sessao_id: string; tipo: string; [key: string]: unknown }>('gerar-peca', {
+      method: 'POST',
+      body: JSON.stringify({ sessao_id, tipo }),
+    }),
+
   listarClientes: (pagina = 1, porPagina = 20) =>
     callFunction<CrmListarResponse>(`crm-listar?pagina=${pagina}&por_pagina=${porPagina}`),
 
