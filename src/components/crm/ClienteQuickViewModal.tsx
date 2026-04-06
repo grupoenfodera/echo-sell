@@ -149,12 +149,12 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
              >
                <span style={{ fontSize: '18px', fontWeight: 700 }}>{initials}</span>
              </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-base font-semibold text-foreground truncate">{cliente.nome}</h2>
-              {subtitleText && (
-                <p className="text-xs truncate" style={{ color: '#9090b0', fontSize: '12px' }}>{subtitleText}</p>
-              )}
-            </div>
+             <div className="flex-1 min-w-0">
+               <h2 className="font-semibold truncate" style={{ fontSize: '18px', color: '#e8e8f0' }}>{cliente.nome}</h2>
+               {subtitleText && (
+                 <p className="truncate" style={{ color: '#9090b0', fontSize: '12px' }}>{subtitleText}</p>
+               )}
+             </div>
             <Badge className={`shrink-0 text-[10px] ${temp.cls}`}>
               {temp.emoji} {temp.label}
             </Badge>
