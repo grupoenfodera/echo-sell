@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { svpApi } from '@/lib/api-svp';
 import type { Cliente, SessaoVenda, Interacao, ClienteTemperatura } from '@/types/crm';
@@ -22,6 +22,14 @@ const TEMP_BADGE: Record<ClienteTemperatura, { emoji: string; label: string; cls
   em_risco: { emoji: '🔴', label: 'Em risco', cls: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
 };
 
+const AVATAR_COLORS: Record<string, { bg: string; color: string }> = {
+  ativo:    { bg: '#ff6b4a22', color: '#ff6b4a' },
+  morno:    { bg: '#f5c84222', color: '#f5c842' },
+  frio:     { bg: '#4a9eff22', color: '#4a9eff' },
+  em_risco: { bg: '#ff6b4a22', color: '#ff6b4a' },
+};
+const AVATAR_DEFAULT = { bg: '#3a3a5222', color: '#9090b0' };
+
 const STATUS_LABELS: Record<string, string> = {
   novo: 'Novo Lead',
   em_contato: 'Roteiro Pronto',
@@ -41,27 +49,14 @@ const PECAS: { tipo: PecaTipo; label: string; icon: React.ElementType; jsonKey: 
 ];
 
 const CANAL_ICON: Record<string, React.ElementType> = {
-  roteiro: ClipboardList,
-  proposta: FileText,
-  email: Mail,
-  whatsapp: MessageSquare,
-  objecoes: Shield,
-  ligacao: Phone,
-  reuniao: CalendarDays,
-  nota: ClipboardList,
-  transcricao: FileText,
+  roteiro: ClipboardList, proposta: FileText, email: Mail, whatsapp: MessageSquare,
+  objecoes: Shield, ligacao: Phone, reuniao: CalendarDays, nota: ClipboardList, transcricao: FileText,
 };
 
 const CANAL_LABEL: Record<string, string> = {
-  roteiro: 'Roteiro gerado',
-  proposta: 'Proposta comercial',
-  email: 'E-mail de follow-up',
-  whatsapp: 'Mensagem WhatsApp',
-  objecoes: 'Objeções geradas',
-  ligacao: 'Ligação',
-  reuniao: 'Reunião',
-  nota: 'Nota',
-  transcricao: 'Transcrição',
+  roteiro: 'Roteiro gerado', proposta: 'Proposta comercial', email: 'E-mail de follow-up',
+  whatsapp: 'Mensagem WhatsApp', objecoes: 'Objeções geradas', ligacao: 'Ligação',
+  reuniao: 'Reunião', nota: 'Nota', transcricao: 'Transcrição',
 };
 
 interface Props {
@@ -116,9 +111,11 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
   if (!cliente) return null;
 
   const temp = TEMP_BADGE[cliente.temperatura] ?? TEMP_BADGE.frio;
+  const avatarColor = AVATAR_COLORS[cliente.temperatura] ?? AVATAR_DEFAULT;
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const score = sessao?.roteiro_json ? (sessao.roteiro_json as any).score : null;
   const statusLabel = STATUS_LABELS[cliente.status] ?? cliente.status;
+  const subtitleText = cliente.empresa || null;
 
   const agingText = cliente.ultimo_contato_em
     ? formatDistanceToNow(new Date(cliente.ultimo_contato_em), { addSuffix: false, locale: ptBR })
@@ -126,26 +123,36 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
 
   const criadoText = formatDistanceToNow(new Date(cliente.criado_em), { addSuffix: false, locale: ptBR });
 
+  const sessaoDate = sessao?.criado_em
+    ? format(new Date(sessao.criado_em), 'dd/MM/yyyy', { locale: ptBR })
+    : null;
+
   return (
     <>
       <Dialog open={!!cliente} onOpenChange={v => { if (!v) onClose(); }}>
-        <DialogContent className="sm:max-w-[720px] p-0 gap-0 overflow-hidden">
+        <DialogContent className="sm:min-w-[720px] sm:max-w-[860px] p-0 gap-0 overflow-hidden">
+          {/* HEADER */}
           <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <span className="text-sm font-bold text-primary">{initials}</span>
+            <div
+              className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: avatarColor.bg, color: avatarColor.color }}
+            >
+              <span className="text-sm font-bold">{initials}</span>
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-base font-semibold text-foreground truncate">{cliente.nome}</h2>
-              <p className="text-xs text-muted-foreground truncate">
-                {[cliente.empresa, score != null ? `Score ${score}/100` : null].filter(Boolean).join(' · ')}
-              </p>
+              {subtitleText && (
+                <p className="text-xs truncate" style={{ color: '#9090b0', fontSize: '12px' }}>{subtitleText}</p>
+              )}
             </div>
             <Badge className={`shrink-0 text-[10px] ${temp.cls}`}>
               {temp.emoji} {temp.label}
             </Badge>
           </div>
 
+          {/* BODY */}
           <div className="grid grid-cols-1 sm:grid-cols-[240px_1fr] min-h-[360px]">
+            {/* LEFT SIDEBAR */}
             <div className="border-r border-border p-4 space-y-5 bg-muted/20">
               <div className="space-y-2">
                 <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Contato</h3>
@@ -201,6 +208,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
               </div>
             </div>
 
+            {/* RIGHT CONTENT */}
             <div className="flex flex-col">
               {loading ? (
                 <div className="flex-1 flex items-center justify-center">
@@ -208,32 +216,59 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                 </div>
               ) : (
                 <>
+                  {/* ÚLTIMA SESSÃO — card de metadados */}
                   <div className="p-4 border-b border-border space-y-3">
-                    <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Última sessão</h3>
                     {sessao ? (
                       <>
-                        <div className="flex items-center gap-2">
-                          <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <p className="text-xs font-medium text-foreground">
-                              {sessao.produto ?? 'Reunião'} · {sessao.nicho ?? cliente.empresa ?? '—'}
-                            </p>
-                            {score != null && (
-                              <p className="text-[10px] text-muted-foreground">Score {score}/100</p>
+                        {/* Card com borda roxa */}
+                        <div
+                          className="rounded-lg p-3 space-y-1.5"
+                          style={{ borderLeft: '3px solid #7c5cfc', background: 'hsl(var(--muted) / 0.3)' }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold uppercase tracking-wider" style={{ fontSize: '10px', color: '#5a5a7a' }}>
+                              Última sessão
+                            </span>
+                            {sessaoDate && (
+                              <span style={{ fontSize: '12px', color: '#9090b0' }}>{sessaoDate}</span>
                             )}
                           </div>
+                          <p className="font-bold truncate" style={{ fontSize: '13px', color: '#e8e8f0' }}>
+                            {sessao.nicho ?? 'Sem nicho'}
+                          </p>
+                          <p className="truncate" style={{ fontSize: '12px', color: '#9090b0' }}>
+                            {sessao.produto ?? 'Sem produto'}
+                          </p>
+                          {score != null && (
+                            <div>
+                              <span
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                                style={{ background: '#7c5cfc22', color: '#7c5cfc' }}
+                              >
+                                Score {score}/100
+                              </span>
+                            </div>
+                          )}
                         </div>
 
+                        {/* Separador */}
+                        <div className="border-t border-border" />
+
+                        {/* Chips de peças */}
                         <div className="flex flex-wrap gap-1.5">
                           {sessao.roteiro_json ? (
                             <button
                               onClick={() => navigate(`/roteiro/${sessao.id}`)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-green-500/10 text-green-600 border border-green-500/20 hover:bg-green-500/20 transition-colors"
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-colors"
+                              style={{ background: '#34d39922', color: '#34d399', border: '1px solid #34d39944' }}
                             >
                               ✓ 📋 Roteiro
                             </button>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-muted/50 text-muted-foreground border border-border">
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium"
+                              style={{ background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52' }}
+                            >
                               📋 Roteiro
                             </span>
                           )}
@@ -246,7 +281,11 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
 
                             if (isGerando) {
                               return (
-                                <span key={peca.tipo} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-muted text-muted-foreground border border-border">
+                                <span
+                                  key={peca.tipo}
+                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium"
+                                  style={{ background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52' }}
+                                >
                                   <Loader2 className="h-3 w-3 animate-spin" /> Gerando...
                                 </span>
                               );
@@ -256,11 +295,11 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                               <button
                                 key={peca.tipo}
                                 onClick={() => temPeca ? navigate(`/roteiro/${sessao.id}`) : handleGerarPeca(peca.tipo)}
-                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium border transition-colors ${
-                                  temPeca
-                                    ? 'bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20'
-                                    : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
-                                }`}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-colors"
+                                style={temPeca
+                                  ? { background: '#34d39922', color: '#34d399', border: '1px solid #34d39944' }
+                                  : { background: '#2a2a3a', color: '#5a5a7a', border: '1px solid #3a3a52' }
+                                }
                               >
                                 {temPeca ? '✓' : '+'} <Icon className="h-3 w-3" /> {peca.label}
                               </button>
@@ -268,6 +307,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                           })}
                         </div>
 
+                        {/* Botões */}
                         <div className="flex items-center gap-2">
                           {sessao.roteiro_json && (
                             <Button
@@ -288,15 +328,16 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                         </div>
                       </>
                     ) : (
-                      <div className="text-center py-4">
-                        <p className="text-xs text-muted-foreground mb-2">Nenhuma sessão ainda</p>
+                      <div className="text-center py-6">
+                        <p className="text-xs text-muted-foreground mb-3">Nenhuma sessão registrada</p>
                         <Button size="sm" className="text-xs" onClick={() => { onClose(); navigate('/'); }}>
-                          Gerar primeiro roteiro
+                          <Plus className="h-3 w-3 mr-1" /> Nova sessão
                         </Button>
                       </div>
                     )}
                   </div>
 
+                  {/* ATIVIDADE */}
                   <div className="flex-1 p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <h3 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Atividade</h3>
