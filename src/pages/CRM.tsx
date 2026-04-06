@@ -348,7 +348,7 @@ export default function CRM() {
                                           cliente={c}
                                           isDragging={snapshot.isDragging}
                                           isFechado={isFechado}
-                                          onClick={() => navigate(`/crm/${c.id}`)}
+                                          onClick={() => setClienteSelecionado(c)}
                                         />
                                       </div>
                                     )}
