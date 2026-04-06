@@ -295,9 +295,14 @@ export default function RoteiroPage() {
       .catch(() => callFn<{ sessoes?: SessaoVenda[] }>(`crm-listar?sessao_id=${sessao_id}`))
       .then(res => {
         const s = res.sessoes?.[0];
-        if (!s || !s.roteiro_json) {
-          setError('Sessão não encontrada ou sem roteiro.');
+        if (!s) {
+          setError('Sessão não encontrada.');
           setLoading(false);
+          return;
+        }
+        if (!s.roteiro_json) {
+          // Still generating — redirect to loading page
+          navigate(`/loading/${sessao_id}`, { replace: true });
           return;
         }
         setSessao(s);
