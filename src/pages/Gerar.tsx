@@ -45,7 +45,7 @@ export default function Gerar() {
   const handleFormSubmit = async (payload: GerarRoteiroPayload) => {
     setLastPayload(payload);
     const result = await gerarRoteiro(payload);
-    if (result?.async && result.sessaoId) {
+    if (result && result.async && result.sessaoId) {
       navigate(`/loading/${result.sessaoId}`, { replace: true });
     }
   };
