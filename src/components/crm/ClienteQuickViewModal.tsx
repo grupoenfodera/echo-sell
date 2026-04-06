@@ -378,30 +378,33 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                        </button>
                      </div>
 
-                    {interacoes.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic">Nenhuma atividade registrada</p>
-                    ) : (
-                      <ScrollArea className="max-h-[180px]">
-                        <div className="space-y-2.5">
-                          {interacoes.slice(0, 8).map(int => {
-                            const Icon = CANAL_ICON[int.canal] ?? ClipboardList;
-                            const label = int.titulo ?? CANAL_LABEL[int.canal] ?? int.canal;
-                            const ago = formatDistanceToNow(new Date(int.criado_em), { addSuffix: false, locale: ptBR });
-                            return (
-                              <div key={int.id} className="flex items-start gap-2.5">
-                                <div className="mt-0.5 h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0">
-                                  <Icon className="h-3 w-3 text-muted-foreground" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs text-foreground truncate">{label}</p>
-                                  <p className="text-[10px] text-muted-foreground">há {ago}</p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </ScrollArea>
-                    )}
+                     {interacoes.length === 0 ? (
+                       <p style={{ fontSize: '13px', color: '#5a5a7a', fontStyle: 'italic' }}>Nenhuma atividade registrada</p>
+                     ) : (
+                       <ScrollArea className="max-h-[180px]">
+                         <div className="space-y-0">
+                           {interacoes.slice(0, 8).map((int, idx) => {
+                             const Icon = CANAL_ICON[int.canal] ?? ClipboardList;
+                             const label = int.titulo ?? CANAL_LABEL[int.canal] ?? int.canal;
+                             const ago = formatDistanceToNow(new Date(int.criado_em), { addSuffix: false, locale: ptBR });
+                             return (
+                               <div key={int.id} className="flex items-start gap-2.5" style={{ padding: '8px 0', borderBottom: idx < interacoes.length - 1 ? '1px solid #2e2e42' : 'none' }}>
+                                 <div
+                                   className="flex items-center justify-center shrink-0"
+                                   style={{ marginTop: '2px', height: '28px', width: '28px', borderRadius: '50%', background: '#22222f', border: '1px solid #2e2e42' }}
+                                 >
+                                   <Icon style={{ width: '12px', height: '12px', color: '#5a5a7a' }} />
+                                 </div>
+                                 <div className="flex-1 min-w-0">
+                                   <p style={{ fontSize: '13px', color: '#e8e8f0' }} className="truncate">{label}</p>
+                                   <p style={{ fontSize: '11px', color: '#5a5a7a' }}>há {ago}</p>
+                                 </div>
+                               </div>
+                             );
+                           })}
+                         </div>
+                       </ScrollArea>
+                     )}
                   </div>
                 </>
               )}

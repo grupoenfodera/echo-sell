@@ -567,8 +567,8 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-foreground truncate">{cliente.nome}</p>
-              {cliente.empresa && (
-                <p className="text-[11px] text-muted-foreground truncate" style={{ marginTop: '1px' }}>{cliente.empresa}</p>
+              {(cliente.empresa) && (
+                <p className="truncate" style={{ fontSize: '11px', color: '#5a5a7a', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cliente.empresa}</p>
               )}
             </div>
             <span
