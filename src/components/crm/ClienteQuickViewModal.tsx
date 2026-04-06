@@ -365,6 +365,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                          </button>
                        </div>
                      )}
+                   </div>
 
                    {/* ATIVIDADE */}
                    <div className="space-y-3" style={{ marginTop: '24px' }}>
