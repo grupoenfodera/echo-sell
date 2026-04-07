@@ -223,14 +223,12 @@ function normalizeBlocos(roteiro: RoteiroJSON, followUp?: FollowUpItem[]): Bloco
         });
       }
 
-      // ── Fechamento: script se fechou / se não fechou ──
+      // ── Fechamento: acordeões "Se fechou" / "Se não fechou" ──
       if (b.script_fechou) {
-        sections.push({ id: `${bloco}-label-fechou`,    tipo: 'label',  label: 'Se fechou',    conteudo: '' });
-        sections.push({ id: `${bloco}-fechou`,           tipo: 'script', label: 'Script',       conteudo: b.script_fechou });
+        sections.push({ id: `${bloco}-fechou`,    tipo: 'oferta', label: 'Se fechou',    conteudo: b.script_fechou });
       }
       if (b.script_nao_fechou) {
-        sections.push({ id: `${bloco}-label-naofechou`, tipo: 'label',  label: 'Se não fechou', conteudo: '' });
-        sections.push({ id: `${bloco}-naofechou`,        tipo: 'script', label: 'Script',        conteudo: b.script_nao_fechou });
+        sections.push({ id: `${bloco}-naofechou`, tipo: 'oferta', label: 'Se não fechou', conteudo: b.script_nao_fechou });
       }
 
       // ── Follow-up (apenas no bloco de fechamento) ──
