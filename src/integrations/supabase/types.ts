@@ -694,6 +694,8 @@ export type Database = {
           pagamento_atrasado: boolean | null
           plano: string | null
           primeiro_acesso: boolean | null
+          regeneracoes_restantes: number | null
+          scripts_restantes: number | null
           tipo_acesso: string | null
           tokens_total: number | null
           ultimo_acesso: string | null
@@ -713,6 +715,8 @@ export type Database = {
           pagamento_atrasado?: boolean | null
           plano?: string | null
           primeiro_acesso?: boolean | null
+          regeneracoes_restantes?: number | null
+          scripts_restantes?: number | null
           tipo_acesso?: string | null
           tokens_total?: number | null
           ultimo_acesso?: string | null
@@ -732,6 +736,8 @@ export type Database = {
           pagamento_atrasado?: boolean | null
           plano?: string | null
           primeiro_acesso?: boolean | null
+          regeneracoes_restantes?: number | null
+          scripts_restantes?: number | null
           tipo_acesso?: string | null
           tokens_total?: number | null
           ultimo_acesso?: string | null
@@ -779,6 +785,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_dashboard_kpis: { Args: never; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
