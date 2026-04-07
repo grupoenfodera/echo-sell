@@ -850,13 +850,14 @@ export default function RoteiroPage() {
               <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground px-1 mb-2">Score</p>
               {Object.entries(scoreBreak).map(([key, val]) => {
                 const max = SCORE_AXIS_MAX[key] ?? 25;
-                const pct = Math.round(((val as number) / max) * 100);
+                const cappedVal = Math.min(val as number, max);
+                const pct = Math.round((cappedVal / max) * 100);
                 return (
                   <div key={key} className="px-1 space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">{SCORE_LABELS[key] ?? key.replace(/_/g, ' ')}</span>
                       <span className={`font-mono font-semibold tabular-nums text-[11px] ${getScoreColor(pct)}`}>
-                        {val as number}/{max}
+                        {cappedVal}/{max}
                       </span>
                     </div>
                     <div className="h-1 rounded-full bg-border overflow-hidden">
@@ -876,10 +877,6 @@ export default function RoteiroPage() {
 
           {/* Phase progress — navigation-based, not approval-based */}
           <div className="p-3 border-t border-border">
-            <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-              <span>Fase atual</span>
-              <span className="font-mono text-foreground font-semibold">{faseAtiva + 1}/{blocos.length}</span>
-            </div>
             <div className="flex gap-1">
               {blocos.map((_, i) => (
                 <button

@@ -84,8 +84,21 @@ function extractInlineInstructions(line: string): { speech: string; instrs: stri
 
 /* ── Parser ────────────────────────────────────────────────── */
 
+/** Normaliza variações de digitação/encoding antes do parse */
+function normalizeContent(raw: string): string {
+  return raw
+    // Corrige erro de encoding/typo da IA: SILENÇO → SILÊNCIO
+    .replace(/SILEN[CÇ]O/gi, 'SILÊNCIO')
+    // Remove tokens de template não preenchidos: {placeholder}, {nome}, etc.
+    // Garante que o texto em torno não fique com espaço duplo
+    .replace(/\s*\{[a-zA-ZÀ-ú_0-9]+\}/g, '')
+    // Limpa espaços duplos resultantes
+    .replace(/  +/g, ' ')
+    .trim();
+}
+
 function parse(content: string): Block[] {
-  const lines = splitToLines(content);
+  const lines = splitToLines(normalizeContent(content));
   const blocks: Block[] = [];
 
   let speechLines: string[] = [];
@@ -227,8 +240,15 @@ export default function ScriptRenderer({ content, accentColor }: ScriptRendererP
 
           case 'pause':
             return (
-              <div key={i} className="py-0.5">
-                <span className="inline-flex items-center gap-1.5 bg-card border border-border/60 rounded-full px-3 py-1 text-[11px] text-muted-foreground">
+              <div key={i} className="py-0.5 flex">
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium"
+                  style={{
+                    background: `color-mix(in srgb, ${accent} 10%, transparent)`,
+                    border: `1px solid color-mix(in srgb, ${accent} 25%, transparent)`,
+                    color: accent,
+                  }}
+                >
                   ⏸ {b.text}
                 </span>
               </div>
