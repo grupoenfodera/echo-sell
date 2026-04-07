@@ -15,7 +15,7 @@ import { svpApi } from '@/lib/api-svp';
 import { supabase } from '@/integrations/supabase/client';
 import PecasPanel from '@/components/roteiro/PecasPanel';
 import type {
-  SessaoVenda, BlocoRoteiro, SecaoRoteiro, SecaoEstado, RoteiroJSON, RoteiroBloco,
+  SessaoVenda, BlocoRoteiro, SecaoRoteiro, SecaoEstado, RoteiroJSON, RoteiroBloco, FollowUpItem,
 } from '@/types/crm';
 
 /* ─────────────────────────────────────────────────
@@ -108,7 +108,7 @@ async function callFn<T>(name: string, body?: Record<string, unknown>): Promise<
    normalizeBlocos
 ───────────────────────────────────────────────── */
 
-function normalizeBlocos(roteiro: RoteiroJSON): BlocoRoteiro[] {
+function normalizeBlocos(roteiro: RoteiroJSON, followUp?: FollowUpItem[]): BlocoRoteiro[] {
   const rr = roteiro.roteiro_reuniao;
 
   if (Array.isArray(rr)) {
@@ -122,6 +122,10 @@ function normalizeBlocos(roteiro: RoteiroJSON): BlocoRoteiro[] {
 
       // ── Generic script (abertura / diagnostico / solucao) ──
       if (b.script) {
+        // Para a fase de Solução, injeta label antes do script de abertura
+        if (bloco === 'solucao' || bloco === 'apresentacao_solucao') {
+          sections.push({ id: `${bloco}-label-abertura`, tipo: 'label', label: 'Abertura da solução', conteudo: '' });
+        }
         sections.push({ id: `${bloco}-script`, tipo: 'script', label: 'Script', conteudo: b.script });
       }
 
@@ -135,32 +139,41 @@ function normalizeBlocos(roteiro: RoteiroJSON): BlocoRoteiro[] {
 
       // ── Fases da solução (solucao) ──
       if (Array.isArray(b.fases) && b.fases.length > 0) {
+        sections.push({ id: `${bloco}-label-estrutura`, tipo: 'label', label: 'Estrutura de cada fase', conteudo: '' });
         (b.fases as { nome: string; descricao: string; ganho_cliente: string; micro_sin: string }[]).forEach((fase, j) => {
-          const parts = [
-            fase.descricao,
-            fase.ganho_cliente ? `\n→ Cliente ganha: ${fase.ganho_cliente}` : '',
-            fase.micro_sin     ? `\n→ Micro-sin: "${fase.micro_sin}"`        : '',
-          ].filter(Boolean);
-          sections.push({ id: `${bloco}-fase-${j}`, tipo: 'instrucao', label: fase.nome, conteudo: parts.join('') });
+          sections.push({
+            id: `${bloco}-fase-${j}`,
+            tipo: 'fase',
+            label: `Fase ${j + 1} — ${fase.nome}`,
+            conteudo: fase.descricao ?? '',
+            ganho_cliente: fase.ganho_cliente ?? '',
+            micro_sin: fase.micro_sin ?? '',
+          });
         });
       }
 
       // ── Oferta: 4 partes distintas ──
+      // Cada sub-bloco tem um label cinza muted + script card com borda âmbar
       if (b.script_entregaveis) {
-        sections.push({ id: `${bloco}-entregaveis`, tipo: 'script',   label: 'Script: Entregáveis',              conteudo: b.script_entregaveis });
+        sections.push({ id: `${bloco}-label-entregaveis`, tipo: 'label', label: 'Compilado de entregáveis',        conteudo: '' });
+        sections.push({ id: `${bloco}-entregaveis`,       tipo: 'script', label: 'Script',                         conteudo: b.script_entregaveis });
       }
       if (b.script_proximos_passos) {
-        sections.push({ id: `${bloco}-proxpassos`,  tipo: 'instrucao', label: 'Próximos Passos (antes do preço)', conteudo: b.script_proximos_passos });
+        sections.push({ id: `${bloco}-label-proxpassos`,  tipo: 'label', label: 'Próximos passos — antes do preço', conteudo: '' });
+        sections.push({ id: `${bloco}-proxpassos`,         tipo: 'script', label: 'Script',                          conteudo: b.script_proximos_passos });
       }
       if (b.script_preco) {
-        sections.push({ id: `${bloco}-preco`,        tipo: 'script',   label: 'Script: Preço + Âncora',           conteudo: b.script_preco });
+        sections.push({ id: `${bloco}-label-preco`,        tipo: 'label', label: 'Preço com âncora',                conteudo: '' });
+        sections.push({ id: `${bloco}-preco`,               tipo: 'script', label: 'Script',                        conteudo: b.script_preco });
       }
       if (b.script_avanco) {
-        sections.push({ id: `${bloco}-avanco`,        tipo: 'instrucao', label: 'Técnica de Avanço',               conteudo: b.script_avanco });
+        sections.push({ id: `${bloco}-label-avanco`,        tipo: 'label', label: 'Técnica de avanço',              conteudo: '' });
+        sections.push({ id: `${bloco}-avanco`,               tipo: 'script', label: 'Script',                       conteudo: b.script_avanco });
       }
 
       // ── Objeções (objecoes) ──
       if (Array.isArray(b.objecoes) && b.objecoes.length > 0) {
+        sections.push({ id: `${bloco}-label-situacoes`, tipo: 'label', label: 'Scripts por situação', conteudo: '' });
         (b.objecoes as { situacao: string; resposta: string; instrucao?: string }[]).forEach((obj, j) => {
           const conteudo = [
             obj.resposta,
@@ -172,15 +185,40 @@ function normalizeBlocos(roteiro: RoteiroJSON): BlocoRoteiro[] {
 
       // ── Fechamento: script se fechou / se não fechou ──
       if (b.script_fechou) {
-        sections.push({ id: `${bloco}-fechou`,    tipo: 'script',   label: 'Se Fechou',    conteudo: b.script_fechou });
+        sections.push({ id: `${bloco}-label-fechou`,    tipo: 'label',  label: 'Se fechou',    conteudo: '' });
+        sections.push({ id: `${bloco}-fechou`,           tipo: 'script', label: 'Script',       conteudo: b.script_fechou });
       }
       if (b.script_nao_fechou) {
-        sections.push({ id: `${bloco}-naofechou`, tipo: 'script', label: 'Se Não Fechou', conteudo: b.script_nao_fechou });
+        sections.push({ id: `${bloco}-label-naofechou`, tipo: 'label',  label: 'Se não fechou', conteudo: '' });
+        sections.push({ id: `${bloco}-naofechou`,        tipo: 'script', label: 'Script',        conteudo: b.script_nao_fechou });
       }
 
-      // ── Instruções de conduta + adaptações (colapsadas por padrão) ──
+      // ── Follow-up (apenas no bloco de fechamento) ──
+      const isFechamento = bloco === 'fechamento' || bloco === 'fechamento_agendamento';
+      if (isFechamento && Array.isArray(followUp) && followUp.length > 0) {
+        sections.push({ id: `${bloco}-label-followup`, tipo: 'label', label: 'Mensagens de follow-up', conteudo: '' });
+        followUp.forEach((fu, j) => {
+          sections.push({
+            id: `${bloco}-followup-${j}`,
+            tipo: 'followup',
+            label: `${fu.tentativa}ª tentativa — ${fu.momento}`,
+            conteudo: fu.mensagem,
+          });
+        });
+      }
+
+      // ── Instruções de conduta + adaptações ──
+      // Oferta: expandido por padrão (o vendedor precisa ver as regras do silêncio/negociação)
+      // Demais fases: colapsado para não poluir
+      const isOferta = bloco === 'oferta';
       if (b.instrucoes_conduta) {
-        sections.push({ id: `${bloco}-instrucoes`, tipo: 'instrucao', label: 'Instruções de Conduta', conteudo: b.instrucoes_conduta, collapsedByDefault: true });
+        sections.push({
+          id: `${bloco}-instrucoes`,
+          tipo: 'instrucao',
+          label: isOferta ? 'Como conduzir' : 'Instruções de Conduta',
+          conteudo: b.instrucoes_conduta,
+          collapsedByDefault: isOferta ? false : true,
+        });
       }
       if (b.adaptacoes) {
         sections.push({ id: `${bloco}-adaptacoes`, tipo: 'instrucao', label: 'Adaptações', conteudo: b.adaptacoes, collapsedByDefault: true });
@@ -266,6 +304,12 @@ function getScoreBg(s: number) {
 ───────────────────────────────────────────────── */
 
 function SecaoInsight({ secao, accentColor = '#1E3FA8' }: { secao: SecaoRoteiro; accentColor?: string }) {
+  // nota_tecnica format: "Concept Title\n\nDescription text"
+  // First paragraph = bold colored insight title; rest = muted description
+  const parts = secao.conteudo.split(/\n\n+/);
+  const insightTitle = parts[0]?.trim() || secao.label;
+  const insightDesc  = parts.slice(1).join('\n\n').trim();
+
   return (
     <div
       className="rounded-xl flex items-start gap-3 px-4 py-3"
@@ -279,12 +323,64 @@ function SecaoInsight({ secao, accentColor = '#1E3FA8' }: { secao: SecaoRoteiro;
       </div>
       <div className="space-y-0.5">
         <p className="text-sm font-semibold leading-snug" style={{ color: accentColor }}>
-          {secao.label}
+          {insightTitle}
         </p>
-        <p className="text-[13px] text-muted-foreground leading-relaxed">
+        {insightDesc && (
+          <p className="text-[13px] text-muted-foreground leading-relaxed">
+            {insightDesc}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────
+   SecaoLabel — separador de seção muted cinza
+───────────────────────────────────────────────── */
+
+function SecaoLabel({ secao }: { secao: SecaoRoteiro }) {
+  return (
+    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 pt-1">
+      {secao.label}
+    </p>
+  );
+}
+
+/* ─────────────────────────────────────────────────
+   SecaoFase — card de fase da solução com chip Micro-sin
+───────────────────────────────────────────────── */
+
+function SecaoFase({ secao, accentColor = '#1E3FA8' }: { secao: SecaoRoteiro; accentColor?: string }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-card px-4 py-3 space-y-2">
+      <p className="text-[13px] font-semibold text-foreground leading-snug">
+        {secao.label}
+      </p>
+      {secao.conteudo && (
+        <p className="text-[12px] text-muted-foreground leading-relaxed">
           {secao.conteudo}
         </p>
-      </div>
+      )}
+      {secao.ganho_cliente && (
+        <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+          <span className="font-medium">Cliente ganha:</span> {secao.ganho_cliente}
+        </p>
+      )}
+      {secao.micro_sin && (
+        <div className="pt-0.5">
+          <span
+            className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium"
+            style={{
+              background: `color-mix(in srgb, ${accentColor} 10%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${accentColor} 22%, transparent)`,
+              color: accentColor,
+            }}
+          >
+            Micro-sin: &ldquo;{secao.micro_sin}&rdquo;
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -328,7 +424,7 @@ function SecaoInstrucao({ secao, accentColor }: { secao: SecaoRoteiro; accentCol
               className="overflow-hidden"
             >
               <div className="px-4 pb-3 pt-2" style={{ borderTop: `1px solid ${ac}18` }}>
-                <ScriptRenderer content={secao.conteudo} accentColor={accentColor} />
+                <ScriptRenderer content={secao.conteudo} accentColor={accentColor} compact />
               </div>
             </motion.div>
           )}
@@ -337,13 +433,16 @@ function SecaoInstrucao({ secao, accentColor }: { secao: SecaoRoteiro; accentCol
     );
   }
 
-  /* Versão aberta — card secundário, claramente abaixo do script na hierarquia */
+  /* Versão aberta */
   return (
-    <div className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3">
-      <p className="text-[9px] font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5 text-muted-foreground/70">
-        <span>⚙</span> {secao.label}
+    <div className="rounded-lg border border-border/60 bg-card px-4 py-3">
+      <p
+        className="text-[10px] font-semibold uppercase tracking-widest mb-3"
+        style={{ color: accentColor ?? 'hsl(var(--muted-foreground))' }}
+      >
+        {secao.label}
       </p>
-      <ScriptRenderer content={secao.conteudo} accentColor={accentColor} />
+      <ScriptRenderer content={secao.conteudo} accentColor={accentColor} compact />
     </div>
   );
 }
@@ -393,6 +492,44 @@ function SecaoObjecao({ secao }: { secao: SecaoRoteiro }) {
 }
 
 /* ─────────────────────────────────────────────────
+   SecaoFollowUp — card de follow-up com número de tentativa
+───────────────────────────────────────────────── */
+
+function SecaoFollowUp({ secao }: { secao: SecaoRoteiro }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(secao.conteudo);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/40">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          {secao.label}
+        </p>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {copied
+            ? <><Check className="h-3 w-3 text-green-500" /><span className="text-green-500">Copiado</span></>
+            : <><Copy className="h-3 w-3" />Copiar</>
+          }
+        </button>
+      </div>
+      <div className="px-4 py-3">
+        <p className="text-[13px] text-foreground leading-relaxed whitespace-pre-wrap">
+          {secao.conteudo}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────
    SecaoScript — full card with Aprovar/Editar/Regenerar
 ───────────────────────────────────────────────── */
 
@@ -429,127 +566,109 @@ function SecaoScript({
     setFeedback('');
   };
 
+  // Hide the label when it's the generic fallback ("Script" / "script")
+  const isGenericLabel = !secao.label || secao.label.toLowerCase() === 'script';
+
   return (
     <div
       className="space-y-1.5 outline-none"
       onClick={onFocus}
       tabIndex={0}
+      style={isFocused ? { outline: `2px solid ${activeColor}22`, outlineOffset: 6, borderRadius: 10 } : {}}
     >
-      {/* Label — floating acima do card de fala */}
-      <div className="flex items-center gap-2">
-        {/* Badge "FALA" — sinaliza que é o script de voz do vendedor */}
-        <span
-          className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
-          style={{
-            background: `${activeColor}18`,
-            color: activeColor,
-            border: `1px solid ${activeColor}30`,
-          }}
-        >
-          FALA
-        </span>
-        <span
-          className="text-[10px] font-semibold uppercase tracking-wider"
-          style={{ color: activeColor, opacity: 0.8 }}
-        >
-          {secao.label}
-        </span>
-        {aprovada && (
-          <span className="text-[9px] text-green-500 font-medium flex items-center gap-0.5">
-            <Check className="h-2.5 w-2.5" /> Aprovado
+      {/* Label — only for non-generic, descriptive labels */}
+      {!isGenericLabel && (
+        <div className="flex items-center gap-2 pl-0.5">
+          <span
+            className="text-[10px] font-semibold uppercase tracking-wider"
+            style={{ color: activeColor }}
+          >
+            {secao.label}
           </span>
-        )}
-        {editada && !aprovada && (
-          <span className="text-[9px] text-blue-400 font-medium flex items-center gap-0.5">
-            <Pencil className="h-2.5 w-2.5" /> Editado
-          </span>
-        )}
-      </div>
+          {aprovada && (
+            <span className="text-[9px] text-green-500 font-medium flex items-center gap-0.5">
+              <Check className="h-2.5 w-2.5" /> Aprovado
+            </span>
+          )}
+          {editada && !aprovada && (
+            <span className="text-[9px] text-blue-400 font-medium flex items-center gap-0.5">
+              <Pencil className="h-2.5 w-2.5" /> Editado
+            </span>
+          )}
+        </div>
+      )}
 
-      {/* Script card — left border + tinted background, no outer border */}
-      <div
-        className="rounded-r-lg transition-all"
-        style={{
-          borderLeft: `3px solid ${activeColor}`,
-          background: aprovada
-            ? 'color-mix(in srgb, #1D9E6F 7%, hsl(var(--card)))'
-            : editada
-            ? 'color-mix(in srgb, #3B6FE8 7%, hsl(var(--card)))'
-            : `color-mix(in srgb, ${accentColor ?? 'hsl(var(--primary))'} 6%, hsl(var(--card)))`,
-          outline: isFocused ? `2px solid ${activeColor}30` : 'none',
-          outlineOffset: 2,
-        }}
-      >
-        {editando ? (
-          <div className="p-4 space-y-2">
-            <Textarea
-              value={textoEdit}
-              onChange={e => setTextoEdit(e.target.value)}
-              rows={8}
-              className="text-sm font-mono resize-none"
-            />
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">{textoEdit.length} caracteres</span>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => { onSalvarEdicao(textoEdit); setEditando(false); }}>Salvar</Button>
-                <Button size="sm" variant="ghost" onClick={() => setEditando(false)}>Cancelar</Button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="py-3 px-4">
-            <ScriptRenderer content={conteudo} accentColor={accentColor} />
-          </div>
-        )}
-
-        {/* Raciocínio */}
-        {secao.raciocinio && !editando && (
-          <div className="px-4 pb-3">
-            <button
-              onClick={e => { e.stopPropagation(); setShowRaciocinio(!showRaciocinio); }}
-              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
-            >
-              <Eye className="h-3 w-3" />
-              {showRaciocinio ? 'Ocultar raciocínio ↑' : 'Ver raciocínio ↓'}
-            </button>
-            <AnimatePresence>
-              {showRaciocinio && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                  <div className="mt-2 p-3 rounded-lg bg-muted/40 text-xs text-muted-foreground whitespace-pre-wrap">{secao.raciocinio}</div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-
-        {/* Feedback input for regeneration */}
-        {showFeedback && (
-          <div className="mx-4 mb-4 space-y-2 p-3 rounded-lg bg-muted/30 border border-amber-500/20">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-500/90 leading-snug">
-                O script atual será substituído — não há como desfazer.
-              </p>
-            </div>
-            <p className="text-xs text-muted-foreground">O que precisa mudar? <span className="text-muted-foreground/60">(opcional)</span></p>
-            <Input
-              placeholder="Ex: mais direto, usar o vocabulário dele..."
-              value={feedback}
-              onChange={e => setFeedback(e.target.value)}
-              className="text-sm"
-              onKeyDown={e => e.key === 'Enter' && handleRegenerar()}
-            />
+      {/* Content — ScriptRenderer default mode creates its own cards per block.
+          Section labels (BLOCO 1, BLOCO 2…) become gray separators between cards.
+          Instructions become their own "Como conduzir" cards.
+          Single-section content → one bordered card; multi-section → multiple cards. */}
+      {editando ? (
+        <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+          <Textarea
+            value={textoEdit}
+            onChange={e => setTextoEdit(e.target.value)}
+            rows={8}
+            className="text-sm font-mono resize-none"
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{textoEdit.length} caracteres</span>
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleRegenerar} disabled={regenerando} className="bg-amber-600 hover:bg-amber-500 text-white">
-                {regenerando ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Regenerando...</> : 'Confirmar →'}
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowFeedback(false); setFeedback(''); }}>Cancelar</Button>
+              <Button size="sm" onClick={() => { onSalvarEdicao(textoEdit); setEditando(false); }}>Salvar</Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditando(false)}>Cancelar</Button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <ScriptRenderer content={conteudo} accentColor={activeColor} />
+      )}
 
-      {/* Actions — only when focused or hovered */}
+      {/* Raciocínio */}
+      {secao.raciocinio && !editando && (
+        <div className="pl-1 pt-1">
+          <button
+            onClick={e => { e.stopPropagation(); setShowRaciocinio(!showRaciocinio); }}
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+          >
+            <Eye className="h-3 w-3" />
+            {showRaciocinio ? 'Ocultar raciocínio ↑' : 'Ver raciocínio ↓'}
+          </button>
+          <AnimatePresence>
+            {showRaciocinio && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                <div className="mt-2 p-3 rounded-lg bg-muted/40 text-xs text-muted-foreground whitespace-pre-wrap">{secao.raciocinio}</div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* Feedback input for regeneration */}
+      {showFeedback && (
+        <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-amber-500/20">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-500/90 leading-snug">
+              O script atual será substituído — não há como desfazer.
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">O que precisa mudar? <span className="text-muted-foreground/60">(opcional)</span></p>
+          <Input
+            placeholder="Ex: mais direto, usar o vocabulário dele..."
+            value={feedback}
+            onChange={e => setFeedback(e.target.value)}
+            className="text-sm"
+            onKeyDown={e => e.key === 'Enter' && handleRegenerar()}
+          />
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleRegenerar} disabled={regenerando} className="bg-amber-600 hover:bg-amber-500 text-white">
+              {regenerando ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Regenerando...</> : 'Confirmar →'}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => { setShowFeedback(false); setFeedback(''); }}>Cancelar</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Actions — only when focused */}
       {!editando && !showFeedback && isFocused && (
         <div className="flex items-center gap-2 pl-1">
           <Button
@@ -586,9 +705,12 @@ function SecaoCard(props: {
   onRegenerar: (feedback?: string) => void;
   accentColor?: string;
 }) {
+  if (props.secao.tipo === 'label')     return <SecaoLabel     secao={props.secao} />;
+  if (props.secao.tipo === 'fase')      return <SecaoFase      secao={props.secao} accentColor={props.accentColor} />;
   if (props.secao.tipo === 'insight')   return <SecaoInsight   secao={props.secao} accentColor={props.accentColor} />;
   if (props.secao.tipo === 'instrucao') return <SecaoInstrucao secao={props.secao} accentColor={props.accentColor} />;
   if (props.secao.tipo === 'objecao')   return <SecaoObjecao   secao={props.secao} />;
+  if (props.secao.tipo === 'followup')  return <SecaoFollowUp  secao={props.secao} />;
   return <SecaoScript {...props} />;
 }
 
@@ -667,7 +789,7 @@ export default function RoteiroPage() {
         if (!s) { setError('Sessão não encontrada.'); setLoading(false); return; }
         if (!s.roteiro_json) { navigate(`/loading/${sessao_id}`, { replace: true }); return; }
         setSessao(s);
-        setBlocos(normalizeBlocos(s.roteiro_json));
+        setBlocos(normalizeBlocos(s.roteiro_json, s.follow_up_json ?? undefined));
         setSecoesEstado((s as any).secoes_estado ?? {});
         setLoading(false);
       })

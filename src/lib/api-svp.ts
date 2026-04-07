@@ -8,9 +8,27 @@ import type {
 
 const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
-async function callFunction<T>(name: string, options: RequestInit = {}): Promise<T> {
+async function getValidToken(): Promise<string | undefined> {
   const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
+
+  // No session in localStorage — try to recover via refresh token
+  if (!session) {
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    return refreshed.session?.access_token;
+  }
+
+  // Session exists but expires in less than 60 seconds — proactive refresh
+  const expiresAt = (session as { expires_at?: number }).expires_at;
+  if (expiresAt && expiresAt * 1000 - Date.now() < 60_000) {
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    return refreshed.session?.access_token ?? session.access_token;
+  }
+
+  return session.access_token;
+}
+
+async function callFunction<T>(name: string, options: RequestInit = {}): Promise<T> {
+  const token = await getValidToken();
   const res = await fetch(`${FUNCTIONS_URL}/${name}`, {
     ...options,
     headers: {
@@ -28,8 +46,7 @@ async function callFunction<T>(name: string, options: RequestInit = {}): Promise
 }
 
 async function callFunctionWithStatus<T>(name: string, options: RequestInit = {}): Promise<{ data: T; httpStatus: number }> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token;
+  const token = await getValidToken();
   const res = await fetch(`${FUNCTIONS_URL}/${name}`, {
     ...options,
     headers: {

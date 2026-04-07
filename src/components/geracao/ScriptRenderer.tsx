@@ -16,6 +16,12 @@ export interface ScriptRendererProps {
   content: string;
   /** Cor hex da fase — usada na borda do script-card. */
   accentColor?: string;
+  /**
+   * compact=true — usado dentro de SecaoScript / SecaoInstrucao.
+   * Script blocks renderizam como <p> simples (sem borda própria).
+   * Instructions renderizam como lista inline (sem card wrapper).
+   */
+  compact?: boolean;
 }
 
 /* ── Types ─────────────────────────────────────────────────── */
@@ -190,63 +196,98 @@ function parse(content: string): Block[] {
   return blocks;
 }
 
+/* ── Helpers ────────────────────────────────────────────────── */
+
+/**
+ * Converte LABEL EM CAPS para "Label em Caps" (título por separador).
+ * "BLOCO 1 — DESAFIOS" → "Bloco 1 — Desafios"
+ * "CONFIRMAÇÃO OBRIGATÓRIA" → "Confirmação obrigatória"
+ */
+function toDisplayLabel(s: string): string {
+  return s
+    .split(/(\s*[—–]\s*)/)                      // split by em/en dash
+    .map((part, i) => {
+      if (/^(\s*[—–]\s*)$/.test(part)) return part; // keep the dash as-is
+      const lower = part.toLowerCase();
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join('');
+}
+
 /* ── Renderer ──────────────────────────────────────────────── */
 
-export default function ScriptRenderer({ content, accentColor }: ScriptRendererProps) {
+export default function ScriptRenderer({ content, accentColor, compact = false }: ScriptRendererProps) {
   if (!content?.trim()) return null;
 
   const blocks = parse(content);
   const accent = accentColor ?? 'hsl(var(--primary))';
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className={compact ? 'flex flex-col gap-4' : 'flex flex-col gap-2.5'}>
       {blocks.map((b, i) => {
         switch (b.kind) {
 
           case 'section':
+            // Separator label — muted gray, title-cased, never accent color
             return (
               <p
                 key={i}
-                className="text-[10px] font-semibold uppercase tracking-widest mt-1 first:mt-0"
-                style={{ color: accent, opacity: 0.85 }}
+                className="text-[12px] font-medium text-muted-foreground/60 pt-2 pb-0 first:pt-0"
               >
-                {b.text}
+                {toDisplayLabel(b.text)}
               </p>
             );
 
           case 'script':
-            // FALA — bloco primário, máxima hierarquia visual.
-            // Borda mais espessa, tint mais forte, texto maior e escuro.
+            if (compact) {
+              // Inside a SecaoScript card — render plain text, no nested border
+              return (
+                <p key={i} className="text-[15px] text-foreground leading-[1.75] whitespace-pre-wrap">
+                  {b.text}
+                </p>
+              );
+            }
             return (
               <div
                 key={i}
-                className="rounded-r-xl py-4 px-5"
+                className="rounded-lg py-4 px-5"
                 style={{
-                  borderLeft: `4px solid ${accent}`,
-                  background: `color-mix(in srgb, ${accent} 11%, hsl(var(--card)))`,
+                  borderLeft: `3px solid ${accent}`,
+                  background: `color-mix(in srgb, ${accent} 7%, hsl(var(--card)))`,
                 }}
               >
-                <p className="text-[15px] font-medium text-foreground leading-[1.85] whitespace-pre-wrap">
+                <p className="text-[15px] text-foreground leading-[1.75] whitespace-pre-wrap">
                   {b.text}
                 </p>
               </div>
             );
 
           case 'instructions':
-            // CONDUTA — bloco secundário, recua visualmente.
-            // Fundo neutro, label pequeno, texto apagado.
+            if (compact) {
+              // Inside a SecaoInstrucao card — render items inline, no nested card
+              return (
+                <div key={i} className="space-y-1.5">
+                  {b.items.map((item, j) => (
+                    <div key={j} className="flex items-start gap-2 py-0.5">
+                      <span className="text-muted-foreground mt-0.5 shrink-0 text-xs leading-none">→</span>
+                      <p className="text-[13px] text-muted-foreground leading-[1.6]">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              );
+            }
             return (
               <div
                 key={i}
-                className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3 space-y-1.5"
+                className="rounded-lg border border-border/60 bg-card px-4 py-3 space-y-1.5"
               >
-                <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/70 mb-2 flex items-center gap-1.5">
-                  <span>⚙</span> Como conduzir
+                <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
+                  Como conduzir
                 </p>
                 {b.items.map((item, j) => (
                   <div key={j} className="flex items-start gap-2 py-0.5">
-                    <span className="text-muted-foreground/60 mt-0.5 shrink-0 text-xs leading-none">→</span>
-                    <p className="text-[12px] text-muted-foreground/80 leading-[1.6]">{item}</p>
+                    <span className="text-muted-foreground mt-0.5 shrink-0 text-xs leading-none">→</span>
+                    <p className="text-[13px] text-muted-foreground leading-[1.6]">{item}</p>
                   </div>
                 ))}
               </div>

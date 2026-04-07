@@ -53,12 +53,16 @@ export interface RoteiroEtapa {
 
 export interface SecaoRoteiro {
   id: string;
-  tipo: 'script' | 'instrucao' | 'objecao' | 'insight';
+  tipo: 'script' | 'instrucao' | 'objecao' | 'insight' | 'fase' | 'label' | 'followup';
   label: string;
   conteudo: string;
   raciocinio?: string;
   conteudo_anterior?: string;
   collapsedByDefault?: boolean;
+  /** Usado em tipo='fase' — chip Micro-sin ao final do card */
+  micro_sin?: string;
+  /** Usado em tipo='fase' — linha "Cliente ganha:" abaixo da descrição */
+  ganho_cliente?: string;
 }
 
 export interface BlocoRoteiro {
