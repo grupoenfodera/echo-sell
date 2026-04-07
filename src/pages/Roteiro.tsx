@@ -112,10 +112,10 @@ async function callFn<T>(name: string, body?: Record<string, unknown>): Promise<
 
 function formatBlocoLabel(raw: string): string {
   // "BLOCO 1 — DESAFIOS" → "Bloco 1 — Desafios"
-  // "CONFIRMAÇÃO OBRIGATÓRIA" → "Confirmação obrigatória"
-  return raw
-    .replace(/:$/, '')
-    .trim()
+  // "CONFIRMAÇÃO OBRIGATÓRIA" → "Confirmação" (label amigável, sem "obrigatória")
+  const cleaned = raw.replace(/:$/, '').trim();
+  if (/CONFIRMAÇÃO\s+OBRIGATÓRIA/i.test(cleaned)) return 'Confirmação';
+  return cleaned
     .toLowerCase()
     .split(/(\s*[—–]\s*)/)
     .map(part => /^\s*[—–]\s*$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1))

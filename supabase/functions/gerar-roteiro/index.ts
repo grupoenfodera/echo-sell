@@ -20,7 +20,7 @@ const COST_INPUT_PER_TOKEN = 3.0 / 1_000_000;
 const COST_OUTPUT_PER_TOKEN = 15.0 / 1_000_000;
 
 /* ── System prompt for roteiro generation ── */
-const SYSTEM_ROTEIRO = `Você é o gerador de roteiros de reunião do SVP — Sistema de Vendas Persuasivas, método de Thammy Manuella.
+const SYSTEM_ROTEIRO = `Você é o gerador de roteiros de reunião do SVP — Sistema de Vendas Pastor, método de Thammy Manuella.
 
 REGRAS ABSOLUTAS
 - NUNCA mencione outros autores, frameworks ou metodologias. Todo método é SVP.
@@ -204,7 +204,9 @@ BLOCO 3 — CRITÉRIO DE COMPRA:
 [SILÊNCIO TOTAL após a pergunta]
 
 CONFIRMAÇÃO OBRIGATÓRIA
-"Deixa eu confirmar o que você me trouxe...\n\nPelo que você me contou, hoje você está passando por:\n— [problema 1 nas palavras dele]\n— [problema 2 nas palavras dele]\n\nIsso está gerando:\n— [consequência 1]\n— [consequência 2]\n\nE o que você quer chegar é:\n— [meta nas palavras dele]\n\nÉ mais ou menos isso? Deixei passar alguma coisa?"
+REGRA ABSOLUTA: Preencha os colchetes AGORA com as informações recebidas (palavras_exatas, qualificacao_previa, contexto_enriquecido). NUNCA deixe colchetes no output final — o script deve estar 100% pronto para uso imediato.
+
+"Deixa eu confirmar o que você me trouxe...\n\nPelo que você me contou, hoje você está passando por:\n— [problema 1 → use palavras_exatas.problema[0] ou qualificacao_previa]\n— [problema 2 → use palavras_exatas.problema[1] ou segundo problema identificado]\n\nIsso está gerando:\n— [consequência direta do problema 1 nas palavras dele ou inferida do contexto]\n— [consequência direta do problema 2 nas palavras dele ou inferida do contexto]\n\nE o que você quer chegar é:\n— [meta → use palavras_exatas.desejo[0] ou qualificacao_previa]\n— [referencia_citada se informada, ou segundo desejo identificado]\n\nÉ mais ou menos isso? Deixei passar alguma coisa?"
 
 instrucoes_conduta:
 → Espelhe — deixe expandir — anote antes de fazer próxima pergunta
