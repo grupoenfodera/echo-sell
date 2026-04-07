@@ -571,11 +571,9 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
   let primaryAction = { label: 'Gerar roteiro', action: () => navigate('/') };
   if (sessao) {
     if (todasGeradas) {
-      primaryAction = { label: 'Registrar contato', action: () => navigate(`/crm/${cliente.id}`) };
-    } else if (temRoteiro && totalPecas > 0 && totalPecas < 4) {
-      primaryAction = { label: 'Continuar', action: () => navigate(`/roteiro/${sessao.id}`) };
-    } else if (temRoteiro) {
-      primaryAction = { label: 'Ver roteiro', action: () => navigate(`/roteiro/${sessao.id}`) };
+      primaryAction = { label: 'Ver Roteiro', action: () => navigate(`/crm/${cliente.id}`) };
+    } else {
+      primaryAction = { label: 'Ver Roteiro', action: () => navigate(`/roteiro/${sessao.id}`) };
     }
   }
 
