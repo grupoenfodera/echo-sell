@@ -569,6 +569,48 @@ export default function RoteiroPage() {
   const [pecasOpen, setPecasOpen]       = useState(false);
   const mainRef                         = useRef<HTMLElement>(null);
 
+  /* ── Sidebar resize ─────────────────────────────── */
+  const ROTEIRO_SIDEBAR_KEY = 'svp-roteiro-sidebar-width';
+  const ROTEIRO_SIDEBAR_MIN = 180;
+  const ROTEIRO_SIDEBAR_MAX = 360;
+  const ROTEIRO_SIDEBAR_DEFAULT = 220;
+
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    try {
+      const n = Number(localStorage.getItem(ROTEIRO_SIDEBAR_KEY));
+      if (n >= ROTEIRO_SIDEBAR_MIN && n <= ROTEIRO_SIDEBAR_MAX) return n;
+    } catch {}
+    return ROTEIRO_SIDEBAR_DEFAULT;
+  });
+  const [sidebarDragging, setSidebarDragging] = useState(false);
+  const dragStartX   = useRef<number>(0);
+  const dragStartW   = useRef<number>(sidebarWidth);
+
+  const handleSidebarDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragStartX.current = e.clientX;
+    dragStartW.current = sidebarWidth;
+    setSidebarDragging(true);
+
+    const onMove = (ev: MouseEvent) => {
+      const next = Math.max(ROTEIRO_SIDEBAR_MIN, Math.min(ROTEIRO_SIDEBAR_MAX, dragStartW.current + ev.clientX - dragStartX.current));
+      setSidebarWidth(next);
+      try { localStorage.setItem(ROTEIRO_SIDEBAR_KEY, String(next)); } catch {}
+    };
+    const onUp = () => {
+      setSidebarDragging(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [sidebarWidth]);
+
   /* Scroll content area to top whenever the active phase changes */
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -752,7 +794,10 @@ export default function RoteiroPage() {
       <div className="flex flex-1 overflow-hidden">
 
         {/* ── SIDEBAR ── */}
-        <aside className="w-[220px] border-r border-border bg-card shrink-0 hidden md:flex flex-col overflow-y-auto">
+        <aside
+          className="border-r border-border bg-card shrink-0 hidden md:flex flex-col overflow-y-auto relative"
+          style={{ width: sidebarWidth }}
+        >
 
           {/* Client context */}
           <div className="p-4 border-b border-border">
@@ -893,6 +938,44 @@ export default function RoteiroPage() {
                 />
               ))}
             </div>
+          </div>
+
+          {/* ── Resize handle ─────────────────────────
+              8px hit-zone on the right edge; 2px accent
+              line appears on hover / while dragging.
+          ──────────────────────────────────────────── */}
+          <div
+            onMouseDown={handleSidebarDragStart}
+            title="Arrastar para redimensionar"
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: -4,
+              bottom: 0,
+              width: 8,
+              cursor: 'col-resize',
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: 2,
+                height: '100%',
+                borderRadius: 1,
+                background: sidebarDragging ? 'hsl(var(--primary))' : 'transparent',
+                transition: sidebarDragging ? 'none' : 'background 0.2s',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLDivElement).style.background = 'hsl(var(--primary) / 50%)';
+              }}
+              onMouseLeave={e => {
+                if (!sidebarDragging)
+                  (e.currentTarget as HTMLDivElement).style.background = 'transparent';
+              }}
+            />
           </div>
         </aside>
 
