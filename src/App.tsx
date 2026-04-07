@@ -1,20 +1,15 @@
-import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "@/components/AppLayout";
-import ProductTourModal from "@/components/ProductTourModal";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import Welcome from "./pages/Welcome";
 import Dashboard from "./pages/Dashboard";
-import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
 import DnaProfile from "./pages/DnaProfile";
 import History from "./pages/History";
@@ -32,24 +27,7 @@ const queryClient = new QueryClient();
 /* ── Auth guards ─────────────────────────────────── */
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, loading, usuario, refreshUsuario } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const [showProductTour, setShowProductTour] = useState(
-    () => sessionStorage.getItem('svp_tour_done') !== '1'
-  );
-
-  const handleTourComplete = async (action: 'configure' | 'explore') => {
-    sessionStorage.setItem('svp_tour_done', '1');
-    setShowProductTour(false);
-
-    if (action === 'explore' && usuario?.id) {
-      await supabase.from('usuarios').update({ primeiro_acesso: false }).eq('id', usuario.id);
-      await refreshUsuario();
-      navigate('/');
-    }
-  };
+  const { session, loading } = useAuth();
 
   if (loading) {
     return (
@@ -60,16 +38,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!session) return <Navigate to="/login" replace />;
-
-  const skipRedirectPaths = ['/bem-vindo', '/onboarding'];
-
-  if (usuario?.primeiro_acesso && showProductTour && !skipRedirectPaths.includes(location.pathname)) {
-    return <ProductTourModal onComplete={handleTourComplete} />;
-  }
-
-  if (usuario?.primeiro_acesso && !skipRedirectPaths.includes(location.pathname)) {
-    return <Navigate to="/bem-vindo" replace />;
-  }
 
   return <>{children}</>;
 };
@@ -106,8 +74,6 @@ const App = () => (
               <Route path="/redefinir-senha" element={<ResetPassword />} />
 
               {/* ── Full-screen protected flows (no sidebar) ── */}
-              <Route path="/bem-vindo" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
-              <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
               <Route
                 path="/loading/:sessao_id"
                 element={<ProtectedRoute><RoteiroLoading /></ProtectedRoute>}
