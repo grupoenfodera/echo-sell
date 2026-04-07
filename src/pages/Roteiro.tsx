@@ -780,19 +780,19 @@ function SecaoScript({
 
       {/* Actions — only when focused */}
       {!editando && !showFeedback && isFocused && (
-        <div className="flex items-center gap-2 pl-1">
+        <div className="flex items-center gap-2 pl-1 flex-wrap">
           <Button
             size="sm"
             variant={aprovada ? 'outline' : 'default'}
             onClick={e => { e.stopPropagation(); onAprovar(); }}
-            className={`text-xs h-7 ${aprovada ? 'text-green-500 border-green-500/40 hover:bg-green-500/10' : ''}`}
+            className={`text-xs h-9 ${aprovada ? 'text-green-500 border-green-500/40 hover:bg-green-500/10' : ''}`}
           >
             <Check className="mr-1 h-3 w-3" />{aprovada ? 'Aprovado' : 'Aprovar'}
           </Button>
-          <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setTextoEdit(conteudo); setEditando(true); }} className="text-xs h-7">
+          <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setTextoEdit(conteudo); setEditando(true); }} className="text-xs h-9">
             <Pencil className="mr-1 h-3 w-3" /> Editar
           </Button>
-          <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setShowFeedback(true); }} className="text-xs h-7">
+          <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setShowFeedback(true); }} className="text-xs h-9">
             <RotateCcw className="mr-1 h-3 w-3" /> Regenerar
           </Button>
         </div>
@@ -1085,11 +1085,12 @@ export default function RoteiroPage() {
     <div className="h-screen flex flex-col bg-background overflow-hidden">
 
       {/* ═══ HEADER ═══ */}
-      <header className="h-14 border-b border-border bg-card flex items-center px-4 gap-3 shrink-0 z-20">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="shrink-0 gap-1 text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Voltar
+      <header className="min-h-14 border-b border-border bg-card flex items-center px-3 sm:px-4 gap-2 sm:gap-3 shrink-0 z-20 flex-wrap py-2 sm:py-0 sm:flex-nowrap">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="shrink-0 gap-1 text-muted-foreground hover:text-foreground h-9 px-2 sm:px-3">
+          <ArrowLeft className="h-4 w-4" />
+          <span className="hidden sm:inline">Voltar</span>
         </Button>
-        <div className="h-5 w-px bg-border" />
+        <div className="h-5 w-px bg-border hidden sm:block" />
         {/* Lead identity — primary context */}
         <div className="flex flex-col justify-center min-w-0 flex-1">
           <span className="font-semibold text-[14px] text-foreground leading-tight truncate">{nomeCliente}</span>
@@ -1105,12 +1106,12 @@ export default function RoteiroPage() {
         </div>
         {/* Action buttons — grouped, consistent */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setPecasOpen(true)} className="gap-1.5 relative">
+          <Button variant="outline" size="sm" onClick={() => setPecasOpen(true)} className="gap-1.5 relative h-9">
             <FileText className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Materiais</span>
             {hasAnyPeca && <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500" />}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleCopiarRoteiro} className="gap-1.5">
+          <Button variant="outline" size="sm" onClick={handleCopiarRoteiro} className="gap-1.5 h-9">
             <Copy className="h-3.5 w-3.5" />
             <span className="hidden md:inline">Copiar roteiro</span>
           </Button>
@@ -1128,7 +1129,7 @@ export default function RoteiroPage() {
 
           {/* Client context */}
           <div className="p-4 border-b border-border">
-            <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Roteiro SVP</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Roteiro SVP</p>
             {/* Name · Nicho on same line */}
             <p className="text-sm font-semibold text-foreground leading-tight truncate">
               {nomeCliente}{nicho ? ` · ${nicho}` : ''}
@@ -1380,13 +1381,16 @@ export default function RoteiroPage() {
 
                 {/* Actions: copy + nav arrows */}
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <Button variant="outline" size="sm" onClick={handleCopiarFase} className="gap-1.5 text-xs">
+                  <Button variant="outline" size="sm" onClick={handleCopiarFase} className="gap-1.5 text-xs h-9 hidden sm:flex">
                     <Copy className="h-3.5 w-3.5" /> Copiar fase
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={handleCopiarFase} className="h-9 w-9 sm:hidden">
+                    <Copy className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-9 w-9"
                     disabled={faseAtiva === 0}
                     onClick={() => setFaseAtiva(f => f - 1)}
                   >
@@ -1395,7 +1399,7 @@ export default function RoteiroPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-9 w-9"
                     disabled={isLastPhase}
                     onClick={() => setFaseAtiva(f => f + 1)}
                   >
@@ -1538,7 +1542,7 @@ export default function RoteiroPage() {
       </div>
 
       {/* ═══ FOOTER ═══ */}
-      <footer className="h-14 border-t border-border bg-card flex items-center px-4 gap-4 shrink-0 z-20">
+      <footer className="h-14 border-t border-border bg-card flex items-center px-3 sm:px-4 gap-3 sm:gap-4 shrink-0 z-20">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <span className="text-sm text-muted-foreground">
             <span className="font-semibold text-foreground">{faseAtiva + 1}</span>
@@ -1546,22 +1550,26 @@ export default function RoteiroPage() {
             <span className="font-semibold text-foreground">{blocos.length}</span>
           </span>
           {isLastPhase && (
-            <span className="text-xs text-green-500 font-medium flex items-center gap-1">
+            <span className="text-xs text-green-500 font-medium hidden sm:flex items-center gap-1">
               <Check className="h-3 w-3" /> Roteiro completo
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={faseAtiva === 0} onClick={() => setFaseAtiva(f => f - 1)}>
-            <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Fase anterior
+          <Button variant="outline" size="sm" disabled={faseAtiva === 0} onClick={() => setFaseAtiva(f => f - 1)} className="h-9 gap-1 px-3">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Anterior</span>
           </Button>
           {!isLastPhase ? (
-            <Button size="sm" onClick={() => setFaseAtiva(f => f + 1)}>
-              Próxima fase <ArrowRight className="h-3.5 w-3.5 ml-1" />
+            <Button size="sm" onClick={() => setFaseAtiva(f => f + 1)} className="h-9 gap-1 px-3">
+              <span className="hidden sm:inline">Próxima</span>
+              <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           ) : (
-            <Button size="sm" onClick={() => setPecasOpen(true)} className="gap-1.5" style={{ background: faseColor }}>
-              <FileText className="h-3.5 w-3.5" /> Gerar materiais
+            <Button size="sm" onClick={() => setPecasOpen(true)} className="h-9 gap-1.5 px-3" style={{ background: faseColor }}>
+              <FileText className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Gerar materiais</span>
+              <span className="sm:hidden">Materiais</span>
             </Button>
           )}
         </div>
@@ -1571,13 +1579,13 @@ export default function RoteiroPage() {
       {pecasOpen && sessao && (
         <div className="fixed inset-0 z-50 flex">
           <div className="flex-1 bg-black/50" onClick={() => setPecasOpen(false)} />
-          <div className="w-full max-w-2xl bg-background border-l border-border flex flex-col shadow-2xl">
+          <div className="w-full sm:max-w-2xl bg-background border-l border-border flex flex-col shadow-2xl">
             <div className="h-14 px-4 border-b border-border flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Materiais de venda</h3>
                 <p className="text-xs text-muted-foreground">Proposta · E-mail · WhatsApp · Objeções</p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setPecasOpen(false)}>
+              <Button variant="ghost" size="sm" onClick={() => setPecasOpen(false)} className="h-9 w-9">
                 <X className="h-4 w-4" />
               </Button>
             </div>

@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { useState, useCallback } from 'react';
 import AppSidebar from './AppSidebar';
 import AppTopbar from './AppTopbar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const SIDEBAR_MIN = 160;
 const SIDEBAR_MAX = 320;
@@ -23,9 +24,14 @@ function getInitialWidth(): number {
  * AppLayout — Sidebar + Topbar + scrollable content area.
  * Used for all authenticated pages except full-screen flows
  * (Roteiro, RoteiroLoading, Login, Welcome, Onboarding).
+ *
+ * Mobile: sidebar collapses into a drawer overlay triggered by the
+ * hamburger button in AppTopbar. Content takes full width.
  */
 export default function AppLayout() {
   const [sidebarWidth, setSidebarWidth] = useState(getInitialWidth);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleWidthChange = useCallback((w: number) => {
     const clamped = Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, w));
@@ -33,17 +39,32 @@ export default function AppLayout() {
     try { localStorage.setItem(STORAGE_KEY, String(clamped)); } catch {}
   }, []);
 
+  const closeMobile = useCallback(() => setMobileMenuOpen(false), []);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Left sidebar — resizable */}
-      <AppSidebar width={sidebarWidth} onWidthChange={handleWidthChange} />
+      {/* Backdrop for mobile drawer */}
+      {isMobile && mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30"
+          onClick={closeMobile}
+        />
+      )}
+
+      {/* Left sidebar — resizable on desktop, drawer on mobile */}
+      <AppSidebar
+        width={sidebarWidth}
+        onWidthChange={handleWidthChange}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={closeMobile}
+      />
 
       {/* Right side — topbar + scrollable content */}
       <div
         className="flex flex-col flex-1 overflow-hidden"
-        style={{ marginLeft: sidebarWidth }}
+        style={{ marginLeft: isMobile ? 0 : sidebarWidth }}
       >
-        <AppTopbar />
+        <AppTopbar onToggleMobile={() => setMobileMenuOpen(o => !o)} />
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto bg-background">

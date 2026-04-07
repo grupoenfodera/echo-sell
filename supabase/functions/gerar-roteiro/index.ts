@@ -405,10 +405,19 @@ Deno.serve(async (req) => {
     if (!usuario.ativo) return errorResponse(usuario.motivo_bloqueio || "Conta bloqueada.", 403);
 
     // Check quota
+    // pastor: limite total vitalício (scripts_restantes)
+    // demais planos: limite mensal (consultas_mes)
     const plano = usuario.plano || "basico";
-    const limite = PLAN_LIMITS[plano] || PLAN_LIMITS.basico;
-    if ((usuario.consultas_mes || 0) >= limite) {
-      return errorResponse(`Limite de ${limite} consultas/mês atingido.`, 402);
+    if (plano === "pastor") {
+      const restantes = usuario.scripts_restantes ?? 0;
+      if (restantes <= 0) {
+        return errorResponse("Seu limite de 30 scripts foi atingido. Entre em contato com o suporte.", 402);
+      }
+    } else {
+      const limite = PLAN_LIMITS[plano] || PLAN_LIMITS.basico;
+      if ((usuario.consultas_mes || 0) >= limite) {
+        return errorResponse(`Limite de ${limite} consultas/mês atingido.`, 402);
+      }
     }
 
     // ── Find or create client ──
@@ -571,15 +580,17 @@ Deno.serve(async (req) => {
     }
 
     // ── Update user stats ──
-    await supabaseAdmin
-      .from("usuarios")
-      .update({
-        consultas_mes: (usuario.consultas_mes || 0) + 1,
-        consultas_total: (usuario.consultas_total || 0) + 1,
-        tokens_total: (usuario.tokens_total || 0) + tokensTotal,
-        custo_total_usd: (usuario.custo_total_usd || 0) + custoUsd,
-      })
-      .eq("id", user.id);
+    const statsUpdate: Record<string, unknown> = {
+      consultas_mes:   (usuario.consultas_mes   || 0) + 1,
+      consultas_total: (usuario.consultas_total || 0) + 1,
+      tokens_total:    (usuario.tokens_total    || 0) + tokensTotal,
+      custo_total_usd: (usuario.custo_total_usd || 0) + custoUsd,
+    };
+    // Pastor: decrementa scripts_restantes (quota vitalícia)
+    if (plano === "pastor") {
+      statsUpdate.scripts_restantes = Math.max(0, (usuario.scripts_restantes ?? 0) - 1);
+    }
+    await supabaseAdmin.from("usuarios").update(statsUpdate).eq("id", user.id);
 
     // ── Update client last contact ──
     if (finalClienteId) {

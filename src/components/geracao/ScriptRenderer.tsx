@@ -297,7 +297,7 @@ export default function ScriptRenderer({ content, accentColor, compact = false }
             if (compact) {
               return (
                 <div key={i}>
-                  <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1" style={{ color: accent }}>
+                  <p className="text-[11px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1" style={{ color: accent }}>
                     💬 Fale
                   </p>
                   <p className="text-[15px] text-foreground leading-[1.75] whitespace-pre-wrap">
@@ -315,7 +315,7 @@ export default function ScriptRenderer({ content, accentColor, compact = false }
                   background: `color-mix(in srgb, ${accent} 7%, hsl(var(--card)))`,
                 }}
               >
-                <p className="text-[9px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: accent }}>
+                <p className="text-[11px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: accent }}>
                   💬 Fale ao cliente
                 </p>
                 <p className="text-[15px] text-foreground leading-[1.75] whitespace-pre-wrap">
@@ -343,7 +343,7 @@ export default function ScriptRenderer({ content, accentColor, compact = false }
                 key={i}
                 className="rounded-lg border border-border/60 bg-muted/30 px-4 py-3 space-y-1.5"
               >
-                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-2 flex items-center gap-1">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-2 flex items-center gap-1">
                   📋 Como conduzir
                 </p>
                 {b.items.map((item, j) => (

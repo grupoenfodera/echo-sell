@@ -128,6 +128,20 @@ Deno.serve(async (req) => {
       return errorResponse("sessao_id, bloco_index e instrucao são obrigatórios.");
     }
 
+    // Verificar quota de regeneração (plano pastor)
+    const { data: usuario } = await supabaseAdmin
+      .from("usuarios")
+      .select("plano, regeneracoes_restantes")
+      .eq("id", user.id)
+      .single();
+
+    if (usuario?.plano === "pastor") {
+      const restantes = usuario.regeneracoes_restantes ?? 0;
+      if (restantes <= 0) {
+        return errorResponse("Seu limite de 30 regenerações foi atingido. Entre em contato com o suporte.", 402);
+      }
+    }
+
     // Buscar sessão
     const { data: sessao, error: sessaoErr } = await supabaseAdmin
       .from("sessoes_venda")
@@ -224,6 +238,14 @@ Deno.serve(async (req) => {
       .eq("id", sessao_id);
 
     if (updateErr) return errorResponse("Erro ao salvar bloco regenerado.");
+
+    // Decrementar regeneracoes_restantes para plano pastor
+    if (usuario?.plano === "pastor") {
+      await supabaseAdmin
+        .from("usuarios")
+        .update({ regeneracoes_restantes: Math.max(0, (usuario.regeneracoes_restantes ?? 0) - 1) })
+        .eq("id", user.id);
+    }
 
     return new Response(JSON.stringify({ ok: true, bloco: blocoNovo }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

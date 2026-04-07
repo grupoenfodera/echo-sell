@@ -2,29 +2,32 @@ import { useNavigate, NavLink } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { svpApi } from '@/lib/api-svp';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Zap, Users, Dna, UserCircle, Package, UserRound,
 } from 'lucide-react';
 
-/* ── Brand tokens ─────────────────────────────────
-   Primary blue : #195FA5
-   Text dark    : #262522
-   Muted        : #595956
-   BG off-white : #F2F2F0
-   Card white   : #FFFFFF
-   Border       : #E4E4E0
+/* ── Brand tokens — Sidebar escuro SVP ────────────
+   Background navy  : #0c1733
+   Border dark      : #1a2a50
+   Text white       : #FFFFFF
+   Muted white      : rgba(255,255,255,0.50)
+   Section label    : rgba(255,255,255,0.28)
+   Hover bg         : rgba(255,255,255,0.07)
+   Active bg        : rgba(255,255,255,0.11)
+   Accent blue      : #4d9fff  (azul claro para itens ativos)
 ─────────────────────────────────────────────────── */
 
 const BRAND = {
-  blue:      '#195FA5',
-  blueBg:    '#195FA514',
-  blueLight: '#EEF4FB',
-  text:      '#262522',
-  muted:     '#595956',
-  mutedLg:   '#8B8B88',
-  bg:        '#FFFFFF',
-  border:    '#E4E4E0',
-  hover:     '#F4F4F2',
+  blue:      '#4d9fff',           // azul claro — ativo/destaque
+  blueBg:    'rgba(77,159,255,0.14)',
+  blueLight: 'rgba(77,159,255,0.08)',
+  text:      '#FFFFFF',
+  muted:     'rgba(255,255,255,0.50)',
+  mutedLg:   'rgba(255,255,255,0.28)',
+  bg:        '#0c1733',           // navy profundo SVP
+  border:    '#1a2a50',
+  hover:     'rgba(255,255,255,0.07)',
 };
 
 /* ── Nav item ────────────────────────────────────── */
@@ -35,21 +38,23 @@ interface NavItemProps {
   label: string;
   badge?: number | null;
   end?: boolean;
+  onClick?: () => void;
 }
 
-function NavItem({ to, icon: Icon, label, badge, end }: NavItemProps) {
+function NavItem({ to, icon: Icon, label, badge, end, onClick }: NavItemProps) {
   return (
     <NavLink
       to={to}
       end={end}
       className="block"
+      onClick={onClick}
       style={({ isActive }) => ({
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        padding: '7px 10px',
+        padding: '9px 10px',
         borderRadius: '8px',
-        fontSize: '13px',
+        fontSize: '14px',
         fontWeight: 500,
         textDecoration: 'none',
         color: isActive ? BRAND.blue : BRAND.muted,
@@ -75,7 +80,7 @@ function NavItem({ to, icon: Icon, label, badge, end }: NavItemProps) {
         <>
           <Icon
             style={{
-              width: '15px', height: '15px', flexShrink: 0,
+              width: '16px', height: '16px', flexShrink: 0,
               color: isActive ? BRAND.blue : 'currentColor',
             }}
           />
@@ -127,11 +132,21 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 interface AppSidebarProps {
   width?: number;
   onWidthChange?: (w: number) => void;
+  /** Mobile only — whether the sidebar drawer is open */
+  mobileOpen?: boolean;
+  /** Mobile only — called when the user closes the drawer */
+  onMobileClose?: () => void;
 }
 
-export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarProps) {
+export default function AppSidebar({
+  width = 192,
+  onWidthChange,
+  mobileOpen = false,
+  onMobileClose,
+}: AppSidebarProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [crmCount, setCrmCount] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef<number>(0);
@@ -150,7 +165,7 @@ export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarPro
       .catch(() => {});
   }, [user?.id]);
 
-  /* Drag-to-resize logic */
+  /* Drag-to-resize logic (desktop only) */
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     dragStartX.current = e.clientX;
@@ -175,6 +190,15 @@ export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarPro
     document.addEventListener('mouseup', onUp);
   }, [width, onWidthChange]);
 
+  /* On mobile: slide sidebar in/out with transform.
+     On desktop: always visible, no transform needed. */
+  const mobileTransform = isMobile
+    ? mobileOpen ? 'translateX(0)' : 'translateX(-100%)'
+    : 'translateX(0)';
+
+  /* Close drawer on nav click (mobile) */
+  const handleNavClick = () => onMobileClose?.();
+
   return (
     <aside
       className="fixed left-0 top-0 bottom-0 z-40 flex flex-col no-print"
@@ -182,6 +206,8 @@ export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarPro
         width,
         background: BRAND.bg,
         borderRight: `1px solid ${BRAND.border}`,
+        transform: mobileTransform,
+        transition: 'transform 0.25s ease',
       }}
     >
       {/* Logo */}
@@ -190,7 +216,7 @@ export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarPro
         style={{ height: '52px', borderBottom: `1px solid ${BRAND.border}` }}
       >
         <button
-          onClick={() => navigate('/')}
+          onClick={() => { navigate('/'); onMobileClose?.(); }}
           className="flex items-center gap-1.5 hover:opacity-75 transition-opacity"
         >
           <span
@@ -198,13 +224,13 @@ export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarPro
               fontSize: '15px',
               fontWeight: 700,
               letterSpacing: '-0.02em',
-              color: BRAND.text,
+              color: '#FFFFFF',
               fontFamily: "'Albert Sans', sans-serif",
             }}
           >
             SVP
           </span>
-          <span style={{ color: BRAND.blue, fontSize: '18px', lineHeight: 1 }}>•</span>
+          <span style={{ color: '#4d9fff', fontSize: '18px', lineHeight: 1 }}>•</span>
         </button>
       </div>
 
@@ -212,18 +238,18 @@ export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarPro
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
         {/* CTA primário */}
         <button
-          onClick={() => navigate('/')}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] font-semibold transition-all"
+          onClick={() => { navigate('/'); onMobileClose?.(); }}
+          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-[14px] font-semibold transition-all"
           style={{
-            background: BRAND.blue,
+            background: '#195FA5',
             color: '#fff',
-            boxShadow: `0 2px 8px -2px ${BRAND.blue}55`,
+            boxShadow: '0 2px 12px -2px rgba(25,95,165,0.60)',
           }}
           onMouseEnter={e => {
-            (e.currentTarget as HTMLButtonElement).style.background = '#1a6cb8';
+            (e.currentTarget as HTMLButtonElement).style.background = '#1e6ec0';
           }}
           onMouseLeave={e => {
-            (e.currentTarget as HTMLButtonElement).style.background = BRAND.blue;
+            (e.currentTarget as HTMLButtonElement).style.background = '#195FA5';
           }}
         >
           <Zap className="h-4 w-4 shrink-0" />
@@ -234,7 +260,7 @@ export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarPro
         <div>
           <SectionLabel>Vendas</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <NavItem to="/crm" icon={Users} label="CRM" badge={crmCount} />
+            <NavItem to="/crm" icon={Users} label="CRM" badge={crmCount} onClick={handleNavClick} />
           </div>
         </div>
 
@@ -242,21 +268,22 @@ export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarPro
         <div>
           <SectionLabel>Configurações</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <NavItem to="/perfil/dna" icon={Dna} label="Meu DNA" />
-            <NavItem to="/produtos" icon={Package} label="Produtos" />
-            <NavItem to="/personas" icon={UserRound} label="Personas" />
-            <NavItem to="/perfil" end icon={UserCircle} label="Conta" />
+            <NavItem to="/perfil/dna" icon={Dna} label="Meu DNA" onClick={handleNavClick} />
+            <NavItem to="/produtos" icon={Package} label="Produtos" onClick={handleNavClick} />
+            <NavItem to="/personas" icon={UserRound} label="Personas" onClick={handleNavClick} />
+            <NavItem to="/perfil" end icon={UserCircle} label="Conta" onClick={handleNavClick} />
           </div>
         </div>
       </nav>
 
-      {/* ── Resize handle ────────────────────────────
+      {/* ── Resize handle (desktop only) ─────────────
           8px hit area on the right edge of the sidebar.
           Shows a 2px accent line on hover / while dragging.
       ─────────────────────────────────────────────── */}
       <div
         onMouseDown={handleDragStart}
         title="Arrastar para redimensionar"
+        className="hidden md:flex"
         style={{
           position: 'absolute',
           top: 0,
@@ -265,7 +292,6 @@ export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarPro
           width: 8,
           cursor: 'col-resize',
           zIndex: 50,
-          display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
         }}
@@ -279,7 +305,6 @@ export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarPro
             background: isDragging ? BRAND.blue : 'transparent',
             transition: isDragging ? 'none' : 'background 0.2s',
           }}
-          className="group-hover:bg-red-500"
           onMouseEnter={e => {
             (e.currentTarget as HTMLDivElement).style.background = `${BRAND.blue}80`;
           }}

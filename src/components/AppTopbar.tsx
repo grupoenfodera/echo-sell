@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Moon, Sun, LogOut, User, Dna, Package, UserCircle } from 'lucide-react';
+import { Moon, Sun, LogOut, User, Dna, Package, UserCircle, Menu } from 'lucide-react';
 
 /* ── Brand tokens ───────────────────────────────── */
 const BRAND = {
@@ -29,7 +29,7 @@ const CONTEXTO_LABEL: Record<string, string> = {
   b2c: 'B2C',
 };
 
-export default function AppTopbar() {
+export default function AppTopbar({ onToggleMobile }: { onToggleMobile?: () => void }) {
   const { theme, toggleTheme } = useTheme();
   const { usuario, signOut } = useAuth();
   const navigate = useNavigate();
@@ -87,6 +87,24 @@ export default function AppTopbar() {
         borderBottom: `1px solid ${topBorder}`,
       }}
     >
+      {/* Mobile hamburger — only visible on small screens */}
+      <button
+        onClick={onToggleMobile}
+        className="md:hidden flex items-center justify-center rounded-lg transition-colors shrink-0"
+        style={{ width: '36px', height: '36px', color: iconColor, background: 'transparent' }}
+        aria-label="Abrir menu"
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLButtonElement).style.background = isDark ? '#ffffff08' : BRAND.hover;
+          (e.currentTarget as HTMLButtonElement).style.color = iconHover;
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+          (e.currentTarget as HTMLButtonElement).style.color = iconColor;
+        }}
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
       {/* Center — DNA / context badge */}
       <div className="flex-1 flex justify-center">
         {tomLabel && ctxLabel ? (
