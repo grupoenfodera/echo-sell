@@ -339,6 +339,7 @@ export default function CRM() {
                 {COLUNAS.map(col => {
                   const items = colunaClientes[col.id];
                   const isFechado = col.id === 'fechado';
+                  const totalValor = items.reduce((sum, c) => sum + (c.ultima_sessao?.preco ?? 0), 0);
 
                   return (
                     <div key={col.id} className="w-[280px] shrink-0 flex flex-col">
@@ -382,6 +383,11 @@ export default function CRM() {
                             </button>
                           )}
                         </div>
+                        {totalValor > 0 && (
+                          <p className="text-[11px] font-semibold text-primary mt-1">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValor)}
+                          </p>
+                        )}
                       </div>
 
                       {/* Column body */}
