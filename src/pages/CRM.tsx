@@ -606,7 +606,7 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-foreground truncate">{cliente.nome}</p>
               {(cliente.empresa) && (
-                <p className="truncate" style={{ fontSize: '11px', color: '#7A7F92', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cliente.empresa}</p>
+                <p className="truncate text-muted-foreground" style={{ fontSize: '11px', marginTop: '1px' }}>{cliente.empresa}</p>
               )}
             </div>
             <span
@@ -649,11 +649,9 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
                 <Tooltip key={i}>
                   <TooltipTrigger asChild>
                     <span
-                      className="h-1.5 flex-1 rounded-full transition-colors"
-                     style={done
-                        ? { background: '#1E3FA8' }
-                        : { background: '#20232B', border: '1px solid #2B2F3C' }
-                      }
+                      className={`h-1.5 flex-1 rounded-full transition-colors ${
+                        done ? 'bg-primary' : 'bg-muted border border-border'
+                      }`}
                     />
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-[10px] px-2 py-1">
