@@ -122,6 +122,7 @@ const CANAL_FILTERS: { value: InteracaoCanal | 'todos'; label: string }[] = [
   { value: 'nota', label: '📝 Notas' },
   { value: 'roteiro', label: '📄 Roteiros' },
   { value: 'proposta', label: '📄 Propostas' },
+  { value: 'transcricao', label: '🧪 Transcrições' },
 ];
 
 /* ── Helpers ────────────────────────────────────── */
@@ -445,6 +446,7 @@ export default function CRMCliente() {
         <NovaInteracaoModal
           aberto={modalInteracao}
           clienteId={clienteId}
+          nomeCliente={cliente?.nome}
           canalInicial={canalInicial}
           onFechar={() => setModalInteracao(false)}
           onCriada={inter => setInteracoes(prev => [inter, ...prev])}
@@ -627,6 +629,11 @@ function SessaoItem({ sessao, onRegistrarResultado }: { sessao: SessaoVenda; onR
         <div className="flex items-center gap-1.5 flex-wrap">
           <Badge variant="secondary" className={`text-[10px] ${statusCls}`}>{statusLabel}</Badge>
           {sessao.contexto && <Badge variant="outline" className="text-[10px]">{sessao.contexto.toUpperCase()}</Badge>}
+          {(sessao.dados_formulario as Record<string, unknown> | undefined)?.origem === 'transcricao' && (
+            <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20">
+              🧪 Transcrição
+            </Badge>
+          )}
           {res && <Badge variant="secondary" className={`text-[10px] ${res.cls}`}>{res.label}</Badge>}
           {!sessao.resultado && (
             <Button

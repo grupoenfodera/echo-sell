@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, XCircle, Clock, Clipboard, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  CheckCircle2, XCircle, Clock, ChevronDown, ChevronRight,
+  Loader2, Zap, FileText,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { svpApi } from '@/lib/api-svp';
 
 /* ── Types ───────────────────────────────────────── */
 
@@ -56,6 +62,8 @@ export interface AnaliseTranscricao {
 
 interface Props {
   analise: AnaliseTranscricao;
+  clienteId?: string;
+  nomeCliente?: string;
   onNovaTranscricao?: () => void;
   onFechar?: () => void;
 }
@@ -69,12 +77,8 @@ const NIVEL_BADGE: Record<string, { label: string; bg: string; color: string; bo
 };
 
 const BLOCO_LABELS: Record<string, string> = {
-  abertura:   'Abertura',
-  diagnostico: 'Diagnóstico',
-  solucao:    'Solução',
-  oferta:     'Oferta',
-  objecoes:   'Objeções',
-  fechamento: 'Fechamento',
+  abertura: 'Abertura', diagnostico: 'Diagnóstico', solucao: 'Solução',
+  oferta: 'Oferta', objecoes: 'Objeções', fechamento: 'Fechamento',
 };
 
 function StatusIcon({ status }: { status: string }) {
@@ -85,23 +89,59 @@ function StatusIcon({ status }: { status: string }) {
 
 /* ── Component ───────────────────────────────────── */
 
-export default function TranscricaoResultadoCard({ analise, onNovaTranscricao, onFechar }: Props) {
+export default function TranscricaoResultadoCard({
+  analise, clienteId, nomeCliente, onNovaTranscricao, onFechar,
+}: Props) {
   const navigate = useNavigate();
-  const [svpExpanded, setSvpExpanded] = useState(false);
+
+  // UI state
+  const [svpExpanded, setSvpExpanded]           = useState(false);
   const [objecoesExpanded, setObjecoesExpanded] = useState(false);
+  const [gerarAberto, setGerarAberto]           = useState(false);
+
+  // Mini-form state
+  const [nicho, setNicho]     = useState('');
+  const [produto, setProduto] = useState('');
+  const [preco, setPreco]     = useState('');
+  const [gerando, setGerando] = useState(false);
+
+  /* ── Generate roteiro directly ── */
+  const handleGerarRoteiro = async () => {
+    if (!nicho.trim() || !produto.trim()) {
+      toast.error('Preencha o nicho e o produto.');
+      return;
+    }
+    setGerando(true);
+    try {
+      const { data } = await svpApi.gerarRoteiroAsync({
+        nicho: nicho.trim(),
+        produto: produto.trim(),
+        preco: preco ? parseFloat(preco) : undefined,
+        nome_cliente: nomeCliente,
+        cliente_id: clienteId,
+        dados_extras: {
+          qualificacao_previa: analise.contexto_enriquecido ?? '',
+          palavras_exatas: (analise.palavras_exatas_cliente?.problema ?? []).join(', '),
+          origem: 'transcricao',
+        },
+      });
+
+      if (!data?.sessao_id) throw new Error('Sessão não retornada pela API.');
+
+      toast.success('Roteiro gerado com sucesso!');
+      onFechar?.();
+      navigate(`/roteiro/${data.sessao_id}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao gerar roteiro.');
+    } finally {
+      setGerando(false);
+    }
+  };
 
   const nivel = analise.nivel_interesse ?? 'frio';
   const nivelBadge = NIVEL_BADGE[nivel] ?? NIVEL_BADGE.frio;
-
-  const copiarContexto = () => {
-    const texto = analise.contexto_enriquecido ?? '';
-    if (!texto) { toast.error('Contexto não disponível.'); return; }
-    navigator.clipboard.writeText(texto).then(() => {
-      toast.success('Contexto copiado! Cole no campo "Qualificação prévia" ao gerar o roteiro.');
-    });
-  };
-
   const palavras = analise.palavras_exatas_cliente;
+
   const todasPalavras = [
     ...(palavras?.problema ?? []),
     ...(palavras?.desejo ?? []),
@@ -119,7 +159,8 @@ export default function TranscricaoResultadoCard({ analise, onNovaTranscricao, o
 
   return (
     <div className="space-y-4">
-      {/* ── Header badge ── */}
+
+      {/* ── Nivel de interesse ── */}
       <div className="flex items-center justify-between gap-3">
         <span
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
@@ -140,12 +181,12 @@ export default function TranscricaoResultadoCard({ analise, onNovaTranscricao, o
         </div>
       )}
 
-      {/* ── Justificativa interesse ── */}
+      {/* ── Justificativa ── */}
       {analise.justificativa_interesse && (
         <p className="text-[12px] text-muted-foreground italic px-1">{analise.justificativa_interesse}</p>
       )}
 
-      {/* ── Palavras exatas do cliente ── */}
+      {/* ── Palavras exatas ── */}
       {todasPalavras.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
@@ -170,13 +211,13 @@ export default function TranscricaoResultadoCard({ analise, onNovaTranscricao, o
           </div>
           {palavras?.referencia_citada && (
             <p className="mt-1.5 text-[11px] text-muted-foreground">
-              📌 Referência citada: <span className="font-semibold text-foreground">{palavras.referencia_citada}</span>
+              📌 Referência: <span className="font-semibold text-foreground">{palavras.referencia_citada}</span>
             </p>
           )}
         </div>
       )}
 
-      {/* ── Auditoria SVP (colapsável) ── */}
+      {/* ── Auditoria SVP ── */}
       <div className="rounded-lg border border-border overflow-hidden">
         <button
           className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/40 hover:bg-muted/60 transition-colors text-left"
@@ -188,14 +229,13 @@ export default function TranscricaoResultadoCard({ analise, onNovaTranscricao, o
             </span>
             <span className="flex items-center gap-1 text-[10px]">
               <span className="text-emerald-500 font-bold">{executados}✓</span>
-              {parciais > 0 && <span className="text-amber-500 font-bold">{parciais}~</span>}
-              {ausentes > 0 && <span className="text-red-400 font-bold">{ausentes}✗</span>}
+              {parciais > 0 && <span className="text-amber-500 font-bold ml-1">{parciais}~</span>}
+              {ausentes > 0 && <span className="text-red-400 font-bold ml-1">{ausentes}✗</span>}
             </span>
           </div>
           {svpExpanded
             ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-            : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-          }
+            : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
         </button>
         {svpExpanded && (
           <div className="px-4 py-3 space-y-2.5 bg-background">
@@ -219,7 +259,7 @@ export default function TranscricaoResultadoCard({ analise, onNovaTranscricao, o
         )}
       </div>
 
-      {/* ── Objeções (colapsável) ── */}
+      {/* ── Objeções ── */}
       {(analise.objecoes_identificadas ?? []).length > 0 && (
         <div className="rounded-lg border border-border overflow-hidden">
           <button
@@ -231,8 +271,7 @@ export default function TranscricaoResultadoCard({ analise, onNovaTranscricao, o
             </span>
             {objecoesExpanded
               ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-              : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-            }
+              : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
           </button>
           {objecoesExpanded && (
             <div className="px-4 py-3 space-y-3 bg-background">
@@ -241,8 +280,7 @@ export default function TranscricaoResultadoCard({ analise, onNovaTranscricao, o
                   <div className="flex items-start gap-2">
                     {ob.foi_tratada
                       ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 mt-0.5 shrink-0" />
-                      : <XCircle className="h-3.5 w-3.5 text-red-400 mt-0.5 shrink-0" />
-                    }
+                      : <XCircle className="h-3.5 w-3.5 text-red-400 mt-0.5 shrink-0" />}
                     <p className="text-[12px] font-medium text-foreground">"{ob.objecao}"</p>
                   </div>
                   {ob.observacao && (
@@ -261,7 +299,9 @@ export default function TranscricaoResultadoCard({ analise, onNovaTranscricao, o
           <p className="text-[10px] font-semibold uppercase tracking-widest text-primary mb-1.5">
             Próxima ação recomendada
           </p>
-          <p className="text-sm text-foreground leading-relaxed">{analise.proxima_acao.recomendacao_principal}</p>
+          <p className="text-sm text-foreground leading-relaxed">
+            {analise.proxima_acao.recomendacao_principal}
+          </p>
           {analise.proxima_acao.para_whatsapp && (
             <div className="mt-2 pt-2 border-t border-primary/15">
               <p className="text-[10px] text-muted-foreground mb-0.5">Abertura de follow-up:</p>
@@ -271,36 +311,96 @@ export default function TranscricaoResultadoCard({ analise, onNovaTranscricao, o
         </div>
       )}
 
-      {/* ── CTAs ── */}
-      <div className="flex flex-col gap-2 pt-1">
-        <Button
-          onClick={copiarContexto}
-          className="w-full gap-2"
-          variant="default"
-        >
-          <Clipboard className="h-4 w-4" />
-          Copiar contexto para o Roteiro
-        </Button>
+      {/* ── Divisor ── */}
+      <div className="border-t border-border" />
 
-        <div className="flex gap-2">
+      {/* ── GERAR ROTEIRO — CTA principal ── */}
+      {!gerarAberto ? (
+        <div className="space-y-2">
           <Button
-            onClick={() => navigate('/')}
-            variant="outline"
-            className="flex-1 text-sm"
+            onClick={() => setGerarAberto(true)}
+            className="w-full gap-2 font-semibold"
+            size="lg"
           >
-            🚀 Gerar Roteiro
+            <Zap className="h-4 w-4" />
+            Gerar Roteiro com esta análise
           </Button>
-          {onNovaTranscricao && (
-            <Button
-              onClick={onNovaTranscricao}
-              variant="ghost"
-              className="flex-1 text-sm text-muted-foreground"
-            >
-              + Nova análise
+          <div className="flex gap-2">
+            {onNovaTranscricao && (
+              <Button variant="ghost" className="flex-1 text-sm text-muted-foreground" onClick={onNovaTranscricao}>
+                + Nova análise
+              </Button>
+            )}
+            <Button variant="ghost" className="flex-1 text-sm text-muted-foreground" onClick={onFechar}>
+              Fechar
             </Button>
-          )}
+          </div>
         </div>
-      </div>
+      ) : (
+        /* ── Mini-form de confirmação ── */
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-4">
+          <div className="flex items-center gap-2 mb-1">
+            <FileText className="h-4 w-4 text-primary" />
+            <p className="text-sm font-semibold text-foreground">Confirmar para gerar o roteiro</p>
+          </div>
+          <p className="text-[11px] text-muted-foreground -mt-2">
+            O contexto completo da análise será injetado automaticamente. Confirme o nicho e produto.
+          </p>
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Nicho *</Label>
+              <Input
+                placeholder="Ex: Desenvolvimento Web, Microfiltragem Industrial..."
+                value={nicho}
+                onChange={e => setNicho(e.target.value)}
+                disabled={gerando}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Produto / Serviço *</Label>
+              <Input
+                placeholder="Ex: Site institucional bilíngue, Mentoria comercial..."
+                value={produto}
+                onChange={e => setProduto(e.target.value)}
+                disabled={gerando}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs">Preço âncora (opcional)</Label>
+              <Input
+                type="number"
+                placeholder="Ex: 8500"
+                value={preco}
+                onChange={e => setPreco(e.target.value)}
+                disabled={gerando}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <Button
+              onClick={handleGerarRoteiro}
+              disabled={gerando || !nicho.trim() || !produto.trim()}
+              className="flex-1 gap-2 font-semibold"
+            >
+              {gerando
+                ? <><Loader2 className="h-4 w-4 animate-spin" /> Gerando roteiro...</>
+                : <><Zap className="h-4 w-4" /> Gerar Roteiro →</>}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setGerarAberto(false)}
+              disabled={gerando}
+              className="shrink-0"
+            >
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

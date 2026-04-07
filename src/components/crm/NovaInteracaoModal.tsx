@@ -29,13 +29,14 @@ const CANAL_OPTIONS: { value: InteracaoCanal; label: string; beta?: boolean }[] 
 interface NovaInteracaoModalProps {
   aberto: boolean;
   clienteId: string;
+  nomeCliente?: string;
   canalInicial?: InteracaoCanal;
   onFechar: () => void;
   onCriada: (interacao: Interacao) => void;
 }
 
 export default function NovaInteracaoModal({
-  aberto, clienteId, canalInicial, onFechar, onCriada,
+  aberto, clienteId, nomeCliente, canalInicial, onFechar, onCriada,
 }: NovaInteracaoModalProps) {
   const [salvando, setSalvando]       = useState(false);
   const [canal, setCanal]             = useState<InteracaoCanal>(canalInicial || 'nota');
@@ -189,6 +190,8 @@ export default function NovaInteracaoModal({
           <div className="py-2 max-h-[70vh] overflow-y-auto pr-1">
             <TranscricaoResultadoCard
               analise={analise}
+              clienteId={clienteId}
+              nomeCliente={nomeCliente}
               onNovaTranscricao={handleNovaAnalise}
               onFechar={handleClose}
             />

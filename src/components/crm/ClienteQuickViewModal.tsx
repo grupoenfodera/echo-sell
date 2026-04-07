@@ -448,6 +448,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
       <NovaInteracaoModal
         aberto={interacaoModal}
         clienteId={cliente.id}
+        nomeCliente={cliente.nome}
         onFechar={() => setInteracaoModal(false)}
         onCriada={(int) => {
           setInteracoes(prev => [int, ...prev]);
