@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
 
         const { data: sessoes } = await supabaseAdmin
           .from("sessoes_venda")
-          .select("id, cliente_id, criado_em, geracao_status, roteiro_gerado_em, proposta_gerada_em, email_gerado_em, whatsapp_gerado_em, objecoes_geradas_em")
+          .select("id, cliente_id, criado_em, geracao_status, roteiro_gerado_em, proposta_gerada_em, email_gerado_em, whatsapp_gerado_em, objecoes_geradas_em, produto, preco")
           .in("cliente_id", clienteIds)
           .eq("usuario_id", user.id)
           .order("criado_em", { ascending: false });
@@ -151,6 +151,8 @@ Deno.serve(async (req) => {
               tem_email: s.email_gerado_em !== null,
               tem_whatsapp: s.whatsapp_gerado_em !== null,
               tem_objecoes: s.objecoes_geradas_em !== null,
+              produto: s.produto ?? null,
+              preco: s.preco ?? null,
             });
           }
         }
