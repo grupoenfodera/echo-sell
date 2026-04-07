@@ -205,16 +205,17 @@ export default function ScriptRenderer({ content, accentColor }: ScriptRendererP
             );
 
           case 'script': {
-            // Split on blank lines (double newline) → visual paragraphs with spacing.
-            // Single \n within a paragraph is preserved as a line break.
+            // A IA gera cada frase/parágrafo em uma linha separada (\n).
+            // Cada linha vira um <p> com espaçamento visual entre elas.
+            // Linhas em branco (duplo \n) também são descartadas pelo filter.
             const paragraphs = b.text
-              .split(/\n{2,}/)
+              .split(/\n/)
               .map(p => p.trim())
               .filter(Boolean);
             return (
               <div
                 key={i}
-                className="rounded-r-lg py-3 px-4"
+                className="rounded-r-lg py-4 px-4 space-y-3"
                 style={{
                   borderLeft: `3px solid ${accent}`,
                   background: `color-mix(in srgb, ${accent} 7%, hsl(var(--card)))`,
@@ -223,8 +224,7 @@ export default function ScriptRenderer({ content, accentColor }: ScriptRendererP
                 {paragraphs.map((para, pi) => (
                   <p
                     key={pi}
-                    className="text-sm text-foreground leading-[1.75] whitespace-pre-wrap"
-                    style={{ marginBottom: pi < paragraphs.length - 1 ? '0.75rem' : 0 }}
+                    className="text-sm text-foreground leading-[1.8]"
                   >
                     {para}
                   </p>
