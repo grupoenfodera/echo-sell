@@ -631,9 +631,9 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
           </div>
 
           {/* Produto + Ticket */}
-          {sessao?.produto && (
+          {sessao?.produto_nome && (
             <p className="text-[10px] text-muted-foreground truncate">
-              📦 {sessao.produto}
+              📦 {sessao.produto_nome}
             </p>
           )}
           {sessao?.preco != null && sessao.preco > 0 && (
@@ -775,8 +775,8 @@ function ListClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () =
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className={`text-[10px] ${statusCls}`}>{statusLabel}</Badge>
-          {sessao?.produto && (
-            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">📦 {sessao.produto}</span>
+          {sessao?.produto_nome && (
+            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">📦 {sessao.produto_nome}</span>
           )}
           {sessao?.preco != null && sessao.preco > 0 && (
             <span className="text-xs font-semibold text-primary">
