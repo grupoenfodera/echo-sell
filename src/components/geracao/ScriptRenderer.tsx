@@ -91,9 +91,15 @@ function splitToLines(raw: string): string[] {
  * Detecta se o conteúdo de um [colchete] é um placeholder de fala
  * (preenchimento com palavras do cliente), e não uma instrução de conduta.
  * Ex: [problema nas palavras dele] [desejo nas palavras dele] [meta] [consequência 1]
+ *
+ * Regra 1 — qualquer [palavra + número] é placeholder: [consequência 1], [problema 2]
+ * Regra 2 — contém palavra-chave de preenchimento: palavras, dele, cliente, etc.
  */
 function isPlaceholder(content: string): boolean {
-  return /\b(palavras?|nome|situação|contexto|cliente|dele|dela|problema|desejo|meta|consequên|Passo\s*\d|Step\s*\d|tentativa)\b/i.test(content);
+  // [algo 1], [algo 2] — placeholder numerado (ex: consequência 1, meta 2)
+  if (/\s+\d+\s*$/.test(content)) return true;
+  // Contém palavras que indicam preenchimento com dados do cliente
+  return /\b(palavras?|nome|situa[çc][aã]o|contexto|cliente|dele|dela|problema|desejo|meta|passo|tentativa)\b/i.test(content);
 }
 
 /** Extrai [instruções] embutidas de uma linha de texto de fala.
