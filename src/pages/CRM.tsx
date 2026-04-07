@@ -689,7 +689,7 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
               {agingText ? `há ${agingText}` : 'Sem contato'}
             </span>
             <span className="text-[9px] text-muted-foreground/70">
-              criado {formatDistanceToNow(new Date(cliente.criado_em), { addSuffix: true, locale: ptBR })}
+              {new Date(cliente.criado_em).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
             </span>
           </div>
         </div>
