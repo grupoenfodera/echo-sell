@@ -90,9 +90,9 @@ function buildTimeline(sessoes: SessaoVenda[], interacoes: Interacao[]): Timelin
 
   // Synthetic events from sessions
   for (const s of sessoes) {
-    if (s.objecoes_geradas_em) entries.push({ id: `${s.id}-objecoes`, icon: Shield, label: 'Objeções geradas', date: new Date(s.objecoes_geradas_em), color: '#f59e0b', synthetic: true });
-    if (s.whatsapp_gerado_em) entries.push({ id: `${s.id}-whatsapp`, icon: Send, label: 'Mensagem WhatsApp gerada', date: new Date(s.whatsapp_gerado_em), color: '#34d399', synthetic: true });
-    if (s.email_gerado_em) entries.push({ id: `${s.id}-email`, icon: Mail, label: 'E-mail de follow-up gerado', date: new Date(s.email_gerado_em), color: '#60a5fa', synthetic: true });
+    if (s.objecoes_geradas_em) entries.push({ id: `${s.id}-objecoes`, icon: Shield, label: 'Objeções geradas', date: new Date(s.objecoes_geradas_em), color: '#b45309', synthetic: true });
+    if (s.whatsapp_gerado_em) entries.push({ id: `${s.id}-whatsapp`, icon: Send, label: 'Mensagem WhatsApp gerada', date: new Date(s.whatsapp_gerado_em), color: '#059669', synthetic: true });
+    if (s.email_gerado_em) entries.push({ id: `${s.id}-email`, icon: Mail, label: 'E-mail de follow-up gerado', date: new Date(s.email_gerado_em), color: '#2563eb', synthetic: true });
     if (s.proposta_gerada_em) entries.push({ id: `${s.id}-proposta`, icon: FileText, label: 'Proposta comercial gerada', date: new Date(s.proposta_gerada_em), color: '#3B6FE8', synthetic: true });
     if (s.roteiro_gerado_em) entries.push({ id: `${s.id}-roteiro`, icon: ClipboardList, label: 'Roteiro gerado', detail: s.nicho ?? undefined, date: new Date(s.roteiro_gerado_em), color: '#1E3FA8', synthetic: true });
     entries.push({ id: `${s.id}-sessao`, icon: CalendarDays, label: 'Nova sessão criada', detail: s.nicho ?? undefined, date: new Date(s.criado_em), color: '#4A4F60', synthetic: true });
@@ -300,7 +300,7 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                             ✓ 📋 Roteiro
                           </button>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted text-muted-foreground border border-border">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted text-foreground/65 dark:text-muted-foreground border border-border">
                             📋 Roteiro
                           </span>
                         )}
@@ -418,16 +418,16 @@ export default function ClienteQuickViewModal({ cliente, onClose, onClienteAtual
                           <div key={entry.id} className="flex items-start gap-2.5" style={{ paddingBottom: isLast ? 0 : '12px' }}>
                             <div
                               className="relative z-10 flex items-center justify-center shrink-0 rounded-full"
-                              style={{ height: '24px', width: '24px', background: `${entry.color}18`, border: `1px solid ${entry.color}44` }}
+                              style={{ height: '24px', width: '24px', background: `${entry.color}22`, border: `1px solid ${entry.color}70` }}
                             >
                               <Icon style={{ width: '10px', height: '10px', color: entry.color }} />
                             </div>
                             <div className="flex-1 min-w-0 pt-0.5">
                               <div className="flex items-start justify-between gap-2">
-                                <p className="truncate text-[12px] text-foreground leading-snug" style={{ fontWeight: entry.synthetic ? 400 : 500, opacity: entry.synthetic ? 0.75 : 1 }}>
+                                <p className="truncate text-[12px] text-foreground leading-snug" style={{ fontWeight: entry.synthetic ? 400 : 500 }}>
                                   {entry.label}
                                 </p>
-                                <span className="text-[10px] text-muted-foreground/60 shrink-0">há {ago}</span>
+                                <span className="text-[10px] text-muted-foreground shrink-0">há {ago}</span>
                               </div>
                               {entry.detail && (
                                 <p className="truncate text-[11px] text-muted-foreground mt-0.5">{entry.detail}</p>

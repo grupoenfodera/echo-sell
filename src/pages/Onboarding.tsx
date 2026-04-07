@@ -227,7 +227,7 @@ const Onboarding = () => {
                     >
                       {badge && (
                         <span className={`absolute top-2 right-2 text-[10px] font-ui font-semibold px-2 py-0.5 rounded-pill ${
-                          badge === 'Principal' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+                          badge === 'Principal' ? 'bg-primary/15 text-primary' : 'bg-slate-200 text-slate-600 dark:bg-muted dark:text-muted-foreground'
                         }`}>
                           {badge}
                         </span>

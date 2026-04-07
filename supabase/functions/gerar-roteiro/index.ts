@@ -592,6 +592,21 @@ Deno.serve(async (req) => {
     }
     await supabaseAdmin.from("usuarios").update(statsUpdate).eq("id", user.id);
 
+    // ── Insert geracoes (admin dashboard tracking) ──
+    await supabaseAdmin.from("geracoes").insert({
+      usuario_id:       user.id,
+      modalidade:       "roteiro",
+      contexto_geracao: contexto ?? null,
+      nicho,
+      produto,
+      tokens_entrada:   tokensEntrada,
+      tokens_saida:     tokensSaida,
+      tokens_total:     tokensTotal,
+      custo_usd:        custoUsd,
+      nome_cliente:     nome_cliente ?? null,
+      resultado_json:   roteiro,
+    });
+
     // ── Update client last contact ──
     if (finalClienteId) {
       await supabaseAdmin

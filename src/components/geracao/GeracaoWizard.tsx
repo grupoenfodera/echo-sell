@@ -147,15 +147,15 @@ function calcScore(data: WizardData): number {
 }
 
 function getScoreColor(score: number): string {
-  if (score < 60) return 'text-red-500';
-  if (score < 80) return 'text-amber-500';
-  return 'text-green-500';
+  if (score < 60) return 'text-red-600 dark:text-red-400';
+  if (score < 80) return 'text-amber-700 dark:text-amber-400';
+  return 'text-green-700 dark:text-green-400';
 }
 
 function getScoreBgColor(score: number): string {
-  if (score < 60) return 'bg-red-500/10 border-red-500/30';
-  if (score < 80) return 'bg-amber-500/10 border-amber-500/30';
-  return 'bg-green-500/10 border-green-500/30';
+  if (score < 60) return 'bg-red-50 dark:bg-red-500/10 border-red-300 dark:border-red-500/30';
+  if (score < 80) return 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30';
+  return 'bg-green-50 dark:bg-green-500/10 border-green-300 dark:border-green-500/30';
 }
 
 function getButtonLabel(score: number, loading: boolean, loadingTipo: string | null, tipo: 'roteiro' | 'proposta'): React.ReactNode {

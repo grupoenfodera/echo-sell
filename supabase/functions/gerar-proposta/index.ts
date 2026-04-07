@@ -154,7 +154,10 @@ ${JSON.stringify(sessao.roteiro_json, null, 2)}`;
 
     // Usage
     const usage = anthropicData.usage || {};
-    const tokensTotal = (usage.input_tokens || 0) + (usage.output_tokens || 0);
+    const tokensEntrada = usage.input_tokens || 0;
+    const tokensSaida   = usage.output_tokens || 0;
+    const tokensTotal   = tokensEntrada + tokensSaida;
+    const custoUsd      = tokensEntrada * (3.0 / 1_000_000) + tokensSaida * (15.0 / 1_000_000);
 
     // Update session
     await supabaseAdmin
@@ -170,6 +173,35 @@ ${JSON.stringify(sessao.roteiro_json, null, 2)}`;
         atualizado_em: new Date().toISOString(),
       })
       .eq("id", sessao_id);
+
+    // ── Update user stats ──
+    const { data: usuario } = await supabaseAdmin
+      .from("usuarios")
+      .select("consultas_mes, consultas_total, tokens_total, custo_total_usd")
+      .eq("id", user.id)
+      .single();
+
+    await supabaseAdmin.from("usuarios").update({
+      consultas_mes:   (usuario?.consultas_mes   || 0) + 1,
+      consultas_total: (usuario?.consultas_total || 0) + 1,
+      tokens_total:    (usuario?.tokens_total    || 0) + tokensTotal,
+      custo_total_usd: (usuario?.custo_total_usd || 0) + custoUsd,
+    }).eq("id", user.id);
+
+    // ── Insert geracoes (admin dashboard tracking) ──
+    await supabaseAdmin.from("geracoes").insert({
+      usuario_id:       user.id,
+      modalidade:       "proposta",
+      contexto_geracao: sessao.contexto ?? null,
+      nicho:            sessao.nicho ?? null,
+      produto:          sessao.produto ?? null,
+      tokens_entrada:   tokensEntrada,
+      tokens_saida:     tokensSaida,
+      tokens_total:     tokensTotal,
+      custo_usd:        custoUsd,
+      nome_cliente:     sessao.cliente_id ?? null,
+      resultado_json:   parsed,
+    });
 
     return new Response(
       JSON.stringify({

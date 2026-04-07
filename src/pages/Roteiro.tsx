@@ -277,7 +277,7 @@ function normalizeBlocos(roteiro: RoteiroJSON, followUp?: FollowUpItem[]): Bloco
     });
   }
 
-  const legacy = rr as Record<string, Record<string, unknown>>;
+  const legacy = rr as unknown as Record<string, Record<string, unknown>>;
   const orderedKeys = [
     ...LEGACY_ORDER.filter(k => k in legacy),
     ...Object.keys(legacy).filter(k => !LEGACY_ORDER.includes(k)),
