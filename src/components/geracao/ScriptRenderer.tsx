@@ -249,6 +249,26 @@ function toDisplayLabel(s: string): string {
     .join('');
 }
 
+/* ── renderWithBoldBrackets ────────────────────────────────── */
+
+/**
+ * Renderiza texto com [colchetes] em negrito.
+ * Preserva \n (whitespace-pre-wrap) e mantém o restante normal.
+ */
+function renderWithBoldBrackets(text: string, accentColor?: string): React.ReactNode {
+  const parts = text.split(/(\[[^\]]+\])/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('[') && part.endsWith(']')) {
+      return (
+        <strong key={i} className="font-bold" style={{ color: accentColor }}>
+          {part}
+        </strong>
+      );
+    }
+    return part;
+  });
+}
+
 /* ── Renderer ──────────────────────────────────────────────── */
 
 export default function ScriptRenderer({ content, accentColor, compact = false }: ScriptRendererProps) {
@@ -275,14 +295,13 @@ export default function ScriptRenderer({ content, accentColor, compact = false }
 
           case 'script':
             if (compact) {
-              // Inside a SecaoScript card — render plain text, no nested border
               return (
                 <div key={i}>
                   <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1" style={{ color: accent }}>
                     💬 Fale
                   </p>
                   <p className="text-[15px] text-foreground leading-[1.75] whitespace-pre-wrap">
-                    {b.text}
+                    {renderWithBoldBrackets(b.text, accent)}
                   </p>
                 </div>
               );
@@ -300,7 +319,7 @@ export default function ScriptRenderer({ content, accentColor, compact = false }
                   💬 Fale ao cliente
                 </p>
                 <p className="text-[15px] text-foreground leading-[1.75] whitespace-pre-wrap">
-                  {b.text}
+                  {renderWithBoldBrackets(b.text, accent)}
                 </p>
               </div>
             );
