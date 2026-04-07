@@ -1,45 +1,40 @@
 
 
-## Barra de Progresso de Roteiros no Topbar
+## Plano: Adicionar Produto, Ticket e Data de Criação nos Cards do CRM
 
-### O que muda
-Substituir o badge de DNA (linhas 108-135) por uma barra de progresso compacta mostrando uso de roteiros vs limite do plano.
+### Resumo
+Adicionar 3 informações nos cards do pipeline: data de criação do lead, ticket médio (preço) e nome do produto. Requer uma mudança mínima na edge function para trazer `produto` e `preco` da sessão.
 
-### Limites por plano (corrigido)
+### Mudanças
+
+**1. Edge Function `crm-listar/index.ts`** (mudança mínima)
+- Linha 136: adicionar `produto, preco` ao select da query de sessões
+- Linhas 145-154: incluir `produto` e `preco` no objeto `ultimasSessoes`
+
+**2. Tipo `UltimaSessao` em `src/types/crm.ts`**
+- Adicionar `produto?: string` e `preco?: number`
+
+**3. Cards em `src/pages/CRM.tsx`**
+- `PipelineCard`: adicionar abaixo do nome/empresa:
+  - Produto como tag/badge sutil (se existir)
+  - Ticket formatado em BRL: "R$ 2.500" (font-semibold, cor primária)
+  - Data de criação relativa ("há 3 dias") no rodapé do card
+- `ListClienteCard`: mesmas 3 informações para consistência
+
+### Layout do card atualizado
 ```text
-basico:     10/mês
-pro:        50/mês
-enterprise: 200/mês
-pastor:     30 roteiros total (scripts_restantes)
+┌──────────────────────────────┐
+│ 👤 João Silva        [Morno] │
+│    Empresa X                 │
+│    📦 Mentoria Premium       │
+│    💰 R$ 2.500               │
+│ ▓▓▓▓░░░░░░  3/5             │
+│              criado há 3 dias│
+└──────────────────────────────┘
 ```
-
-### Design
-```text
-┌──────────────────────────────────────────┐
-│  ▎██████████░░░░░░░░░░▎  7 de 50        │
-│  ▎   barra 4px        ▎  roteiros       │
-└──────────────────────────────────────────┘
-```
-- Largura ~180px, barra 4px de altura, border-radius full
-- Cor dinâmica: `#195FA5` (< 70%), `#f5c842` (70–90%), `#ff6b4a` (> 90%)
-- Fundo barra: `#E4E4E0` (light) / `#2B2F3C` (dark)
-- Label: "7 de 50 roteiros" (11px, muted) — plano pastor: "X restantes"
-- Clicável → navega para `/perfil`
-
-### Alterações em `src/components/AppTopbar.tsx`
-1. Remover estado `dna`, `useEffect` de fetch do DNA, constantes `TONE_NAME` e `CONTEXTO_LABEL`
-2. Adicionar constante `PLAN_LIMITS = { basico: 10, pro: 50, enterprise: 200, pastor: 30 }`
-3. Substituir bloco center (linhas 108-135) pela barra de progresso usando `usuario.consultas_mes` e `usuario.plano`
-4. Para plano `pastor`: usar `usuario.scripts_restantes` e mostrar "X restantes" com barra invertida (restantes/30)
-
-### Campos do `usuarios` utilizados (já no AuthContext)
-- `consultas_mes` — uso mensal (basico/pro/enterprise)
-- `plano` — determina o limite
-- `scripts_restantes` — apenas para pastor
-
-Nota: `scripts_restantes` não está no tipo `UsuarioData` do AuthContext — preciso adicioná-lo.
 
 ### Arquivos alterados
-- `src/contexts/AuthContext.tsx` — adicionar `scripts_restantes` ao tipo `UsuarioData`
-- `src/components/AppTopbar.tsx` — substituir DNA badge pela barra de progresso
+1. `supabase/functions/crm-listar/index.ts` — adicionar 2 campos ao select + mapeamento
+2. `src/types/crm.ts` — adicionar `produto?` e `preco?` ao tipo `UltimaSessao`
+3. `src/pages/CRM.tsx` — exibir as 3 novas informações nos cards
 
