@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -36,14 +37,14 @@ import { toast } from 'sonner';
 
 /* ── Constantes ────────────────────────────────── */
 
-const TEMP_COLORS: Record<ClienteTemperatura, { border: string; bg: string; text: string; label: string }> = {
-  ativo:    { border: '#E03E3E', bg: '#E03E3E22', text: '#E03E3E', label: 'Quente' },
-  morno:    { border: '#E8A020', bg: '#E8A02022', text: '#E8A020', label: 'Morno' },
-  frio:     { border: '#3B6FE8', bg: '#3B6FE822', text: '#3B6FE8', label: 'Frio' },
-  em_risco: { border: '#E03E3E', bg: '#E03E3E22', text: '#E03E3E', label: 'Em risco' },
+const TEMP_COLORS: Record<ClienteTemperatura, { border: string; bg: string; bgDark: string; text: string; textDark: string; label: string }> = {
+  ativo:    { border: '#E03E3E', bg: '#E03E3E18', bgDark: '#E03E3E25', text: '#C53030', textDark: '#F87171', label: 'Quente' },
+  morno:    { border: '#E8A020', bg: '#E8A02018', bgDark: '#E8A02025', text: '#B7791F', textDark: '#FBBF24', label: 'Morno' },
+  frio:     { border: '#3B6FE8', bg: '#3B6FE818', bgDark: '#3B6FE825', text: '#2B5DC2', textDark: '#60A5FA', label: 'Frio' },
+  em_risco: { border: '#E03E3E', bg: '#E03E3E18', bgDark: '#E03E3E25', text: '#C53030', textDark: '#F87171', label: 'Em risco' },
 };
 
-const TEMP_DEFAULT = { border: '#2B2F3C', bg: '#2B2F3C22', text: '#7A7F92', label: '—' };
+const TEMP_DEFAULT = { border: '#7A7F92', bg: '#7A7F9215', bgDark: '#7A7F9220', text: '#7A7F92', textDark: '#9CA3AF', label: '—' };
 
 const TEMP_BADGE: Record<ClienteTemperatura, { label: string }> = {
   frio:     { label: 'Frio' },
@@ -517,7 +518,10 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
   dragHandleProps?: React.HTMLAttributes<HTMLElement> | null;
 }) {
   const navigate = useNavigate();
-  const tc = TEMP_COLORS[cliente.temperatura] ?? TEMP_DEFAULT;
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const tcRaw = TEMP_COLORS[cliente.temperatura] ?? TEMP_DEFAULT;
+  const tc = { border: tcRaw.border, bg: isDark ? tcRaw.bgDark : tcRaw.bg, text: isDark ? tcRaw.textDark : tcRaw.text, label: tcRaw.label };
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const sessao = cliente.ultima_sessao;
 
@@ -606,7 +610,7 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-foreground truncate">{cliente.nome}</p>
               {(cliente.empresa) && (
-                <p className="truncate" style={{ fontSize: '11px', color: '#7A7F92', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{cliente.empresa}</p>
+                <p className="truncate text-muted-foreground" style={{ fontSize: '11px', marginTop: '1px' }}>{cliente.empresa}</p>
               )}
             </div>
             <span
@@ -629,15 +633,15 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
             <div
               className="rounded-md px-2 py-1"
               style={{
-                background: cliente.status === 'perdido' ? 'hsl(var(--destructive) / 0.08)' : 'hsl(142 71% 45% / 0.08)',
+                background: cliente.status === 'perdido' ? 'hsl(var(--destructive) / 0.08)' : 'hsl(var(--ok) / 0.10)',
               }}
             >
               {cliente.status === 'ganho' ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: '#34d399' }}>✅ Ganho</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: 'hsl(var(--ok))' }}>✅ Ganho</span>
               ) : cliente.status === 'perdido' ? (
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-destructive">❌ Perdido</span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: '#34d399' }}>✅ Fechado</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: 'hsl(var(--ok))' }}>✅ Fechado</span>
               )}
             </div>
           )}
@@ -649,11 +653,9 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
                 <Tooltip key={i}>
                   <TooltipTrigger asChild>
                     <span
-                      className="h-1.5 flex-1 rounded-full transition-colors"
-                     style={done
-                        ? { background: '#1E3FA8' }
-                        : { background: '#20232B', border: '1px solid #2B2F3C' }
-                      }
+                      className={`h-1.5 flex-1 rounded-full transition-colors ${
+                        done ? 'bg-primary' : 'bg-muted border border-border'
+                      }`}
                     />
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-[10px] px-2 py-1">
@@ -693,8 +695,11 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
 
 function ListClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () => void }) {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const temp = TEMP_BADGE[cliente.temperatura] || TEMP_BADGE.frio;
-  const tempColor = TEMP_COLORS[cliente.temperatura] || TEMP_DEFAULT;
+  const tcRaw = TEMP_COLORS[cliente.temperatura] || TEMP_DEFAULT;
+  const tempColor = { border: tcRaw.border, bg: isDark ? tcRaw.bgDark : tcRaw.bg, text: isDark ? tcRaw.textDark : tcRaw.text, label: tcRaw.label };
   const statusCls = STATUS_CLS[cliente.status] || STATUS_CLS.novo;
   const statusLabel = STATUS_LABEL[cliente.status] || cliente.status;
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
