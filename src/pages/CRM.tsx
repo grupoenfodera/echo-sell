@@ -36,14 +36,14 @@ import { toast } from 'sonner';
 
 /* ── Constantes ────────────────────────────────── */
 
-const TEMP_COLORS: Record<ClienteTemperatura, { border: string; bg: string; text: string; label: string }> = {
-  ativo:    { border: '#E03E3E', bg: '#E03E3E22', text: '#E03E3E', label: 'Quente' },
-  morno:    { border: '#E8A020', bg: '#E8A02022', text: '#E8A020', label: 'Morno' },
-  frio:     { border: '#3B6FE8', bg: '#3B6FE822', text: '#3B6FE8', label: 'Frio' },
-  em_risco: { border: '#E03E3E', bg: '#E03E3E22', text: '#E03E3E', label: 'Em risco' },
+const TEMP_COLORS: Record<ClienteTemperatura, { border: string; bg: string; bgDark: string; text: string; textDark: string; label: string }> = {
+  ativo:    { border: '#E03E3E', bg: '#E03E3E18', bgDark: '#E03E3E25', text: '#C53030', textDark: '#F87171', label: 'Quente' },
+  morno:    { border: '#E8A020', bg: '#E8A02018', bgDark: '#E8A02025', text: '#B7791F', textDark: '#FBBF24', label: 'Morno' },
+  frio:     { border: '#3B6FE8', bg: '#3B6FE818', bgDark: '#3B6FE825', text: '#2B5DC2', textDark: '#60A5FA', label: 'Frio' },
+  em_risco: { border: '#E03E3E', bg: '#E03E3E18', bgDark: '#E03E3E25', text: '#C53030', textDark: '#F87171', label: 'Em risco' },
 };
 
-const TEMP_DEFAULT = { border: '#2B2F3C', bg: '#2B2F3C22', text: '#7A7F92', label: '—' };
+const TEMP_DEFAULT = { border: '#7A7F92', bg: '#7A7F9215', bgDark: '#7A7F9220', text: '#7A7F92', textDark: '#9CA3AF', label: '—' };
 
 const TEMP_BADGE: Record<ClienteTemperatura, { label: string }> = {
   frio:     { label: 'Frio' },
