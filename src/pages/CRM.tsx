@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -517,7 +518,10 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
   dragHandleProps?: React.HTMLAttributes<HTMLElement> | null;
 }) {
   const navigate = useNavigate();
-  const tc = TEMP_COLORS[cliente.temperatura] ?? TEMP_DEFAULT;
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const tcRaw = TEMP_COLORS[cliente.temperatura] ?? TEMP_DEFAULT;
+  const tc = { border: tcRaw.border, bg: isDark ? tcRaw.bgDark : tcRaw.bg, text: isDark ? tcRaw.textDark : tcRaw.text, label: tcRaw.label };
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   const sessao = cliente.ultima_sessao;
 
