@@ -384,8 +384,8 @@ export default function CRM() {
                           )}
                         </div>
                         {totalValor > 0 && (
-                          <p className="mt-1 text-muted-foreground text-xs font-normal">
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValor)} na mesa
+                          <p className="mt-1 text-xs font-normal text-ok">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValor)}
                           </p>
                         )}
                       </div>
