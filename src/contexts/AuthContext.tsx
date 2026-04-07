@@ -17,6 +17,8 @@ interface UsuarioData {
   cancelamento_solicitado: boolean | null;
   pagamento_atrasado: boolean | null;
   motivo_bloqueio: string | null;
+  scripts_restantes: number | null;
+  regeneracoes_restantes: number | null;
 }
 
 interface AuthContextType {
