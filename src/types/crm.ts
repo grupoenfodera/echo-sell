@@ -53,7 +53,7 @@ export interface RoteiroEtapa {
 
 export interface SecaoRoteiro {
   id: string;
-  tipo: 'script' | 'instrucao' | 'objecao' | 'insight' | 'fase' | 'label' | 'followup';
+  tipo: 'script' | 'instrucao' | 'objecao' | 'oferta' | 'insight' | 'fase' | 'label' | 'followup';
   label: string;
   conteudo: string;
   raciocinio?: string;

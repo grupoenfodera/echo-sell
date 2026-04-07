@@ -152,23 +152,18 @@ function normalizeBlocos(roteiro: RoteiroJSON, followUp?: FollowUpItem[]): Bloco
         });
       }
 
-      // ── Oferta: 4 partes distintas ──
-      // Cada sub-bloco tem um label cinza muted + script card com borda âmbar
+      // ── Oferta: 4 acordeões (mesmo padrão visual de Objeções) ──
       if (b.script_entregaveis) {
-        sections.push({ id: `${bloco}-label-entregaveis`, tipo: 'label', label: 'Compilado de entregáveis',        conteudo: '' });
-        sections.push({ id: `${bloco}-entregaveis`,       tipo: 'script', label: 'Script',                         conteudo: b.script_entregaveis });
+        sections.push({ id: `${bloco}-entregaveis`,  tipo: 'oferta', label: 'Compilado de entregáveis',         conteudo: b.script_entregaveis });
       }
       if (b.script_proximos_passos) {
-        sections.push({ id: `${bloco}-label-proxpassos`,  tipo: 'label', label: 'Próximos passos — antes do preço', conteudo: '' });
-        sections.push({ id: `${bloco}-proxpassos`,         tipo: 'script', label: 'Script',                          conteudo: b.script_proximos_passos });
+        sections.push({ id: `${bloco}-proxpassos`,   tipo: 'oferta', label: 'Próximos passos — antes do preço', conteudo: b.script_proximos_passos });
       }
       if (b.script_preco) {
-        sections.push({ id: `${bloco}-label-preco`,        tipo: 'label', label: 'Preço com âncora',                conteudo: '' });
-        sections.push({ id: `${bloco}-preco`,               tipo: 'script', label: 'Script',                        conteudo: b.script_preco });
+        sections.push({ id: `${bloco}-preco`,        tipo: 'oferta', label: 'Preço com âncora',                 conteudo: b.script_preco });
       }
       if (b.script_avanco) {
-        sections.push({ id: `${bloco}-label-avanco`,        tipo: 'label', label: 'Técnica de avanço',              conteudo: '' });
-        sections.push({ id: `${bloco}-avanco`,               tipo: 'script', label: 'Script',                       conteudo: b.script_avanco });
+        sections.push({ id: `${bloco}-avanco`,       tipo: 'oferta', label: 'Técnica de avanço',                conteudo: b.script_avanco });
       }
 
       // ── Objeções (objecoes) ──
@@ -492,6 +487,52 @@ function SecaoObjecao({ secao }: { secao: SecaoRoteiro }) {
 }
 
 /* ─────────────────────────────────────────────────
+   SecaoOferta — acordeão idêntico ao de Objeções,
+   mas renderiza ScriptRenderer (💬 Fale + ⏸ pausa)
+───────────────────────────────────────────────── */
+
+function SecaoOferta({ secao, accentColor = '#E8A020' }: { secao: SecaoRoteiro; accentColor?: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="rounded-xl border border-border bg-card cursor-pointer select-none transition-colors hover:bg-muted/20"
+      onClick={() => setOpen(o => !o)}
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: accentColor }} />
+          <span className="text-sm text-foreground truncate">{secao.label}</span>
+        </div>
+        {open
+          ? <ChevronUp   className="h-4 w-4 text-muted-foreground shrink-0" />
+          : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
+      </div>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+          >
+            <div
+              className="px-4 pb-4 pt-3 border-t border-border"
+              onClick={e => e.stopPropagation()}
+            >
+              <ScriptRenderer content={secao.conteudo} accentColor={accentColor} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────
    SecaoFollowUp — card de follow-up com número de tentativa
 ───────────────────────────────────────────────── */
 
@@ -710,6 +751,7 @@ function SecaoCard(props: {
   if (props.secao.tipo === 'insight')   return <SecaoInsight   secao={props.secao} accentColor={props.accentColor} />;
   if (props.secao.tipo === 'instrucao') return <SecaoInstrucao secao={props.secao} accentColor={props.accentColor} />;
   if (props.secao.tipo === 'objecao')   return <SecaoObjecao   secao={props.secao} />;
+  if (props.secao.tipo === 'oferta')    return <SecaoOferta    secao={props.secao} accentColor={props.accentColor} />;
   if (props.secao.tipo === 'followup')  return <SecaoFollowUp  secao={props.secao} />;
   return <SecaoScript {...props} />;
 }
