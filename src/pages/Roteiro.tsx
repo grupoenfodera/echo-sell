@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, ArrowRight, Check, Copy, Loader2,
   ChevronDown, ChevronUp, Eye, Pencil, RotateCcw, AlertCircle,
-  FileText, X,
+  FileText, X, Star, Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -843,6 +843,14 @@ export default function RoteiroPage() {
   const [pecasOpen, setPecasOpen]       = useState(false);
   const mainRef                         = useRef<HTMLElement>(null);
 
+  // ── Avaliação de efetividade por bloco (1–5 estrelas) ──
+  const [avaliacoes, setAvaliacoes]           = useState<Record<string, number>>({});
+
+  // ── Regenerar bloco com IA ──
+  const [showRegenerarBloco, setShowRegenerarBloco] = useState(false);
+  const [instrucaoBloco, setInstrucaoBloco]         = useState('');
+  const [regenerandoBloco, setRegenerandoBloco]     = useState(false);
+
   /* ── Sidebar resize ─────────────────────────────── */
   const ROTEIRO_SIDEBAR_KEY = 'svp-roteiro-sidebar-width';
   const ROTEIRO_SIDEBAR_MIN = 180;
@@ -885,9 +893,11 @@ export default function RoteiroPage() {
     document.addEventListener('mouseup', onUp);
   }, [sidebarWidth]);
 
-  /* Scroll content area to top whenever the active phase changes */
+  /* Scroll + reset regenerar ao trocar de fase */
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    setShowRegenerarBloco(false);
+    setInstrucaoBloco('');
   }, [faseAtiva]);
 
   /* Load session */
@@ -902,6 +912,7 @@ export default function RoteiroPage() {
         setSessao(s);
         setBlocos(normalizeBlocos(s.roteiro_json, s.follow_up_json ?? undefined));
         setSecoesEstado((s as any).secoes_estado ?? {});
+        setAvaliacoes((s.dados_formulario as any)?.avaliacoes_blocos ?? {});
         setLoading(false);
       })
       .catch(err => { setError(err.message || 'Erro ao carregar sessão.'); setLoading(false); });
@@ -999,6 +1010,48 @@ export default function RoteiroPage() {
     navigator.clipboard.writeText(text);
     toast.success(`Script "${b.titulo}" copiado!`);
   }, [blocos, faseAtiva, secoesEstado]);
+
+  /* ── Avaliar efetividade do bloco ── */
+  const handleAvaliar = useCallback(async (blocoKey: string, nota: number) => {
+    const novasAvaliacoes = { ...avaliacoes, [blocoKey]: nota };
+    setAvaliacoes(novasAvaliacoes);
+    try {
+      const dadosAtuais = (sessao?.dados_formulario ?? {}) as Record<string, unknown>;
+      await supabase.from('sessoes_venda').update({
+        dados_formulario: { ...dadosAtuais, avaliacoes_blocos: novasAvaliacoes },
+      }).eq('id', sessao_id!);
+    } catch { toast.error('Erro ao salvar avaliação'); }
+  }, [avaliacoes, sessao, sessao_id]);
+
+  /* ── Regenerar bloco inteiro com IA ── */
+  const handleRegenerarBloco = useCallback(async () => {
+    if (!instrucaoBloco.trim()) return;
+    setRegenerandoBloco(true);
+    try {
+      const res = await callFn<{ ok: boolean; bloco: RoteiroBloco }>(
+        'regenerar-bloco',
+        { sessao_id, bloco_index: faseAtiva, instrucao: instrucaoBloco.trim() },
+      );
+
+      // Atualiza sessão local e renormaliza os blocos
+      setSessao(prev => {
+        if (!prev?.roteiro_json) return prev;
+        const rr = [...((prev.roteiro_json.roteiro_reuniao ?? []) as RoteiroBloco[])];
+        rr[faseAtiva] = res.bloco;
+        const novoRoteiro = { ...prev.roteiro_json, roteiro_reuniao: rr };
+        setBlocos(normalizeBlocos(novoRoteiro as any, prev.follow_up_json ?? undefined));
+        return { ...prev, roteiro_json: novoRoteiro as any };
+      });
+
+      toast.success('Bloco regenerado com sucesso!');
+      setShowRegenerarBloco(false);
+      setInstrucaoBloco('');
+    } catch (err: any) {
+      toast.error('Erro ao regenerar: ' + (err.message ?? 'tente novamente'));
+    } finally {
+      setRegenerandoBloco(false);
+    }
+  }, [instrucaoBloco, faseAtiva, sessao_id]);
 
   /* ── Loading / Error ── */
   if (loading) {
@@ -1376,6 +1429,109 @@ export default function RoteiroPage() {
                   ))}
                 </motion.div>
               </AnimatePresence>
+
+              {/* ── Block-level actions ── */}
+              <div className="mt-8 pt-5 border-t border-border space-y-4">
+
+                {/* Avaliação de efetividade */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-foreground">Efetividade desta fase</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Sua avaliação melhora a geração futura da IA
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map(star => {
+                      const nota = avaliacoes[blocoAtivo.bloco] ?? 0;
+                      return (
+                        <button
+                          key={star}
+                          onClick={() => handleAvaliar(blocoAtivo.bloco, star === nota ? 0 : star)}
+                          className="transition-transform hover:scale-110 active:scale-95"
+                          title={['', 'Não funcionou', 'Fraco', 'Ok', 'Bom', 'Excelente'][star]}
+                        >
+                          <Star
+                            className="h-6 w-6 transition-colors"
+                            style={{
+                              fill:   star <= nota ? faseColor : 'transparent',
+                              color:  star <= nota ? faseColor : 'hsl(var(--border))',
+                              strokeWidth: 1.5,
+                            }}
+                          />
+                        </button>
+                      );
+                    })}
+                    {(avaliacoes[blocoAtivo.bloco] ?? 0) > 0 && (
+                      <span className="text-[10px] text-muted-foreground ml-1">
+                        {['', 'Não funcionou', 'Fraco', 'Ok', 'Bom', 'Excelente'][avaliacoes[blocoAtivo.bloco]]}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Regenerar bloco */}
+                {!showRegenerarBloco ? (
+                  <button
+                    onClick={() => setShowRegenerarBloco(true)}
+                    className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors border border-dashed border-border hover:border-foreground/30 rounded-lg px-4 py-2.5 w-full justify-center"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Regenerar bloco com IA
+                  </button>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-xl border border-border bg-card p-4 space-y-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 shrink-0" style={{ color: faseColor }} />
+                      <p className="text-sm font-medium text-foreground">
+                        Regenerar: <span style={{ color: faseColor }}>{blocoAtivo.titulo}</span>
+                      </p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Descreva o que quer mudar. A IA vai manter o contexto do cliente e reescrever toda a fase.
+                    </p>
+                    <Textarea
+                      placeholder={`Ex: torne o script mais direto, inclua uma pergunta sobre urgência, adapte para um cliente mais técnico...`}
+                      value={instrucaoBloco}
+                      onChange={e => setInstrucaoBloco(e.target.value)}
+                      rows={3}
+                      className="text-sm resize-none"
+                      disabled={regenerandoBloco}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleRegenerarBloco}
+                        disabled={regenerandoBloco || !instrucaoBloco.trim()}
+                        style={{ background: faseColor }}
+                        className="text-white gap-1.5"
+                      >
+                        {regenerandoBloco
+                          ? <><Loader2 className="h-3 w-3 animate-spin" /> Regenerando...</>
+                          : <><Sparkles className="h-3 w-3" /> Regenerar</>}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => { setShowRegenerarBloco(false); setInstrucaoBloco(''); }}
+                        disabled={regenerandoBloco}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                    {regenerandoBloco && (
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Reescrevendo com contexto completo do cliente...
+                      </p>
+                    )}
+                  </motion.div>
+                )}
+              </div>
             </div>
           )}
         </main>
