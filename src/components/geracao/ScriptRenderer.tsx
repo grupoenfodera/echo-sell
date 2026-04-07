@@ -215,37 +215,38 @@ export default function ScriptRenderer({ content, accentColor }: ScriptRendererP
             );
 
           case 'script':
-            // Cada bloco 'script' já é um parágrafo separado —
-            // a linha em branco no conteúdo faz flush() e cria
-            // um novo bloco, que vira um card independente aqui.
+            // FALA — bloco primário, máxima hierarquia visual.
+            // Borda mais espessa, tint mais forte, texto maior e escuro.
             return (
               <div
                 key={i}
-                className="rounded-r-lg py-3 px-4"
+                className="rounded-r-xl py-4 px-5"
                 style={{
-                  borderLeft: `3px solid ${accent}`,
-                  background: `color-mix(in srgb, ${accent} 7%, hsl(var(--card)))`,
+                  borderLeft: `4px solid ${accent}`,
+                  background: `color-mix(in srgb, ${accent} 11%, hsl(var(--card)))`,
                 }}
               >
-                <p className="text-sm text-foreground leading-[1.8] whitespace-pre-wrap">
+                <p className="text-[15px] font-medium text-foreground leading-[1.85] whitespace-pre-wrap">
                   {b.text}
                 </p>
               </div>
             );
 
           case 'instructions':
+            // CONDUTA — bloco secundário, recua visualmente.
+            // Fundo neutro, label pequeno, texto apagado.
             return (
               <div
                 key={i}
-                className="rounded-lg border border-border/60 bg-card px-4 py-3 space-y-1.5"
+                className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3 space-y-1.5"
               >
-                <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-                  Como conduzir
+                <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/70 mb-2 flex items-center gap-1.5">
+                  <span>⚙</span> Como conduzir
                 </p>
                 {b.items.map((item, j) => (
                   <div key={j} className="flex items-start gap-2 py-0.5">
-                    <span className="text-muted-foreground mt-0.5 shrink-0 text-xs leading-none">→</span>
-                    <p className="text-[13px] text-muted-foreground leading-[1.6]">{item}</p>
+                    <span className="text-muted-foreground/60 mt-0.5 shrink-0 text-xs leading-none">→</span>
+                    <p className="text-[12px] text-muted-foreground/80 leading-[1.6]">{item}</p>
                   </div>
                 ))}
               </div>

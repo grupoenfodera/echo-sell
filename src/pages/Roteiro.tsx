@@ -337,12 +337,11 @@ function SecaoInstrucao({ secao, accentColor }: { secao: SecaoRoteiro; accentCol
     );
   }
 
-  /* Versão aberta: usa ScriptRenderer para formatar → bullets, section labels, etc. */
+  /* Versão aberta — card secundário, claramente abaixo do script na hierarquia */
   return (
-    <div className="rounded-lg border border-border/60 bg-card px-4 py-3">
-      <p className="text-[10px] font-semibold uppercase tracking-wider mb-2"
-        style={{ color: accentColor ?? 'hsl(var(--muted-foreground))' }}>
-        {secao.label}
+    <div className="rounded-lg border border-border/50 bg-muted/30 px-4 py-3">
+      <p className="text-[9px] font-semibold uppercase tracking-widest mb-2 flex items-center gap-1.5 text-muted-foreground/70">
+        <span>⚙</span> {secao.label}
       </p>
       <ScriptRenderer content={secao.conteudo} accentColor={accentColor} />
     </div>
@@ -436,11 +435,22 @@ function SecaoScript({
       onClick={onFocus}
       tabIndex={0}
     >
-      {/* Label — outside the card, as floating small-caps */}
+      {/* Label — floating acima do card de fala */}
       <div className="flex items-center gap-2">
+        {/* Badge "FALA" — sinaliza que é o script de voz do vendedor */}
+        <span
+          className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
+          style={{
+            background: `${activeColor}18`,
+            color: activeColor,
+            border: `1px solid ${activeColor}30`,
+          }}
+        >
+          FALA
+        </span>
         <span
           className="text-[10px] font-semibold uppercase tracking-wider"
-          style={{ color: activeColor }}
+          style={{ color: activeColor, opacity: 0.8 }}
         >
           {secao.label}
         </span>
