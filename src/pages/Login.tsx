@@ -77,8 +77,12 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(220_100%_50%/0.08)_0%,transparent_70%)]" />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{
+        background: 'radial-gradient(ellipse at 60% 40%, #0d2a6b 0%, #071630 55%, #000000 100%)',
+      }}
+    >
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 30% 70%, #0a1f5c 0%, transparent 60%)' }} />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -96,7 +100,8 @@ const Login = () => {
             placeholder="seu@email.com"
             value={email}
             onChange={e => { setEmail(e.target.value); setError(''); }}
-            className="h-12 bg-card border-border font-ui"
+            className="h-12 font-ui border-0 placeholder:text-white/40 text-white"
+            style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}
             autoComplete="email"
           />
           <div className="relative">
@@ -105,13 +110,14 @@ const Login = () => {
               placeholder="Senha"
               value={password}
               onChange={e => { setPassword(e.target.value); setError(''); }}
-              className="h-12 bg-card border-border font-ui pr-10"
+              className="h-12 font-ui pr-10 border-0 placeholder:text-white/40 text-white"
+              style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}
               autoComplete="current-password"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
               tabIndex={-1}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -139,14 +145,14 @@ const Login = () => {
           <div className="text-center">
             <Link
               to="/esqueci-senha"
-              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-ui"
+              className="text-[11px] text-white/50 hover:text-white transition-colors font-ui"
             >
               Esqueci minha senha
             </Link>
           </div>
         </form>
 
-        <p className="text-center text-[10px] text-muted-foreground/60 mt-8 font-ui">
+        <p className="text-center text-[10px] text-white/30 mt-8 font-ui">
           Acesso exclusivo para alunos SVP
         </p>
       </motion.div>
