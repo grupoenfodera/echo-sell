@@ -695,8 +695,11 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
 
 function ListClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () => void }) {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const temp = TEMP_BADGE[cliente.temperatura] || TEMP_BADGE.frio;
-  const tempColor = TEMP_COLORS[cliente.temperatura] || TEMP_DEFAULT;
+  const tcRaw = TEMP_COLORS[cliente.temperatura] || TEMP_DEFAULT;
+  const tempColor = { border: tcRaw.border, bg: isDark ? tcRaw.bgDark : tcRaw.bg, text: isDark ? tcRaw.textDark : tcRaw.text, label: tcRaw.label };
   const statusCls = STATUS_CLS[cliente.status] || STATUS_CLS.novo;
   const statusLabel = STATUS_LABEL[cliente.status] || cliente.status;
   const initials = cliente.nome.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
