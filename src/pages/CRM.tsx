@@ -383,6 +383,11 @@ export default function CRM() {
                             </button>
                           )}
                         </div>
+                        {totalValor > 0 && (
+                          <p className="text-[11px] font-semibold text-primary mt-1">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValor)}
+                          </p>
+                        )}
                       </div>
 
                       {/* Column body */}
