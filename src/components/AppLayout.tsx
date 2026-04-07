@@ -7,7 +7,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const SIDEBAR_MIN = 160;
 const SIDEBAR_MAX = 320;
 const SIDEBAR_DEFAULT = 192;
+const SIDEBAR_COLLAPSED = 56;
 const STORAGE_KEY = 'svp-sidebar-width';
+const COLLAPSED_KEY = 'svp-sidebar-collapsed';
 
 function getInitialWidth(): number {
   try {
@@ -20,16 +22,16 @@ function getInitialWidth(): number {
   return SIDEBAR_DEFAULT;
 }
 
-/**
- * AppLayout — Sidebar + Topbar + scrollable content area.
- * Used for all authenticated pages except full-screen flows
- * (Roteiro, RoteiroLoading, Login, Welcome, Onboarding).
- *
- * Mobile: sidebar collapses into a drawer overlay triggered by the
- * hamburger button in AppTopbar. Content takes full width.
- */
+function getInitialCollapsed(): boolean {
+  try {
+    return localStorage.getItem(COLLAPSED_KEY) === 'true';
+  } catch {}
+  return false;
+}
+
 export default function AppLayout() {
   const [sidebarWidth, setSidebarWidth] = useState(getInitialWidth);
+  const [collapsed, setCollapsed] = useState(getInitialCollapsed);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -39,7 +41,17 @@ export default function AppLayout() {
     try { localStorage.setItem(STORAGE_KEY, String(clamped)); } catch {}
   }, []);
 
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem(COLLAPSED_KEY, String(next)); } catch {}
+      return next;
+    });
+  }, []);
+
   const closeMobile = useCallback(() => setMobileMenuOpen(false), []);
+
+  const effectiveWidth = isMobile ? 0 : (collapsed ? SIDEBAR_COLLAPSED : sidebarWidth);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -51,10 +63,12 @@ export default function AppLayout() {
         />
       )}
 
-      {/* Left sidebar — resizable on desktop, drawer on mobile */}
+      {/* Left sidebar */}
       <AppSidebar
-        width={sidebarWidth}
+        width={collapsed && !isMobile ? SIDEBAR_COLLAPSED : sidebarWidth}
+        collapsed={collapsed && !isMobile}
         onWidthChange={handleWidthChange}
+        onToggleCollapse={toggleCollapsed}
         mobileOpen={mobileMenuOpen}
         onMobileClose={closeMobile}
       />
@@ -62,11 +76,10 @@ export default function AppLayout() {
       {/* Right side — topbar + scrollable content */}
       <div
         className="flex flex-col flex-1 overflow-hidden"
-        style={{ marginLeft: isMobile ? 0 : sidebarWidth }}
+        style={{ marginLeft: effectiveWidth }}
       >
         <AppTopbar onToggleMobile={() => setMobileMenuOpen(o => !o)} />
 
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto bg-background">
           <Outlet />
         </main>
