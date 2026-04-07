@@ -1,40 +1,30 @@
 
 
-## Plano: Adicionar Produto, Ticket e Data de Criação nos Cards do CRM
+## Plano: Ajustar CTAs dos cards do CRM
 
-### Resumo
-Adicionar 3 informações nos cards do pipeline: data de criação do lead, ticket médio (preço) e nome do produto. Requer uma mudança mínima na edge function para trazer `produto` e `preco` da sessão.
+### Lógica atual (linhas 571-579)
+O botão primário varia entre 4 labels: "Gerar roteiro", "Registrar contato", "Continuar" e "Ver roteiro".
 
-### Mudanças
+### Nova lógica
+- **Sem sessão** → manter `"Gerar roteiro"` (inalterado)
+- **Com sessão (qualquer estado)** → `"Ver Roteiro"`
 
-**1. Edge Function `crm-listar/index.ts`** (mudança mínima)
-- Linha 136: adicionar `produto, preco` ao select da query de sessões
-- Linhas 145-154: incluir `produto` e `preco` no objeto `ultimasSessoes`
+### Alteração em `src/pages/CRM.tsx` (linhas 571-579)
 
-**2. Tipo `UltimaSessao` em `src/types/crm.ts`**
-- Adicionar `produto?: string` e `preco?: number`
-
-**3. Cards em `src/pages/CRM.tsx`**
-- `PipelineCard`: adicionar abaixo do nome/empresa:
-  - Produto como tag/badge sutil (se existir)
-  - Ticket formatado em BRL: "R$ 2.500" (font-semibold, cor primária)
-  - Data de criação relativa ("há 3 dias") no rodapé do card
-- `ListClienteCard`: mesmas 3 informações para consistência
-
-### Layout do card atualizado
-```text
-┌──────────────────────────────┐
-│ 👤 João Silva        [Morno] │
-│    Empresa X                 │
-│    📦 Mentoria Premium       │
-│    💰 R$ 2.500               │
-│ ▓▓▓▓░░░░░░  3/5             │
-│              criado há 3 dias│
-└──────────────────────────────┘
+```typescript
+let primaryAction = { label: 'Gerar roteiro', action: () => navigate('/') };
+if (sessao) {
+  if (todasGeradas) {
+    primaryAction = { label: 'Ver Roteiro', action: () => navigate(`/crm/${cliente.id}`) };
+  } else if (temRoteiro && totalPecas > 0 && totalPecas < 4) {
+    primaryAction = { label: 'Ver Roteiro', action: () => navigate(`/roteiro/${sessao.id}`) };
+  } else if (temRoteiro) {
+    primaryAction = { label: 'Ver Roteiro', action: () => navigate(`/roteiro/${sessao.id}`) };
+  } else {
+    primaryAction = { label: 'Ver Roteiro', action: () => navigate(`/roteiro/${sessao.id}`) };
+  }
+}
 ```
 
-### Arquivos alterados
-1. `supabase/functions/crm-listar/index.ts` — adicionar 2 campos ao select + mapeamento
-2. `src/types/crm.ts` — adicionar `produto?` e `preco?` ao tipo `UltimaSessao`
-3. `src/pages/CRM.tsx` — exibir as 3 novas informações nos cards
+Resumo: cards sem roteiro criado mantêm "Gerar roteiro"; todos os demais exibem "Ver Roteiro", preservando a navegação original de cada caso.
 
