@@ -1,5 +1,5 @@
 import { useNavigate, NavLink } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { svpApi } from '@/lib/api-svp';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -124,10 +124,18 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 /* ── Sidebar ─────────────────────────────────────── */
 
-export default function AppSidebar() {
+interface AppSidebarProps {
+  width?: number;
+  onWidthChange?: (w: number) => void;
+}
+
+export default function AppSidebar({ width = 192, onWidthChange }: AppSidebarProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [crmCount, setCrmCount] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartX = useRef<number>(0);
+  const dragStartWidth = useRef<number>(width);
 
   /* Fetch active client count for CRM badge */
   useEffect(() => {
@@ -142,11 +150,36 @@ export default function AppSidebar() {
       .catch(() => {});
   }, [user?.id]);
 
+  /* Drag-to-resize logic */
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragStartX.current = e.clientX;
+    dragStartWidth.current = width;
+    setIsDragging(true);
+
+    const onMove = (ev: MouseEvent) => {
+      const delta = ev.clientX - dragStartX.current;
+      onWidthChange?.(dragStartWidth.current + delta);
+    };
+    const onUp = () => {
+      setIsDragging(false);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [width, onWidthChange]);
+
   return (
     <aside
       className="fixed left-0 top-0 bottom-0 z-40 flex flex-col no-print"
       style={{
-        width: '192px',
+        width,
         background: BRAND.bg,
         borderRight: `1px solid ${BRAND.border}`,
       }}
@@ -216,6 +249,46 @@ export default function AppSidebar() {
           </div>
         </div>
       </nav>
+
+      {/* ── Resize handle ────────────────────────────
+          8px hit area on the right edge of the sidebar.
+          Shows a 2px accent line on hover / while dragging.
+      ─────────────────────────────────────────────── */}
+      <div
+        onMouseDown={handleDragStart}
+        title="Arrastar para redimensionar"
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: -4,
+          bottom: 0,
+          width: 8,
+          cursor: 'col-resize',
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {/* Visual indicator — thin line that appears on hover/drag */}
+        <div
+          style={{
+            width: 2,
+            height: '100%',
+            borderRadius: 1,
+            background: isDragging ? BRAND.blue : 'transparent',
+            transition: isDragging ? 'none' : 'background 0.2s',
+          }}
+          className="group-hover:bg-red-500"
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLDivElement).style.background = `${BRAND.blue}80`;
+          }}
+          onMouseLeave={e => {
+            if (!isDragging)
+              (e.currentTarget as HTMLDivElement).style.background = 'transparent';
+          }}
+        />
+      </div>
     </aside>
   );
 }
