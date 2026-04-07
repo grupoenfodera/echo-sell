@@ -120,13 +120,14 @@ function normalizeBlocos(roteiro: RoteiroJSON, followUp?: FollowUpItem[]): Bloco
       const bloco = (b.bloco || '').toLowerCase();
       const num   = b.numero ?? i + 1;
 
-      // ── Generic script (abertura / diagnostico / solucao) ──
+      // ── Generic script (abertura / diagnostico / solucao) — acordeão ──
       if (b.script) {
-        // Para a fase de Solução, injeta label antes do script de abertura
-        if (bloco === 'solucao' || bloco === 'apresentacao_solucao') {
-          sections.push({ id: `${bloco}-label-abertura`, tipo: 'label', label: 'Abertura da solução', conteudo: '' });
-        }
-        sections.push({ id: `${bloco}-script`, tipo: 'script', label: 'Script', conteudo: b.script });
+        const scriptLabel =
+          bloco === 'abertura'                                       ? 'Script de abertura'    :
+          bloco === 'descoberta' || bloco === 'diagnostico'          ? 'Script de diagnóstico' :
+          bloco === 'solucao'    || bloco === 'apresentacao_solucao' ? 'Abertura da solução'   :
+          'Script';
+        sections.push({ id: `${bloco}-script`, tipo: 'oferta', label: scriptLabel, conteudo: b.script });
       }
 
       // ── Perguntas-chave (diagnostico) ──
@@ -137,9 +138,8 @@ function normalizeBlocos(roteiro: RoteiroJSON, followUp?: FollowUpItem[]): Bloco
         });
       }
 
-      // ── Fases da solução (solucao) ──
+      // ── Fases da solução — cada fase vira um acordeão ──
       if (Array.isArray(b.fases) && b.fases.length > 0) {
-        sections.push({ id: `${bloco}-label-estrutura`, tipo: 'label', label: 'Estrutura de cada fase', conteudo: '' });
         (b.fases as { nome: string; descricao: string; ganho_cliente: string; micro_sin: string }[]).forEach((fase, j) => {
           sections.push({
             id: `${bloco}-fase-${j}`,
@@ -347,35 +347,61 @@ function SecaoLabel({ secao }: { secao: SecaoRoteiro }) {
 ───────────────────────────────────────────────── */
 
 function SecaoFase({ secao, accentColor = '#1E3FA8' }: { secao: SecaoRoteiro; accentColor?: string }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="rounded-lg border border-border/60 bg-card px-4 py-3 space-y-2">
-      <p className="text-[13px] font-semibold text-foreground leading-snug">
-        {secao.label}
-      </p>
-      {secao.conteudo && (
-        <p className="text-[12px] text-muted-foreground leading-relaxed">
-          {secao.conteudo}
-        </p>
-      )}
-      {secao.ganho_cliente && (
-        <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
-          <span className="font-medium">Cliente ganha:</span> {secao.ganho_cliente}
-        </p>
-      )}
-      {secao.micro_sin && (
-        <div className="pt-0.5">
-          <span
-            className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium"
-            style={{
-              background: `color-mix(in srgb, ${accentColor} 10%, transparent)`,
-              border: `1px solid color-mix(in srgb, ${accentColor} 22%, transparent)`,
-              color: accentColor,
-            }}
-          >
-            Micro-sin: &ldquo;{secao.micro_sin}&rdquo;
-          </span>
+    <div
+      className="rounded-xl border border-border bg-card cursor-pointer select-none transition-colors hover:bg-muted/20"
+      onClick={() => setOpen(o => !o)}
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: accentColor }} />
+          <span className="text-sm text-foreground truncate">{secao.label}</span>
         </div>
-      )}
+        {open
+          ? <ChevronUp   className="h-4 w-4 text-muted-foreground shrink-0" />
+          : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
+      </div>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+          >
+            <div
+              className="px-4 pb-4 pt-3 border-t border-border space-y-2.5"
+              onClick={e => e.stopPropagation()}
+            >
+              {secao.conteudo && (
+                <p className="text-[13px] text-foreground leading-relaxed">{secao.conteudo}</p>
+              )}
+              {secao.ganho_cliente && (
+                <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+                  <span className="font-medium">Cliente ganha:</span> {secao.ganho_cliente}
+                </p>
+              )}
+              {secao.micro_sin && (
+                <span
+                  className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-medium"
+                  style={{
+                    background: `color-mix(in srgb, ${accentColor} 10%, transparent)`,
+                    border: `1px solid color-mix(in srgb, ${accentColor} 22%, transparent)`,
+                    color: accentColor,
+                  }}
+                >
+                  Micro-sin: &ldquo;{secao.micro_sin}&rdquo;
+                </span>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
