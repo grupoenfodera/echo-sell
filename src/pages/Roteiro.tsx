@@ -1481,7 +1481,7 @@ export default function RoteiroPage() {
                     className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors border border-dashed border-border hover:border-foreground/30 rounded-lg px-4 py-2.5 w-full justify-center"
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    Regenerar bloco com IA
+                    Regenerar bloco com IA SVP
                   </button>
                 ) : (
                   <motion.div
