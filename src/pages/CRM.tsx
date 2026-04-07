@@ -339,6 +339,7 @@ export default function CRM() {
                 {COLUNAS.map(col => {
                   const items = colunaClientes[col.id];
                   const isFechado = col.id === 'fechado';
+                  const totalValor = items.reduce((sum, c) => sum + (c.ultima_sessao?.preco ?? 0), 0);
 
                   return (
                     <div key={col.id} className="w-[280px] shrink-0 flex flex-col">
