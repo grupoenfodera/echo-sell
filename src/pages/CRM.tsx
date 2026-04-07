@@ -207,8 +207,10 @@ export default function CRM() {
       const col = mapStatusToColuna(c.status);
       map[col].push(c);
     });
-    // Sort fechado by most recent
-    map.fechado.sort((a, b) => new Date(b.atualizado_em).getTime() - new Date(a.atualizado_em).getTime());
+    // Sort all columns by most recent first
+    const sortRecent = (a: Cliente, b: Cliente) =>
+      new Date(b.atualizado_em).getTime() - new Date(a.atualizado_em).getTime();
+    (Object.keys(map) as PipelineColuna[]).forEach(col => map[col].sort(sortRecent));
     return map;
   }, [clientesFiltrados]);
 
