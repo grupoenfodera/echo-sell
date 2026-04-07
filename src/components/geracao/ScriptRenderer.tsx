@@ -39,11 +39,15 @@ type Block =
 const SECTION_RE = /^(BLOCO\s+\d+\s*[—–\-]+\s*[^:\n]+:?|CONFIRMAÇÃO\s+OBRIGATÓRIA|INSTRUÇÃO\s+DE\s+CONDUTA|VERIFICAÇÃO\s+OBRIGATÓRIA)(:?\s*)/i;
 
 /**
- * Sub-headers: qualquer linha curta (5–70 chars) que termina com ":"
+ * Sub-headers: linha curta (5–45 chars) que termina com ":"
  * e não começa com aspas, colchetes, setas ou bullets.
  * Ex: "Compilado de entregáveis:", "Estrutura de cada fase:", "Preço com âncora:"
+ *
+ * EXCLUÍDAS linhas conversacionais (fala do vendedor) que contêm pronomes/verbos:
+ * "Pelo que você me contou...", "Isso está gerando:", "E o que você quer chegar é:"
  */
-const SUBHEADER_RE = /^(?!["""''«»\[→•*\-–—])[A-ZÀ-Úa-zà-ú].{3,68}:$/;
+const SUBHEADER_RE = /^(?!["""''«»\[→•*\-–—])[A-ZÀ-Úa-zà-ú].{3,45}:$/;
+const CONVERSATIONAL_RE = /\b(você|eu\s|me\s|\bnós\b|isso\s|está\s|estão|foram|gerando|contou|passando|chegar|quer\s|pelo\s|hoje\s|trouxe|confirmar|passou|contar)\b/i;
 
 /** [SILÊNCIO TOTAL] / [pausa — ...] / # pausa */
 const PAUSE_RE = /^(\[(silên[çc]io|pausa)[^\]]*\]|#\s*pausa\b[^.]*)/i;
@@ -144,7 +148,8 @@ function parse(content: string): Block[] {
     }
 
     // ── Sub-header (linha curta terminando em ":") ────
-    if (SUBHEADER_RE.test(line)) {
+    // Exclui linhas conversacionais (fala do vendedor) que contêm pronomes/verbos
+    if (SUBHEADER_RE.test(line) && !CONVERSATIONAL_RE.test(line)) {
       flushSpeech();
       flushInstrs();
       blocks.push({ kind: 'section', text: line.replace(/:$/, '').trim() });
@@ -242,9 +247,14 @@ export default function ScriptRenderer({ content, accentColor, compact = false }
             if (compact) {
               // Inside a SecaoScript card — render plain text, no nested border
               return (
-                <p key={i} className="text-[15px] text-foreground leading-[1.75] whitespace-pre-wrap">
-                  {b.text}
-                </p>
+                <div key={i}>
+                  <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1" style={{ color: accent }}>
+                    💬 Fale
+                  </p>
+                  <p className="text-[15px] text-foreground leading-[1.75] whitespace-pre-wrap">
+                    {b.text}
+                  </p>
+                </div>
               );
             }
             return (
@@ -256,6 +266,9 @@ export default function ScriptRenderer({ content, accentColor, compact = false }
                   background: `color-mix(in srgb, ${accent} 7%, hsl(var(--card)))`,
                 }}
               >
+                <p className="text-[9px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5" style={{ color: accent }}>
+                  💬 Fale ao cliente
+                </p>
                 <p className="text-[15px] text-foreground leading-[1.75] whitespace-pre-wrap">
                   {b.text}
                 </p>
@@ -279,10 +292,10 @@ export default function ScriptRenderer({ content, accentColor, compact = false }
             return (
               <div
                 key={i}
-                className="rounded-lg border border-border/60 bg-card px-4 py-3 space-y-1.5"
+                className="rounded-lg border border-border/60 bg-muted/30 px-4 py-3 space-y-1.5"
               >
-                <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
-                  Como conduzir
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-2 flex items-center gap-1">
+                  📋 Como conduzir
                 </p>
                 {b.items.map((item, j) => (
                   <div key={j} className="flex items-start gap-2 py-0.5">
