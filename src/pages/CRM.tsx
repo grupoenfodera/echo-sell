@@ -641,7 +641,7 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
               ) : cliente.status === 'perdido' ? (
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-destructive">❌ Perdido</span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: '#34d399' }}>✅ Fechado</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: 'hsl(var(--ok))' }}>✅ Fechado</span>
               )}
             </div>
           )}
