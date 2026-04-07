@@ -46,6 +46,18 @@ const FASE_COLORS: Record<string, string> = {
 };
 const INDEX_COLORS = ['#1E3FA8', '#254DC7', '#3B6FE8', '#E8A020', '#E03E3E', '#1D9E6F'];
 
+const FASE_DESCRICOES: Record<string, string> = {
+  abertura:             'Gerar autoridade e segurança emocional antes de qualquer pergunta.',
+  descoberta:           'Extrair problema, desejo e critério de compra nas palavras do cliente.',
+  diagnostico:          'Extrair problema, desejo e critério de compra nas palavras do cliente.',
+  apresentacao_solucao: 'Apresentar metodologia conectada ao que o cliente verbalizou.',
+  solucao:              'Apresentar metodologia conectada ao que o cliente verbalizou.',
+  oferta:               'Cliente entra mentalmente no projeto antes de ouvir o número.',
+  tratamento_objecoes:  'Cada resposta reconhece, revela o problema oculto e constrói desejo.',
+  objecoes:             'Cada resposta reconhece, revela o problema oculto e constrói desejo.',
+  fechamento:           'Nunca sair sem próximo passo com data — fechou ou não fechou.',
+};
+
 function getFaseColor(bloco: string, index: number): string {
   return FASE_COLORS[bloco.toLowerCase()] ?? INDEX_COLORS[index % INDEX_COLORS.length];
 }
@@ -408,13 +420,7 @@ function SecaoScript({
   const editada  = estado?.editada  ?? false;
   const conteudo = editada && estado?.texto_editado ? estado.texto_editado : secao.conteudo;
 
-  const borderCls = aprovada
-    ? 'border-green-500/40 bg-green-500/5'
-    : editada
-    ? 'border-blue-500/40 bg-blue-500/5'
-    : isFocused
-    ? 'border-primary/40 bg-card'
-    : 'border-border bg-card';
+  const activeColor = aprovada ? '#1D9E6F' : editada ? '#3B6FE8' : (accentColor ?? 'hsl(var(--primary))');
 
   const handleRegenerar = async () => {
     setRegenerando(true);
@@ -426,23 +432,46 @@ function SecaoScript({
 
   return (
     <div
-      className={`rounded-xl border-2 ${borderCls} transition-all duration-200 ${isFocused ? 'ring-2 ring-primary/15' : ''}`}
+      className="space-y-1.5 outline-none"
       onClick={onFocus}
       tabIndex={0}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
-        <span className="font-semibold text-sm text-foreground">{secao.label}</span>
-        <div className="flex items-center gap-1.5 text-[10px]">
-          {aprovada && <span className="flex items-center gap-1 text-green-500 font-medium"><Check className="h-3 w-3" /> Aprovado</span>}
-          {editada && !aprovada && <span className="flex items-center gap-1 text-blue-400 font-medium"><Pencil className="h-3 w-3" /> Editado</span>}
-        </div>
+      {/* Label — outside the card, as floating small-caps */}
+      <div className="flex items-center gap-2">
+        <span
+          className="text-[10px] font-semibold uppercase tracking-wider"
+          style={{ color: activeColor }}
+        >
+          {secao.label}
+        </span>
+        {aprovada && (
+          <span className="text-[9px] text-green-500 font-medium flex items-center gap-0.5">
+            <Check className="h-2.5 w-2.5" /> Aprovado
+          </span>
+        )}
+        {editada && !aprovada && (
+          <span className="text-[9px] text-blue-400 font-medium flex items-center gap-0.5">
+            <Pencil className="h-2.5 w-2.5" /> Editado
+          </span>
+        )}
       </div>
 
-      {/* Body */}
-      <div className="p-4 space-y-3">
+      {/* Script card — left border + tinted background, no outer border */}
+      <div
+        className="rounded-r-lg transition-all"
+        style={{
+          borderLeft: `3px solid ${activeColor}`,
+          background: aprovada
+            ? 'color-mix(in srgb, #1D9E6F 7%, hsl(var(--card)))'
+            : editada
+            ? 'color-mix(in srgb, #3B6FE8 7%, hsl(var(--card)))'
+            : `color-mix(in srgb, ${accentColor ?? 'hsl(var(--primary))'} 6%, hsl(var(--card)))`,
+          outline: isFocused ? `2px solid ${activeColor}30` : 'none',
+          outlineOffset: 2,
+        }}
+      >
         {editando ? (
-          <div className="space-y-2">
+          <div className="p-4 space-y-2">
             <Textarea
               value={textoEdit}
               onChange={e => setTextoEdit(e.target.value)}
@@ -458,12 +487,14 @@ function SecaoScript({
             </div>
           </div>
         ) : (
-          <ScriptRenderer content={conteudo} accentColor={accentColor} />
+          <div className="py-3 px-4">
+            <ScriptRenderer content={conteudo} accentColor={accentColor} />
+          </div>
         )}
 
         {/* Raciocínio */}
         {secao.raciocinio && !editando && (
-          <div>
+          <div className="px-4 pb-3">
             <button
               onClick={e => { e.stopPropagation(); setShowRaciocinio(!showRaciocinio); }}
               className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
@@ -483,7 +514,7 @@ function SecaoScript({
 
         {/* Feedback input for regeneration */}
         {showFeedback && (
-          <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-amber-500/20">
+          <div className="mx-4 mb-4 space-y-2 p-3 rounded-lg bg-muted/30 border border-amber-500/20">
             <div className="flex items-start gap-2">
               <AlertCircle className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-500/90 leading-snug">
@@ -506,27 +537,27 @@ function SecaoScript({
             </div>
           </div>
         )}
-
-        {/* Actions — only on Script, never on instrucao/objecao */}
-        {!editando && !showFeedback && (
-          <div className="flex items-center gap-2 pt-1">
-            <Button
-              size="sm"
-              variant={aprovada ? 'outline' : 'default'}
-              onClick={e => { e.stopPropagation(); onAprovar(); }}
-              className={`text-xs h-7 ${aprovada ? 'text-green-500 border-green-500/40 hover:bg-green-500/10' : ''}`}
-            >
-              <Check className="mr-1 h-3 w-3" />{aprovada ? 'Aprovado' : 'Aprovar'}
-            </Button>
-            <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setTextoEdit(conteudo); setEditando(true); }} className="text-xs h-7">
-              <Pencil className="mr-1 h-3 w-3" /> Editar
-            </Button>
-            <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setShowFeedback(true); }} className="text-xs h-7">
-              <RotateCcw className="mr-1 h-3 w-3" /> Regenerar
-            </Button>
-          </div>
-        )}
       </div>
+
+      {/* Actions — only when focused or hovered */}
+      {!editando && !showFeedback && isFocused && (
+        <div className="flex items-center gap-2 pl-1">
+          <Button
+            size="sm"
+            variant={aprovada ? 'outline' : 'default'}
+            onClick={e => { e.stopPropagation(); onAprovar(); }}
+            className={`text-xs h-7 ${aprovada ? 'text-green-500 border-green-500/40 hover:bg-green-500/10' : ''}`}
+          >
+            <Check className="mr-1 h-3 w-3" />{aprovada ? 'Aprovado' : 'Aprovar'}
+          </Button>
+          <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setTextoEdit(conteudo); setEditando(true); }} className="text-xs h-7">
+            <Pencil className="mr-1 h-3 w-3" /> Editar
+          </Button>
+          <Button size="sm" variant="outline" onClick={e => { e.stopPropagation(); setShowFeedback(true); }} className="text-xs h-7">
+            <RotateCcw className="mr-1 h-3 w-3" /> Regenerar
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -801,25 +832,31 @@ export default function RoteiroPage() {
 
           {/* Client context */}
           <div className="p-4 border-b border-border">
-            <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-1.5">Roteiro SVP</p>
-            <p className="text-sm font-semibold text-foreground leading-tight">{nomeCliente}</p>
-            {nicho && <p className="text-xs text-muted-foreground mt-0.5 truncate">{nicho}</p>}
-            {sessao?.preco && (
-              <p className="text-xs text-muted-foreground mt-0.5">R${Number(sessao.preco).toLocaleString('pt-BR')}/mês</p>
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">Roteiro SVP</p>
+            {/* Name · Nicho on same line */}
+            <p className="text-sm font-semibold text-foreground leading-tight truncate">
+              {nomeCliente}{nicho ? ` · ${nicho}` : ''}
+            </p>
+            {/* Price · emotional state on same line */}
+            {(sessao?.preco || estadoEmoc) && (
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                {sessao?.preco ? `R$${Number(sessao.preco).toLocaleString('pt-BR')}/mês` : ''}
+                {sessao?.preco && estadoEmoc ? ' · ' : ''}
+                {estadoEmoc ?? ''}
+              </p>
             )}
-            {/* Emotional / decision profile — critical context during meeting */}
-            {(estadoEmoc || perfilDec) && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {estadoEmoc && (
-                  <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 font-medium">
-                    {estadoEmoc}
-                  </span>
-                )}
-                {perfilDec && (
-                  <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
-                    {perfilDec}
-                  </span>
-                )}
+            {/* Roteiro progress bar */}
+            {blocos.length > 0 && (
+              <div className="mt-3 h-0.5 rounded-full bg-border overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.round(
+                      (blocos.filter((_, i) => getFaseStatus(i) === 'aprovado').length / blocos.length) * 100
+                    )}%`,
+                    background: '#1D9E6F',
+                  }}
+                />
               </div>
             )}
           </div>
@@ -835,10 +872,21 @@ export default function RoteiroPage() {
                 <button
                   key={bloco.bloco}
                   onClick={() => setFaseAtiva(i)}
-                  className="w-full text-left py-2.5 rounded-lg transition-all hover:bg-muted/30"
+                  className="w-full text-left rounded-lg transition-all"
                   style={isActive
-                    ? { paddingLeft: '6px', paddingRight: '8px', borderLeft: `3px solid ${color}`, background: 'hsl(var(--background))' }
-                    : { paddingLeft: '9px', paddingRight: '8px' }
+                    ? {
+                        padding: '8px 8px 8px 6px',
+                        borderTop: '1px solid hsl(var(--border))',
+                        borderRight: '1px solid hsl(var(--border))',
+                        borderBottom: '1px solid hsl(var(--border))',
+                        borderLeft: `3px solid ${color}`,
+                        background: 'hsl(var(--background))',
+                      }
+                    : {
+                        padding: '8px',
+                        border: '1px solid hsl(var(--border) / 50%)',
+                        background: 'hsl(var(--card))',
+                      }
                   }
                 >
                   <div className="flex items-center gap-2.5">
@@ -858,6 +906,9 @@ export default function RoteiroPage() {
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">{bloco.tempo}</p>
                     </div>
+                    {status === 'aprovado' && (
+                      <span className="h-2 w-2 rounded-full bg-green-500 shrink-0" />
+                    )}
                   </div>
                 </button>
               );
@@ -1005,35 +1056,56 @@ export default function RoteiroPage() {
 
               {/* Phase header */}
               <div className="flex items-start justify-between gap-4 mb-6">
-                <div className="flex items-start gap-4">
-                  <div
-                    className="h-11 w-11 rounded-full shrink-0 flex items-center justify-center text-base font-bold"
-                    style={{ background: `${faseColor}20`, color: faseColor, border: `2px solid ${faseColor}50` }}
-                  >
-                    {blocoAtivo.numero}
+                <div className="flex-1 min-w-0">
+                  {/* Fase pill + title + time */}
+                  <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                    <span
+                      className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                      style={{ background: `${faseColor}18`, color: faseColor }}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: faseColor }} />
+                      Fase {blocoAtivo.numero}
+                    </span>
+                    <h2 className="text-xl font-bold text-foreground leading-none">{blocoAtivo.titulo}</h2>
+                    <span
+                      className="text-xs px-2.5 py-0.5 rounded-full border font-medium text-muted-foreground"
+                      style={{ borderColor: 'hsl(var(--border))' }}
+                    >
+                      {blocoAtivo.tempo}
+                    </span>
                   </div>
-                  <div className="pt-0.5">
-                    <div className="flex items-center flex-wrap gap-2">
-                      <h2 className="text-xl font-bold text-foreground leading-none">{blocoAtivo.titulo}</h2>
-                      <span
-                        className="text-xs px-2 py-0.5 rounded-full font-medium"
-                        style={{ background: `${faseColor}15`, color: faseColor }}
-                      >
-                        {blocoAtivo.tempo}
-                      </span>
-                    </div>
-                  </div>
+                  {/* Phase description */}
+                  {FASE_DESCRICOES[blocoAtivo.bloco.toLowerCase()] && (
+                    <p className="text-sm text-muted-foreground leading-snug">
+                      {FASE_DESCRICOES[blocoAtivo.bloco.toLowerCase()]}
+                    </p>
+                  )}
                 </div>
 
-                {/* Copy this phase's script */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopiarFase}
-                  className="shrink-0 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
-                >
-                  <Copy className="h-3.5 w-3.5" /> Copiar fase
-                </Button>
+                {/* Actions: copy + nav arrows */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Button variant="outline" size="sm" onClick={handleCopiarFase} className="gap-1.5 text-xs">
+                    <Copy className="h-3.5 w-3.5" /> Copiar fase
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={faseAtiva === 0}
+                    onClick={() => setFaseAtiva(f => f - 1)}
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={isLastPhase}
+                    onClick={() => setFaseAtiva(f => f + 1)}
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
 
               {/* Section cards */}
