@@ -73,7 +73,15 @@ FORMATO — retorne JSON puro, sem markdown, sem crases:
 
 Scripts: mínimo 4 frases por etapa. Use linguagem natural e persuasiva.
 Objeções obrigatórias: "está caro", "preciso pensar", "já tentei antes".
-Cada resposta de objeção deve ter mínimo 3 frases.`;
+Cada resposta de objeção deve ter mínimo 3 frases.
+
+FORMATAÇÃO DOS CAMPOS DE SCRIPT — OBRIGATÓRIO:
+- Separe blocos temáticos distintos com uma linha em branco (\n\n).
+- Cada parágrafo = 1 a 3 frases sobre o mesmo tema ou momento da conversa.
+- NUNCA coloque todo o script em um único parágrafo longo.
+- Exemplo correto:
+  "Olá [Nome], obrigado por estar aqui.\n\nAntes de começar, deixa eu te explicar como vai funcionar nossa conversa.\n\nA ideia é simples: primeiro te escuto, depois mostro como trabalhamos juntos."
+- O \n\n é a quebra de parágrafo — use-o sempre que mudar de tema ou momento.`;
 
 function errorResponse(message: string, status: number) {
   return new Response(
