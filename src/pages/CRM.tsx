@@ -633,11 +633,11 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
             <div
               className="rounded-md px-2 py-1"
               style={{
-                background: cliente.status === 'perdido' ? 'hsl(var(--destructive) / 0.08)' : 'hsl(142 71% 45% / 0.08)',
+                background: cliente.status === 'perdido' ? 'hsl(var(--destructive) / 0.08)' : 'hsl(var(--ok) / 0.10)',
               }}
             >
               {cliente.status === 'ganho' ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: '#34d399' }}>✅ Ganho</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: 'hsl(var(--ok))' }}>✅ Ganho</span>
               ) : cliente.status === 'perdido' ? (
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium text-destructive">❌ Perdido</span>
               ) : (
