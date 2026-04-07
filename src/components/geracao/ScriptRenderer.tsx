@@ -204,7 +204,13 @@ export default function ScriptRenderer({ content, accentColor }: ScriptRendererP
               </p>
             );
 
-          case 'script':
+          case 'script': {
+            // Split on blank lines (double newline) → visual paragraphs with spacing.
+            // Single \n within a paragraph is preserved as a line break.
+            const paragraphs = b.text
+              .split(/\n{2,}/)
+              .map(p => p.trim())
+              .filter(Boolean);
             return (
               <div
                 key={i}
@@ -214,11 +220,18 @@ export default function ScriptRenderer({ content, accentColor }: ScriptRendererP
                   background: `color-mix(in srgb, ${accent} 7%, hsl(var(--card)))`,
                 }}
               >
-                <p className="text-sm text-foreground leading-[1.75] whitespace-pre-wrap">
-                  {b.text}
-                </p>
+                {paragraphs.map((para, pi) => (
+                  <p
+                    key={pi}
+                    className="text-sm text-foreground leading-[1.75] whitespace-pre-wrap"
+                    style={{ marginBottom: pi < paragraphs.length - 1 ? '0.75rem' : 0 }}
+                  >
+                    {para}
+                  </p>
+                ))}
               </div>
             );
+          }
 
           case 'instructions':
             return (
@@ -230,9 +243,9 @@ export default function ScriptRenderer({ content, accentColor }: ScriptRendererP
                   Como conduzir
                 </p>
                 {b.items.map((item, j) => (
-                  <div key={j} className="flex items-start gap-2">
+                  <div key={j} className="flex items-start gap-2 py-0.5">
                     <span className="text-muted-foreground mt-0.5 shrink-0 text-xs leading-none">→</span>
-                    <p className="text-[13px] text-muted-foreground leading-snug">{item}</p>
+                    <p className="text-[13px] text-muted-foreground leading-[1.6]">{item}</p>
                   </div>
                 ))}
               </div>
@@ -254,12 +267,18 @@ export default function ScriptRenderer({ content, accentColor }: ScriptRendererP
               </div>
             );
 
-          case 'text':
+          case 'text': {
+            const tParas = b.text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
             return (
-              <p key={i} className="text-[13px] text-foreground/80 leading-relaxed">
-                {b.text}
-              </p>
+              <div key={i} className="space-y-3">
+                {tParas.map((para, pi) => (
+                  <p key={pi} className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                    {para}
+                  </p>
+                ))}
+              </div>
             );
+          }
 
           default:
             return null;
