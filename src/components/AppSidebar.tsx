@@ -7,25 +7,15 @@ import {
   Zap, Users, Dna, UserCircle, Package, UserRound,
 } from 'lucide-react';
 
-/* ── Brand tokens — Sidebar escuro SVP ────────────
-   Background navy  : #0c1733
-   Border dark      : #1a2a50
-   Text white       : #FFFFFF
-   Muted white      : rgba(255,255,255,0.50)
-   Section label    : rgba(255,255,255,0.28)
-   Hover bg         : rgba(255,255,255,0.07)
-   Active bg        : rgba(255,255,255,0.11)
-   Accent blue      : #4d9fff  (azul claro para itens ativos)
-─────────────────────────────────────────────────── */
+/* ── Brand tokens ─────────────────────────────────── */
 
 const BRAND = {
-  blue:      '#4d9fff',           // azul claro — ativo/destaque
+  blue:      '#4d9fff',
   blueBg:    'rgba(77,159,255,0.14)',
-  blueLight: 'rgba(77,159,255,0.08)',
   text:      '#FFFFFF',
   muted:     'rgba(255,255,255,0.50)',
   mutedLg:   'rgba(255,255,255,0.28)',
-  bg:        '#0c1733',           // navy profundo SVP
+  bg:        '#0c1733',
   border:    '#1a2a50',
   hover:     'rgba(255,255,255,0.07)',
 };
@@ -63,7 +53,7 @@ function NavItem({ to, icon: Icon, label, badge, end, onClick }: NavItemProps) {
       })}
       onMouseEnter={e => {
         const el = e.currentTarget as HTMLAnchorElement;
-        if (!el.classList.contains('active') && !el.getAttribute('aria-current')) {
+        if (!el.getAttribute('aria-current')) {
           el.style.background = BRAND.hover;
           el.style.color = BRAND.text;
         }
@@ -132,9 +122,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 interface AppSidebarProps {
   width?: number;
   onWidthChange?: (w: number) => void;
-  /** Mobile only — whether the sidebar drawer is open */
   mobileOpen?: boolean;
-  /** Mobile only — called when the user closes the drawer */
   onMobileClose?: () => void;
 }
 
@@ -152,7 +140,6 @@ export default function AppSidebar({
   const dragStartX = useRef<number>(0);
   const dragStartWidth = useRef<number>(width);
 
-  /* Fetch active client count for CRM badge */
   useEffect(() => {
     if (!user?.id) return;
     svpApi.listarClientes(1, 200)
@@ -165,7 +152,6 @@ export default function AppSidebar({
       .catch(() => {});
   }, [user?.id]);
 
-  /* Drag-to-resize logic (desktop only) */
   const handleDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     dragStartX.current = e.clientX;
@@ -190,13 +176,10 @@ export default function AppSidebar({
     document.addEventListener('mouseup', onUp);
   }, [width, onWidthChange]);
 
-  /* On mobile: slide sidebar in/out with transform.
-     On desktop: always visible, no transform needed. */
   const mobileTransform = isMobile
     ? mobileOpen ? 'translateX(0)' : 'translateX(-100%)'
     : 'translateX(0)';
 
-  /* Close drawer on nav click (mobile) */
   const handleNavClick = () => onMobileClose?.();
 
   return (
@@ -234,9 +217,9 @@ export default function AppSidebar({
         </button>
       </div>
 
-      {/* Scrollable nav content */}
+      {/* Nav content */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
-        {/* CTA primário */}
+        {/* CTA */}
         <button
           onClick={() => { navigate('/'); onMobileClose?.(); }}
           className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-[14px] font-semibold transition-all"
@@ -276,10 +259,7 @@ export default function AppSidebar({
         </div>
       </nav>
 
-      {/* ── Resize handle (desktop only) ─────────────
-          8px hit area on the right edge of the sidebar.
-          Shows a 2px accent line on hover / while dragging.
-      ─────────────────────────────────────────────── */}
+      {/* Resize handle (desktop only) */}
       <div
         onMouseDown={handleDragStart}
         title="Arrastar para redimensionar"
@@ -296,7 +276,6 @@ export default function AppSidebar({
           justifyContent: 'center',
         }}
       >
-        {/* Visual indicator — thin line that appears on hover/drag */}
         <div
           style={{
             width: 2,

@@ -632,7 +632,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error("Edge function error:", err);
     return new Response(
-      JSON.stringify({ error: err.message || "Erro interno." }),
+      JSON.stringify({ error: ((err as Error)?.message) || "Erro interno." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

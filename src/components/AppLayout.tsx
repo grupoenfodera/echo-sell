@@ -20,14 +20,6 @@ function getInitialWidth(): number {
   return SIDEBAR_DEFAULT;
 }
 
-/**
- * AppLayout — Sidebar + Topbar + scrollable content area.
- * Used for all authenticated pages except full-screen flows
- * (Roteiro, RoteiroLoading, Login, Welcome, Onboarding).
- *
- * Mobile: sidebar collapses into a drawer overlay triggered by the
- * hamburger button in AppTopbar. Content takes full width.
- */
 export default function AppLayout() {
   const [sidebarWidth, setSidebarWidth] = useState(getInitialWidth);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,7 +35,6 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Backdrop for mobile drawer */}
       {isMobile && mobileMenuOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-30"
@@ -51,7 +42,6 @@ export default function AppLayout() {
         />
       )}
 
-      {/* Left sidebar — resizable on desktop, drawer on mobile */}
       <AppSidebar
         width={sidebarWidth}
         onWidthChange={handleWidthChange}
@@ -59,14 +49,12 @@ export default function AppLayout() {
         onMobileClose={closeMobile}
       />
 
-      {/* Right side — topbar + scrollable content */}
       <div
         className="flex flex-col flex-1 overflow-hidden"
         style={{ marginLeft: isMobile ? 0 : sidebarWidth }}
       >
         <AppTopbar onToggleMobile={() => setMobileMenuOpen(o => !o)} />
 
-        {/* Page content */}
         <main className="flex-1 overflow-y-auto bg-background">
           <Outlet />
         </main>

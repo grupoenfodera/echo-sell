@@ -131,17 +131,38 @@ Deno.serve(async (req) => {
       if (clientes && clientes.length > 0) {
         const clienteIds = clientes.map((c: Record<string, unknown>) => c.id);
 
-        const { data: sessoes } = await supabaseAdmin
-          .from("sessoes_venda")
-          .select("id, cliente_id, criado_em, geracao_status, roteiro_gerado_em, proposta_gerada_em, email_gerado_em, whatsapp_gerado_em, objecoes_geradas_em")
-          .in("cliente_id", clienteIds)
-          .eq("usuario_id", user.id)
-          .order("criado_em", { ascending: false });
+        // Fetch sessions and products in parallel
+        const [sessoesRes, produtosRes] = await Promise.all([
+          supabaseAdmin
+            .from("sessoes_venda")
+            .select("id, cliente_id, criado_em, geracao_status, roteiro_gerado_em, proposta_gerada_em, email_gerado_em, whatsapp_gerado_em, objecoes_geradas_em, produto, preco")
+            .in("cliente_id", clienteIds)
+            .eq("usuario_id", user.id)
+            .order("criado_em", { ascending: false }),
+          supabaseAdmin
+            .from("produtos")
+            .select("nome, descricao")
+            .eq("usuario_id", user.id),
+        ]);
+
+        const sessoes = sessoesRes.data || [];
+        const produtos = (produtosRes.data || []) as { nome: string; descricao: string | null }[];
+
+        // Build a map: description prefix → product name for matching
+        const findProdutoNome = (descricao: string | null): string | null => {
+          if (!descricao || !produtos.length) return null;
+          const desc = (descricao as string).slice(0, 100);
+          for (const p of produtos) {
+            if (p.descricao && (p.descricao as string).slice(0, 100) === desc) return p.nome;
+          }
+          return null;
+        };
 
         const ultimasSessoes = new Map<string, Record<string, unknown>>();
-        for (const s of (sessoes || []) as Record<string, unknown>[]) {
+        for (const s of sessoes as Record<string, unknown>[]) {
           const cid = s.cliente_id as string;
           if (!ultimasSessoes.has(cid)) {
+            const produtoNome = findProdutoNome(s.produto as string | null);
             ultimasSessoes.set(cid, {
               id: s.id,
               criado_em: s.criado_em,
@@ -151,6 +172,8 @@ Deno.serve(async (req) => {
               tem_email: s.email_gerado_em !== null,
               tem_whatsapp: s.whatsapp_gerado_em !== null,
               tem_objecoes: s.objecoes_geradas_em !== null,
+              produto_nome: produtoNome,
+              preco: s.preco ?? null,
             });
           }
         }
@@ -177,6 +200,6 @@ Deno.serve(async (req) => {
     return errorResponse("Método não permitido.", 405);
   } catch (err) {
     console.error("Error:", err);
-    return errorResponse(err.message || "Erro interno.", 500);
+    return errorResponse(((err as Error)?.message) || "Erro interno.", 500);
   }
 });

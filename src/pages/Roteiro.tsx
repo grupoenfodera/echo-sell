@@ -1091,15 +1091,15 @@ export default function RoteiroPage() {
           <span className="hidden sm:inline">Voltar</span>
         </Button>
         <div className="h-5 w-px bg-border hidden sm:block" />
-        {/* Lead identity — primary context */}
-        <div className="flex flex-col justify-center min-w-0 flex-1">
+        {/* Lead identity — mobile only */}
+        <div className="flex flex-col justify-center min-w-0 flex-1 sm:hidden">
           <span className="font-semibold text-[14px] text-foreground leading-tight truncate">{nomeCliente}</span>
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            {nicho && <span className="hidden sm:inline truncate">{nicho}</span>}
-            {nicho && dataSessao && <span className="hidden md:inline">·</span>}
-            {dataSessao && <span className="hidden md:inline">{dataSessao}</span>}
+            {nicho && <span className="truncate">{nicho}</span>}
           </div>
         </div>
+        {/* Spacer on desktop */}
+        <div className="hidden sm:flex flex-1" />
         {/* Score badge */}
         <div className={`inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-bold shrink-0 ${getScoreBg(score)} ${getScoreColor(score)}`}>
           {score}/100
@@ -1481,7 +1481,7 @@ export default function RoteiroPage() {
                     className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors border border-dashed border-border hover:border-foreground/30 rounded-lg px-4 py-2.5 w-full justify-center"
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    Regenerar bloco com IA
+                    Regenerar bloco com IA SVP
                   </button>
                 ) : (
                   <motion.div

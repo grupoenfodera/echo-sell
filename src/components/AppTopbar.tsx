@@ -2,13 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { Moon, Sun, LogOut, User, Dna, Package, UserCircle, Menu } from 'lucide-react';
 
 /* ── Brand tokens ───────────────────────────────── */
 const BRAND = {
   blue:    '#195FA5',
-  blueBg:  '#195FA510',
   text:    '#262522',
   muted:   '#595956',
   mutedLg: '#8B8B88',
@@ -17,16 +15,12 @@ const BRAND = {
   hover:   '#F4F4F2',
 };
 
-const TONE_NAME: Record<string, string> = {
-  consultivo: 'Consultivo',
-  direto: 'Direto',
-  relacional: 'Relacional',
-  tecnico: 'Técnico',
-  svp_puro: 'SVP Puro',
-};
-const CONTEXTO_LABEL: Record<string, string> = {
-  b2b: 'B2B',
-  b2c: 'B2C',
+/* ── Plan limits ─────────────────────────────────── */
+const PLAN_LIMITS: Record<string, number> = {
+  basico: 10,
+  pro: 50,
+  enterprise: 200,
+  pastor: 30,
 };
 
 export default function AppTopbar({ onToggleMobile }: { onToggleMobile?: () => void }) {
@@ -35,7 +29,6 @@ export default function AppTopbar({ onToggleMobile }: { onToggleMobile?: () => v
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [dna, setDna] = useState<{ tom: string; contexto: string } | null>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -45,21 +38,7 @@ export default function AppTopbar({ onToggleMobile }: { onToggleMobile?: () => v
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  useEffect(() => {
-    if (!usuario?.id) return;
-    supabase
-      .from('usuario_dna')
-      .select('tom_primario, contexto')
-      .eq('usuario_id', usuario.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.tom_primario) setDna({ tom: data.tom_primario, contexto: data.contexto || '' });
-      });
-  }, [usuario?.id]);
-
   const initial = usuario?.nome?.charAt(0)?.toUpperCase() || 'U';
-  const tomLabel = dna ? (TONE_NAME[dna.tom] ?? dna.tom) : null;
-  const ctxLabel = dna ? (CONTEXTO_LABEL[dna.contexto] ?? dna.contexto?.toUpperCase()) : null;
 
   const handleLogout = async () => {
     setOpen(false);
@@ -67,7 +46,7 @@ export default function AppTopbar({ onToggleMobile }: { onToggleMobile?: () => v
     navigate('/login');
   };
 
-  /* Dark mode overrides for topbar surfaces */
+  /* Dark mode overrides */
   const isDark = theme === 'dark';
   const topBg     = isDark ? '#0F1014' : BRAND.bg;
   const topBorder = isDark ? '#2B2F3C' : BRAND.border;
@@ -78,6 +57,28 @@ export default function AppTopbar({ onToggleMobile }: { onToggleMobile?: () => v
   const dropText  = isDark ? '#E8EAF0' : BRAND.text;
   const dropMuted = isDark ? '#7A7F92' : BRAND.muted;
 
+  /* ── Progress bar logic ────────────────────────── */
+  const plano = usuario?.plano || 'basico';
+  const limit = PLAN_LIMITS[plano] ?? PLAN_LIMITS.basico;
+  const isPastor = plano === 'pastor';
+
+  const used = isPastor
+    ? limit - (usuario?.scripts_restantes ?? limit)
+    : (usuario?.consultas_mes ?? 0);
+
+  const percent = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
+
+  // Pastor: amber earlier (50%) since it's a fixed quota
+  const barColor = isPastor
+    ? (percent > 90 ? '#ff6b4a' : percent > 50 ? '#f5c842' : BRAND.blue)
+    : (percent > 90 ? '#ff6b4a' : percent > 70 ? '#f5c842' : BRAND.blue);
+
+  const barBg = isDark ? '#2B2F3C' : BRAND.border;
+
+  const label = isPastor
+    ? `${usuario?.scripts_restantes ?? 0} restantes`
+    : `${used} de ${limit} roteiros`;
+
   return (
     <header
       className="flex items-center px-4 gap-3 shrink-0 no-print"
@@ -87,7 +88,7 @@ export default function AppTopbar({ onToggleMobile }: { onToggleMobile?: () => v
         borderBottom: `1px solid ${topBorder}`,
       }}
     >
-      {/* Mobile hamburger — only visible on small screens */}
+      {/* Mobile hamburger */}
       <button
         onClick={onToggleMobile}
         className="md:hidden flex items-center justify-center rounded-lg transition-colors shrink-0"
@@ -105,29 +106,38 @@ export default function AppTopbar({ onToggleMobile }: { onToggleMobile?: () => v
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Center — DNA / context badge */}
+      {/* Center — Usage progress bar */}
       <div className="flex-1 flex justify-center">
-        {tomLabel && ctxLabel ? (
+        {usuario ? (
           <button
-            onClick={() => navigate('/perfil/dna')}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-colors"
+            onClick={() => navigate('/perfil')}
+            className="flex items-center gap-2.5 px-3 py-1.5 rounded-full transition-colors"
             style={{
-              background: isDark ? '#1E3FA818' : BRAND.blueBg,
-              border: `1px solid ${isDark ? '#2B2F3C' : BRAND.blue + '30'}`,
-              color: isDark ? '#7A7F92' : BRAND.muted,
+              background: isDark ? '#ffffff06' : '#F4F4F2',
+              border: `1px solid ${isDark ? '#2B2F3C' : BRAND.border}`,
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? '#1E3FA855' : BRAND.blue + '60';
-              (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#E8EAF0' : BRAND.text;
+              (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? '#3B4050' : '#C4C4C0';
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? '#2B2F3C' : BRAND.blue + '30';
-              (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#7A7F92' : BRAND.muted;
+              (e.currentTarget as HTMLButtonElement).style.borderColor = isDark ? '#2B2F3C' : BRAND.border;
             }}
           >
-            <span style={{ color: BRAND.blue, fontWeight: 700 }}>{tomLabel}</span>
-            <span style={{ color: isDark ? '#2B2F3C' : BRAND.border }}>·</span>
-            <span>{ctxLabel}</span>
+            <div
+              className="rounded-full overflow-hidden shrink-0"
+              style={{ width: '120px', height: '4px', background: barBg }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${percent}%`, background: barColor }}
+              />
+            </div>
+            <span
+              className="text-[11px] font-medium whitespace-nowrap"
+              style={{ color: isDark ? '#7A7F92' : BRAND.muted }}
+            >
+              {label}
+            </span>
           </button>
         ) : (
           <div />
@@ -188,7 +198,6 @@ export default function AppTopbar({ onToggleMobile }: { onToggleMobile?: () => v
                   : '0 8px 24px -4px rgba(38,37,34,0.12)',
               }}
             >
-              {/* User info */}
               <div className="px-4 py-2.5" style={{ borderBottom: `1px solid ${dropBorder}` }}>
                 <p className="text-[13px] font-semibold truncate" style={{ color: dropText }}>
                   {usuario?.nome || 'Usuário'}

@@ -17,6 +17,8 @@ export interface UltimaSessao {
   tem_email: boolean;
   tem_whatsapp: boolean;
   tem_objecoes: boolean;
+  produto_nome?: string | null;
+  preco?: number | null;
 }
 
 export interface Cliente {
