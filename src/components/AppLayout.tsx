@@ -75,7 +75,7 @@ export default function AppLayout() {
 
       {/* Right side — topbar + scrollable content */}
       <div
-        className="flex flex-col flex-1 overflow-hidden"
+        className="flex flex-col flex-1 overflow-hidden transition-[margin-left] duration-200 ease-in-out"
         style={{ marginLeft: effectiveWidth }}
       >
         <AppTopbar onToggleMobile={() => setMobileMenuOpen(o => !o)} />
