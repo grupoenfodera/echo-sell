@@ -55,8 +55,12 @@ const PAUSE_RE = /^(\[(silên[çc]io|pausa)[^\]]*\]|#\s*pausa\b[^.]*)/i;
 /** Qualquer [colchete] que não seja pausa → instrução */
 const BRACKET_RE = /^\[.+\]$/;
 
-/** → ou - → item de instrução */
-const ARROW_RE = /^[→\-–—]\s+/;
+/**
+ * Somente → marca instrução de conduta.
+ * Em-dash (—) e en-dash (–) são bullets de fala (ex: "— [problema nas palavras dele]")
+ * e NÃO devem ser tratados como instrução.
+ */
+const ARROW_RE = /^→\s+/;
 
 /**
  * Divide o texto bruto em linhas lógicas.
@@ -83,12 +87,25 @@ function splitToLines(raw: string): string[] {
   // separadores de parágrafo no parser abaixo.
 }
 
-/** Extrai [instruções] embutidas de uma linha de texto de fala */
+/**
+ * Detecta se o conteúdo de um [colchete] é um placeholder de fala
+ * (preenchimento com palavras do cliente), e não uma instrução de conduta.
+ * Ex: [problema nas palavras dele] [desejo nas palavras dele] [meta] [consequência 1]
+ */
+function isPlaceholder(content: string): boolean {
+  return /\b(palavras?|nome|situação|contexto|cliente|dele|dela|problema|desejo|meta|consequên|Passo\s*\d|Step\s*\d|tentativa)\b/i.test(content);
+}
+
+/** Extrai [instruções] embutidas de uma linha de texto de fala.
+ *  Placeholders do tipo [palavras dele] permanecem na fala. */
 function extractInlineInstructions(line: string): { speech: string; instrs: string[] } {
   const instrs: string[] = [];
   const speech = line.replace(/\[[^\]]+\]/g, (match) => {
-    if (!PAUSE_RE.test(match)) instrs.push(match.replace(/^\[|\]$/g, '').trim());
-    return '';
+    if (PAUSE_RE.test(match)) return match;            // pausa → fica na fala
+    const content = match.replace(/^\[|\]$/g, '').trim();
+    if (isPlaceholder(content)) return match;          // placeholder → fica na fala
+    instrs.push(content);
+    return '';                                         // instrução real → remove da fala
   }).replace(/\s{2,}/g, ' ').trim();
   return { speech, instrs };
 }
@@ -117,6 +134,9 @@ function parse(content: string): Block[] {
 
   const flushSpeech = () => {
     if (speechLines.length === 0) return;
+    // Remove marcadores de parágrafo no final (trailing empty lines)
+    while (speechLines.length > 0 && speechLines[speechLines.length - 1] === '') speechLines.pop();
+    if (speechLines.length === 0) return;
     blocks.push({ kind: 'script', text: speechLines.join('\n') });
     speechLines = [];
   };
@@ -128,11 +148,15 @@ function parse(content: string): Block[] {
   };
 
   for (const line of lines) {
-    // ── Linha em branco = separador de parágrafo ───────
-    // Faz flush do bloco de fala atual para que o próximo
-    // parágrafo vire um card separado.
+    // ── Linha em branco = quebra de parágrafo DENTRO da fala ──
+    // NÃO gera um novo card — parágrafos consecutivos de fala
+    // ficam no mesmo card, separados por \n\n (whitespace-pre-wrap).
+    // Um novo card só é criado quando um elemento não-fala interrompe
+    // (instrução, pausa, seção), que chama flushSpeech() explicitamente.
     if (line === '') {
-      flushSpeech();
+      if (speechLines.length > 0 && speechLines[speechLines.length - 1] !== '') {
+        speechLines.push('');  // marcador de quebra de parágrafo
+      }
       flushInstrs();
       continue;
     }
