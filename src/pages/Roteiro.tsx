@@ -105,6 +105,37 @@ async function callFn<T>(name: string, body?: Record<string, unknown>): Promise<
 }
 
 /* ─────────────────────────────────────────────────
+   splitDiagnosticoScript
+   Separa o script de Diagnóstico em segmentos por
+   BLOCO N — LABEL e CONFIRMAÇÃO OBRIGATÓRIA.
+───────────────────────────────────────────────── */
+
+function formatBlocoLabel(raw: string): string {
+  // "BLOCO 1 — DESAFIOS" → "Bloco 1 — Desafios"
+  // "CONFIRMAÇÃO OBRIGATÓRIA" → "Confirmação obrigatória"
+  return raw
+    .replace(/:$/, '')
+    .trim()
+    .toLowerCase()
+    .split(/(\s*[—–]\s*)/)
+    .map(part => /^\s*[—–]\s*$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
+}
+
+function splitDiagnosticoScript(script: string): Array<{ label: string; conteudo: string }> {
+  // Captura marcadores BLOCO N — LABEL: e CONFIRMAÇÃO OBRIGATÓRIA como delimitadores
+  const BLOCO_RE = /(BLOCO\s+\d+\s*[—–-]+[^:\n]+:?|CONFIRMAÇÃO\s+OBRIGATÓRIA)/gi;
+  const parts = script.split(BLOCO_RE);
+  // parts = [antes, "BLOCO 1 — DESAFIOS:", conteudo1, "BLOCO 2 — ...", conteudo2, ...]
+  const segments: Array<{ label: string; conteudo: string }> = [];
+  for (let i = 1; i < parts.length; i += 2) {
+    const content = (parts[i + 1] ?? '').trim();
+    if (content) segments.push({ label: formatBlocoLabel(parts[i]), conteudo: content });
+  }
+  return segments;
+}
+
+/* ─────────────────────────────────────────────────
    normalizeBlocos
 ───────────────────────────────────────────────── */
 
@@ -120,14 +151,28 @@ function normalizeBlocos(roteiro: RoteiroJSON, followUp?: FollowUpItem[]): Bloco
       const bloco = (b.bloco || '').toLowerCase();
       const num   = b.numero ?? i + 1;
 
-      // ── Generic script (abertura / diagnostico / solucao) — acordeão ──
+      // ── Generic script — acordeão ──
       if (b.script) {
-        const scriptLabel =
-          bloco === 'abertura'                                       ? 'Script de abertura'    :
-          bloco === 'descoberta' || bloco === 'diagnostico'          ? 'Script de diagnóstico' :
-          bloco === 'solucao'    || bloco === 'apresentacao_solucao' ? 'Abertura da solução'   :
-          'Script';
-        sections.push({ id: `${bloco}-script`, tipo: 'oferta', label: scriptLabel, conteudo: b.script });
+        const isDiscovery = bloco === 'descoberta' || bloco === 'diagnostico';
+
+        if (isDiscovery) {
+          // Diagnóstico: divide por BLOCO 1/2/3 + CONFIRMAÇÃO
+          const segmentos = splitDiagnosticoScript(b.script);
+          if (segmentos.length > 1) {
+            segmentos.forEach((seg, j) =>
+              sections.push({ id: `${bloco}-script-${j}`, tipo: 'oferta', label: seg.label, conteudo: seg.conteudo })
+            );
+          } else {
+            // Fallback se não encontrou BLOCOs — exibe o script inteiro
+            sections.push({ id: `${bloco}-script`, tipo: 'oferta', label: 'Script de diagnóstico', conteudo: b.script });
+          }
+        } else {
+          const scriptLabel =
+            bloco === 'abertura'                                       ? 'Script de abertura'  :
+            bloco === 'solucao' || bloco === 'apresentacao_solucao'    ? 'Abertura da solução' :
+            'Script';
+          sections.push({ id: `${bloco}-script`, tipo: 'oferta', label: scriptLabel, conteudo: b.script });
+        }
       }
 
       // ── Perguntas-chave (diagnostico) ──
