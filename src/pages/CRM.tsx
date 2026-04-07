@@ -630,6 +630,18 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
             </span>
           </div>
 
+          {/* Produto + Ticket */}
+          {sessao?.produto && (
+            <p className="text-[10px] text-muted-foreground truncate">
+              📦 {sessao.produto}
+            </p>
+          )}
+          {sessao?.preco != null && sessao.preco > 0 && (
+            <p className="text-xs font-semibold text-primary">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(sessao.preco)}
+            </p>
+          )}
+
           {/* Fechado badge — with visual tint */}
           {isFechado && (
             <div
@@ -670,11 +682,14 @@ function PipelineCard({ cliente, isDragging, isFechado, isSaving, onClick, dragH
             </div>
           )}
 
-          {/* Aging */}
+          {/* Aging + creation date */}
           <div className="flex items-center justify-between gap-1">
             <span className="flex items-center gap-1 text-[10px]" style={{ color: agingColor }}>
               <Clock className="h-3 w-3" />
               {agingText ? `há ${agingText}` : 'Sem contato'}
+            </span>
+            <span className="text-[9px] text-muted-foreground/70">
+              criado {formatDistanceToNow(new Date(cliente.criado_em), { addSuffix: true, locale: ptBR })}
             </span>
           </div>
         </div>
@@ -760,6 +775,14 @@ function ListClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () =
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className={`text-[10px] ${statusCls}`}>{statusLabel}</Badge>
+          {sessao?.produto && (
+            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">📦 {sessao.produto}</span>
+          )}
+          {sessao?.preco != null && sessao.preco > 0 && (
+            <span className="text-xs font-semibold text-primary">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(sessao.preco)}
+            </span>
+          )}
         </div>
         {sessao && (
           <div className="flex flex-wrap gap-1.5 pt-1">
@@ -810,6 +833,9 @@ function ListClienteCard({ cliente, onClick }: { cliente: Cliente; onClick: () =
             {cliente.ultimo_contato_em
               ? `Último contato ${formatDistanceToNow(new Date(cliente.ultimo_contato_em), { addSuffix: true, locale: ptBR })}`
               : 'Sem contato registrado'}
+          </span>
+          <span className="text-[9px] text-muted-foreground/70">
+            criado {formatDistanceToNow(new Date(cliente.criado_em), { addSuffix: true, locale: ptBR })}
           </span>
         </div>
       </CardContent>
