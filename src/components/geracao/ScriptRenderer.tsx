@@ -68,8 +68,9 @@ function splitToLines(raw: string): string[] {
 
   return normalized
     .split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 0);
+    .map(l => l.trim());
+  // Não filtramos linhas vazias aqui — elas funcionam como
+  // separadores de parágrafo no parser abaixo.
 }
 
 /** Extrai [instruções] embutidas de uma linha de texto de fala */
@@ -117,6 +118,15 @@ function parse(content: string): Block[] {
   };
 
   for (const line of lines) {
+    // ── Linha em branco = separador de parágrafo ───────
+    // Faz flush do bloco de fala atual para que o próximo
+    // parágrafo vire um card separado.
+    if (line === '') {
+      flushSpeech();
+      flushInstrs();
+      continue;
+    }
+
     // ── Seção ──────────────────────────────────────────
     if (SECTION_RE.test(line)) {
       flushSpeech();
@@ -204,34 +214,24 @@ export default function ScriptRenderer({ content, accentColor }: ScriptRendererP
               </p>
             );
 
-          case 'script': {
-            // A IA gera cada frase/parágrafo em uma linha separada (\n).
-            // Cada linha vira um <p> com espaçamento visual entre elas.
-            // Linhas em branco (duplo \n) também são descartadas pelo filter.
-            const paragraphs = b.text
-              .split(/\n/)
-              .map(p => p.trim())
-              .filter(Boolean);
+          case 'script':
+            // Cada bloco 'script' já é um parágrafo separado —
+            // a linha em branco no conteúdo faz flush() e cria
+            // um novo bloco, que vira um card independente aqui.
             return (
               <div
                 key={i}
-                className="rounded-r-lg py-4 px-4 space-y-3"
+                className="rounded-r-lg py-3 px-4"
                 style={{
                   borderLeft: `3px solid ${accent}`,
                   background: `color-mix(in srgb, ${accent} 7%, hsl(var(--card)))`,
                 }}
               >
-                {paragraphs.map((para, pi) => (
-                  <p
-                    key={pi}
-                    className="text-sm text-foreground leading-[1.8]"
-                  >
-                    {para}
-                  </p>
-                ))}
+                <p className="text-sm text-foreground leading-[1.8] whitespace-pre-wrap">
+                  {b.text}
+                </p>
               </div>
             );
-          }
 
           case 'instructions':
             return (
