@@ -168,16 +168,25 @@ const QuickEditModal = ({ dna, onClose, onSaved }: { dna: any; onClose: () => vo
     if (!contexto) { toast.error('Selecione o contexto (B2B, B2C ou Ambos).'); return; }
     setSaving(true);
     try {
-      const { data: blocoData } = await supabase.functions.invoke('gerar-dna', {
-        body: {
-          tom_primario: tomPrimario,
-          tom_secundario: dna.tom_secundario || null,
-          peso_secundario: dna.peso_secundario || null,
-          contexto,
-          ticket_medio: ticket,
-          nicho_principal: nicho,
-        },
-      });
+      // gerar-dna is optional — never block the save if it fails
+      let blocoInjetado = dna.bloco_injetado || '';
+      if (ticket && nicho) {
+        try {
+          const { data: blocoData } = await supabase.functions.invoke('gerar-dna', {
+            body: {
+              tom_primario: tomPrimario,
+              tom_secundario: dna.tom_secundario || null,
+              peso_secundario: dna.peso_secundario || null,
+              contexto,
+              ticket_medio: ticket,
+              nicho_principal: nicho,
+            },
+          });
+          if (blocoData?.bloco_injetado) blocoInjetado = blocoData.bloco_injetado;
+        } catch {
+          // silently ignore — save proceeds without new bloco
+        }
+      }
 
       const updated = {
         usuario_id: usuario.id,
@@ -185,7 +194,7 @@ const QuickEditModal = ({ dna, onClose, onSaved }: { dna: any; onClose: () => vo
         contexto,
         ticket_medio: ticket,
         nicho_principal: nicho,
-        bloco_injetado: blocoData?.bloco_injetado || dna.bloco_injetado || '',
+        bloco_injetado: blocoInjetado,
         atualizado_em: new Date().toISOString(),
       };
 
