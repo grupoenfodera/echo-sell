@@ -465,7 +465,7 @@ Deno.serve(async (req) => {
       .single();
 
     let contexto = contextoGeracao || contextoBody || null;
-    if (!contexto && dna?.contexto && dna.contexto !== "ambos") {
+    if (!contexto && dna?.contexto && dna.contexto.toLowerCase() !== "ambos") {
       contexto = dna.contexto;
     }
     // Normalize to lowercase for DB check constraint
