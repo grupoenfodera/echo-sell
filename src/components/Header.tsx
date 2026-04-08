@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Moon, Sun, LogOut, User, Dna, ClipboardList, Users, ChevronDown, Package, UserCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import logoSvp from '@/assets/logo-svp.png';
+import NotificationBell from '@/components/NotificationBell';
 
 const TONE_NAME: Record<string, string> = {
   consultivo: 'Consultivo',
@@ -81,6 +82,9 @@ const Header = () => {
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
+
+        {/* Sininho de novidades */}
+        <NotificationBell />
 
         {/* DNA Badge */}
         {dnaBadge && (

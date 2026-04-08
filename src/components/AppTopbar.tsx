@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Moon, Sun, LogOut, User, Dna, Package, UserCircle, Menu } from 'lucide-react';
+import NotificationBell from '@/components/NotificationBell';
 
 /* ── Brand tokens ───────────────────────────────── */
 const BRAND = {
@@ -144,8 +145,11 @@ export default function AppTopbar({ onToggleMobile }: { onToggleMobile?: () => v
         )}
       </div>
 
-      {/* Right — theme toggle + user */}
+      {/* Right — theme toggle + bell + user */}
       <div className="flex items-center gap-1.5 shrink-0">
+        {/* Sininho de novidades */}
+        <NotificationBell />
+
         <button
           onClick={toggleTheme}
           className="flex items-center justify-center rounded-lg transition-colors"

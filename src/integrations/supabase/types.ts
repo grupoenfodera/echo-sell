@@ -29,6 +29,72 @@ export type Database = {
         }
         Relationships: []
       }
+      novidades: {
+        Row: {
+          id: string
+          titulo: string
+          descricao: string | null
+          tipo: string
+          emoji: string
+          ativo: boolean
+          criado_em: string
+        }
+        Insert: {
+          id?: string
+          titulo: string
+          descricao?: string | null
+          tipo?: string
+          emoji?: string
+          ativo?: boolean
+          criado_em?: string
+        }
+        Update: {
+          id?: string
+          titulo?: string
+          descricao?: string | null
+          tipo?: string
+          emoji?: string
+          ativo?: boolean
+          criado_em?: string
+        }
+        Relationships: []
+      }
+      novidades_lidas: {
+        Row: {
+          id: string
+          usuario_id: string
+          novidade_id: string
+          lida_em: string
+        }
+        Insert: {
+          id?: string
+          usuario_id: string
+          novidade_id: string
+          lida_em?: string
+        }
+        Update: {
+          id?: string
+          usuario_id?: string
+          novidade_id?: string
+          lida_em?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "novidades_lidas_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "novidades_lidas_novidade_id_fkey"
+            columns: ["novidade_id"]
+            isOneToOne: false
+            referencedRelation: "novidades"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       clientes: {
         Row: {
           atualizado_em: string | null
