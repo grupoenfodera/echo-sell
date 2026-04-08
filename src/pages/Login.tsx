@@ -41,7 +41,7 @@ const Login = () => {
         .from('usuarios')
         .select('ativo, motivo_bloqueio, acesso_svp_expira')
         .eq('id', authData.user.id)
-        .single();
+        .maybeSingle();
 
       if (usuario && !usuario.ativo) {
         await supabase.auth.signOut();

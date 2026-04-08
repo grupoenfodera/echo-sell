@@ -56,9 +56,10 @@ const DnaProfile = () => {
         <main className="pb-16 px-4 sm:px-6 pt-6">
           <div className="max-w-[920px] mx-auto text-center py-20">
             <p className="text-muted-foreground font-body mb-4">DNA Comercial não configurado.</p>
-            <Button onClick={() => navigate('/onboarding')} className="rounded-pill">Configurar agora</Button>
+            <Button onClick={() => setEditModal(true)} className="rounded-pill">Configurar agora</Button>
           </div>
         </main>
+        {editModal && <QuickEditModal dna={{}} onClose={() => setEditModal(false)} onSaved={d => { setDna(d); setEditModal(false); }} />}
       </>
     );
   }
@@ -93,7 +94,7 @@ const DnaProfile = () => {
           )}
 
           <div className="flex gap-3 mb-10">
-            <Button onClick={() => navigate('/onboarding')} variant="outline" className="rounded-pill">
+            <Button onClick={() => setEditModal(true)} variant="outline" className="rounded-pill">
               Reconfigurar DNA
             </Button>
             <Button onClick={() => setEditModal(true)} className="rounded-pill">
@@ -145,8 +146,18 @@ const SummaryRow = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
+const TONS = [
+  { value: 'consultivo', label: 'Consultivo', icon: '🔵' },
+  { value: 'direto', label: 'Direto', icon: '🟡' },
+  { value: 'relacional', label: 'Relacional', icon: '🟢' },
+  { value: 'tecnico', label: 'Técnico', icon: '🟣' },
+  { value: 'svp_puro', label: 'SVP Puro', icon: '⚪' },
+];
+
 const QuickEditModal = ({ dna, onClose, onSaved }: { dna: any; onClose: () => void; onSaved: (d: any) => void }) => {
   const { usuario } = useAuth();
+  const isNew = !dna.tom_primario;
+  const [tomPrimario, setTomPrimario] = useState(dna.tom_primario || 'consultivo');
   const [contexto, setContexto] = useState(dna.contexto || '');
   const [ticket, setTicket] = useState(dna.ticket_medio || '');
   const [nicho, setNicho] = useState(dna.nicho_principal || '');
@@ -154,13 +165,14 @@ const QuickEditModal = ({ dna, onClose, onSaved }: { dna: any; onClose: () => vo
 
   const handleSave = async () => {
     if (!usuario?.id) return;
+    if (!contexto) { toast.error('Selecione o contexto (B2B, B2C ou Ambos).'); return; }
     setSaving(true);
     try {
       const { data: blocoData } = await supabase.functions.invoke('gerar-dna', {
         body: {
-          tom_primario: dna.tom_primario,
-          tom_secundario: dna.tom_secundario,
-          peso_secundario: dna.peso_secundario,
+          tom_primario: tomPrimario,
+          tom_secundario: dna.tom_secundario || null,
+          peso_secundario: dna.peso_secundario || null,
           contexto,
           ticket_medio: ticket,
           nicho_principal: nicho,
@@ -168,18 +180,24 @@ const QuickEditModal = ({ dna, onClose, onSaved }: { dna: any; onClose: () => vo
       });
 
       const updated = {
+        usuario_id: usuario.id,
+        tom_primario: tomPrimario,
         contexto,
         ticket_medio: ticket,
         nicho_principal: nicho,
-        bloco_injetado: blocoData?.bloco_injetado || dna.bloco_injetado,
+        bloco_injetado: blocoData?.bloco_injetado || dna.bloco_injetado || '',
         atualizado_em: new Date().toISOString(),
       };
 
-      await supabase.from('usuario_dna').update(updated).eq('usuario_id', usuario.id);
-      toast.success('DNA atualizado.');
+      const { error } = await supabase
+        .from('usuario_dna')
+        .upsert(updated, { onConflict: 'usuario_id' });
+
+      if (error) throw error;
+      toast.success(isNew ? 'DNA configurado!' : 'DNA atualizado.');
       onSaved({ ...dna, ...updated });
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao atualizar.');
+      toast.error(err.message || 'Erro ao salvar.');
     } finally {
       setSaving(false);
     }
@@ -188,7 +206,17 @@ const QuickEditModal = ({ dna, onClose, onSaved }: { dna: any; onClose: () => vo
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="bg-card border border-border rounded-xl p-6 w-full max-w-sm space-y-4">
-        <h3 className="font-heading text-lg text-foreground">Edição rápida</h3>
+        <h3 className="font-heading text-lg text-foreground">{isNew ? 'Configurar DNA' : 'Edição rápida'}</h3>
+        {isNew && (
+          <div>
+            <label className="text-xs font-ui text-muted-foreground mb-1 block">Tom principal</label>
+            <div className="flex flex-wrap gap-2">
+              {TONS.map(t => (
+                <button key={t.value} onClick={() => setTomPrimario(t.value)} className={`px-3 py-1.5 rounded-lg text-xs font-ui border transition-all ${tomPrimario === t.value ? 'bg-primary text-primary-foreground border-primary' : 'bg-card border-border text-foreground'}`}>{t.icon} {t.label}</button>
+              ))}
+            </div>
+          </div>
+        )}
         <div>
           <label className="text-xs font-ui text-muted-foreground mb-1 block">Contexto</label>
           <div className="flex gap-2">
@@ -199,11 +227,11 @@ const QuickEditModal = ({ dna, onClose, onSaved }: { dna: any; onClose: () => vo
         </div>
         <div>
           <label className="text-xs font-ui text-muted-foreground mb-1 block">Ticket médio</label>
-          <Input value={ticket} onChange={e => setTicket(e.target.value)} className="bg-card border-border font-ui" />
+          <Input value={ticket} onChange={e => setTicket(e.target.value)} placeholder="Ex: R$ 3.000" className="bg-card border-border font-ui" />
         </div>
         <div>
           <label className="text-xs font-ui text-muted-foreground mb-1 block">Nicho</label>
-          <Input value={nicho} onChange={e => setNicho(e.target.value)} className="bg-card border-border font-ui" />
+          <Input value={nicho} onChange={e => setNicho(e.target.value)} placeholder="Ex: Coaching, Consultoria, SaaS..." className="bg-card border-border font-ui" />
         </div>
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" onClick={onClose} size="sm" className="rounded-pill">Cancelar</Button>

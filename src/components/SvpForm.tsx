@@ -85,7 +85,7 @@ const SvpForm = ({ modality, formData, onChange, onSubmit, loading, dna, context
         </div>
       ) : (
         <Link
-          to="/onboarding"
+          to="/dna-comercial"
           className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 hover:bg-muted transition-colors"
         >
           <Settings className="w-3.5 h-3.5" />
