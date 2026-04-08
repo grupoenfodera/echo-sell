@@ -632,10 +632,15 @@ export type Database = {
         Row: {
           atualizado_em: string | null
           bloco_injetado: string | null
+          cases_reais: string | null
           contexto: string | null
           criado_em: string | null
+          diferenciais: string | null
+          estilo_narrativa: string | null
+          expressoes_proprias: string | null
           id: string
           nicho_principal: string | null
+          objecoes_frequentes: string | null
           peso_secundario: number | null
           ticket_medio: string | null
           tom_primario: string | null
@@ -645,10 +650,15 @@ export type Database = {
         Insert: {
           atualizado_em?: string | null
           bloco_injetado?: string | null
+          cases_reais?: string | null
           contexto?: string | null
           criado_em?: string | null
+          diferenciais?: string | null
+          estilo_narrativa?: string | null
+          expressoes_proprias?: string | null
           id?: string
           nicho_principal?: string | null
+          objecoes_frequentes?: string | null
           peso_secundario?: number | null
           ticket_medio?: string | null
           tom_primario?: string | null
@@ -658,10 +668,15 @@ export type Database = {
         Update: {
           atualizado_em?: string | null
           bloco_injetado?: string | null
+          cases_reais?: string | null
           contexto?: string | null
           criado_em?: string | null
+          diferenciais?: string | null
+          estilo_narrativa?: string | null
+          expressoes_proprias?: string | null
           id?: string
           nicho_principal?: string | null
+          objecoes_frequentes?: string | null
           peso_secundario?: number | null
           ticket_medio?: string | null
           tom_primario?: string | null
